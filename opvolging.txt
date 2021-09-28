@@ -26,18 +26,18 @@ Einddoelen (met evaluatiecriteria):
 
     Indicator: de student kan tonen dat hij/zij zijn code kan exporteren naar een virtuele machine om daar het systeem op te testen.
 
-2.  De toetsenbord driver: de student wil via het toetsenbord input geven aan het besturingssysteem en dit weergeven op het scherm. 
+2. In staat zijn een bootloader te schrijven die bij et opstart evan de (virtuele) machine ingeladen en uitgevoerd wordt.
+   Indicator: eenvoudige bootloader die een tekst weergeeft (en ingegeven tekst terug afdrukt)
 
-    Indicator: er komt tekst op het scherm wanneer de student op het toetsenbord typt.
+3. Een CLi implementeren met enkele eenvoudige commando's. 
+   Indicator: werkende code hiervoor.
 
-3. De bus enumereren: de student wil alle verbonden (USB en/of PCIe) apparaten kunnen lezen en hun naam laten zien op het scherm. Deze lijst zou dus moeten veranderen als hij/zij een apparaat verwijdert of toevoegt.
+4. In staat zijn bestandinformatie van een FAT-schijf te lezen.
+   indicator 1: directory-informatie weergeven
+   indicator 2: een bestand vanaf de FAT-disk naar het geheugen laden (op een plaats) 
 
-    Indicator: een lijst met apparaatnamen komt op het scherm wanneer dit wordt gevraagd. (Eventueel via het toetsenbord zoals doel 1)
 
-4. FAT32 driver: de student wil een schijf geformateerd met bestandsysteem FAT32 kunnen lezen en zijn bestanden weergeven op het scherm. Hier kan hij/zij optioneel op verder bouwen door de inhoud van een bestand aan te passen.
-
-    Indicator: een lijst met bestandsnamen van een gemounte schijf (virtuele machine) laten zien op het scherm.
-
+<Johan Donné - goedgekeurd op 28/09/21/>
 
 Motivatie - betrokkenheid:
 
