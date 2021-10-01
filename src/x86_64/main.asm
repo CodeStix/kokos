@@ -12,6 +12,7 @@ start:
     mov esp, stack_top
 
     call check_cpuid_supported
+    call check_long_mode
 
     mov dword [0xb8000], 0x2f4b2f4f
     hlt
@@ -34,7 +35,23 @@ check_cpuid_supported:
     je .no_cpuid
     ret
 .no_cpuid:
-    mov dword [0xb8000], 0x2f302f45
+    mov dword [0xb8000], 0x4f304f45 ; Print E0 in red to screen https://wiki.osdev.org/Printing_To_Screen
+    hlt
+
+check_long_mode:
+    mov eax, 0x80000000     ; Call cpuid with parameter 0x80000000 https://en.wikipedia.org/wiki/CPUID
+    cpuid
+    cmp eax, 0x80000001     ; The returned value should at least be 0x80000001 because we need that
+    jb .no_long_mode        ; function to check if long mode is supported.
+
+    mov eax, 0x80000001     ; Call cpuid with parameter 0x80000001 https://en.wikipedia.org/wiki/CPUID
+    cpuid
+    test edx, 1 << 29       ; Check for long mode flag (al155)
+    jz .no_long_mode
+    ret
+
+.no_long_mode:
+    mov dword [0xb8000], 0x4f314f45 ; Print E1 in red to screen https://wiki.osdev.org/Printing_To_Screen
     hlt
 
 ; A bbs section contains uninitialized variables, so the stack too
