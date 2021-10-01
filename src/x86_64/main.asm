@@ -10,7 +10,7 @@ bits 32
 
 ; Name the following block of code 'start', when refernced, start will contain the address of its first instruction (mov)
 start:
-    mov esp, stack_top
+    mov esp, stack_top      ; Set the address of the stack, so that push and pop instructions will work correctly
 
     call check_cpuid_supported
     call check_long_mode
@@ -22,9 +22,6 @@ start:
 
     lgdt [gdt64.pointer]    ; Load global descriptor table
     jmp gdt64.code_segment:start64  ; Jump to start64, using the code_segment declared in the global descriptor table
-
-    hlt
-
 
 ; Check if cpuid is supported (ap21)
 ; You can check if cpuid is supported by trying to flip the identification flag in the flags register, if this flag stays flipped,
@@ -106,13 +103,11 @@ enable_paging:
 
 section .bss ; The bbs section contains uninitialized variables, so the stack too
 
-stack_bottom:
-    ; Reserve 1024 * 16 bytes
+stack_bottom: ; Reserve 1024 * 16 bytes for the stack
     resb 1024 * 16
 stack_top:
 
-
-align 4096
+align 4096  ; Enforce the next address to be a multiple of 4096 (required for the page tables)
 
 page_table_l4:
     resb 4096

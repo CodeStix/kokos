@@ -12,6 +12,5 @@ start64:
     mov gs, ax
 
     mov dword [0xb8000], 0x2f4b2f4f
-    ; mov dword [0xb8002], 0x2f4b2f4f
 
     hlt
