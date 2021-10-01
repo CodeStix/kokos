@@ -1,0 +1,183 @@
+=================================================================================
+
+Persoonlijk ontwikkelingsplan (POP) - opvolgingsdocument Academiejaar 2021-2022
+
+=================================================================================
+
+
+Student:	Stijn Rogiest
+
+Mentor:		<in te vullen door de mentor>
+
+
+=================================================================================
+Beschrijving - datum 26/9/2021 
+=================================================================================
+
+Onderwerp: Besturingssysteem ontwikkelen
+
+De student zou graag meer bijleren over de Intel x86 instructieset en assembly in het algemeen door een basic operating systeem te ontwikkelen. Dit is het programma dat start wanneer je op de aan-knop op je computer drukt. Een paar populaire besturingssystemen zijn Windows, Linux en macOS.
+
+In het volgende lijstje worden een aantal doelen opgesomd die de student zou willen bereiken, waarvan de moeilijkheidsgraad elke keer iets hoger ligt.
+
+Einddoelen (met evaluatiecriteria):
+
+1. Weten hoe een omgeving in te stellen om een besturingssysteem te ontwikkelen.
+
+    Indicator: de student kan tonen dat hij/zij zijn code kan exporteren naar een virtuele machine om daar het systeem op te testen.
+
+2. In staat zijn een bootloader te schrijven die bij et opstart evan de (virtuele) machine ingeladen en uitgevoerd wordt.
+   Indicator: eenvoudige bootloader die een tekst weergeeft (en ingegeven tekst terug afdrukt)
+
+3. Een CLi implementeren met enkele eenvoudige commando's. 
+   Indicator: werkende code hiervoor.
+
+4. In staat zijn bestandinformatie van een FAT-schijf te lezen.
+   indicator 1: directory-informatie weergeven
+   indicator 2: een bestand vanaf de FAT-disk naar het geheugen laden (op een plaats) 
+
+
+<Johan Donné - goedgekeurd op 28/09/21/>
+
+Motivatie - betrokkenheid:
+
+Ik werk graag met C en zou me daarom willen verdiepen in de wereld van low level programming door een basic operating systeem te ontwikkelen. Ik wil weten hoe besturingssystemen zoals Windows in detail werken.
+
+Motivatie - grenzen verleggen:
+
+Ik heb nog nooit met assembly gewerkt.
+
+Kerndoelen:
+
+1.e 2.a 2.b 6.e 8.i 8.j 10.m 10.n
+
+Werkvorm:
+
+YouTube tutorials, zelfstudie en handleidingen lezen.
+
+
+
+=================================================================================
+Planning - <datum van eerste ingave> (op te stellen nadat je voorstel is goedgekeurd)
+=================================================================================
+
+<Hou hier je werkplanning bij, op te stellen nadat je voorstel is goedgekeurd>
+
+
+=================================================================================
+Logboek
+=================================================================================
+
+<Noteer hier je activiteiten, gevonden informatie, behaalde milestones, 
+belangrijke gebeurtenissen, problemen, oplossingen...
+Zet voor elke nieuwe entry op een aparte lijn je naam en de datum.
+Als je dat wil, mag je de zuiver technische informatie in een aanvullend 'technisch logboek'
+bijhouden (binnen je repository). In dat geval kan je hier bij de verschillende entries verwijzen
+naar dat technisch logboek.>
+
+
+
+
+
+
+
+
+
+
+
+
+=================================================================================
+Eerste tussenrapportering - <datum van ingave>
+=================================================================================
+
+Stand van zaken:
+
+<Geef hier een korte stand van zaken van wat er gebeurd is sinds de start: 
+Wat is er gerealiseerd? Wat moet nog gebeuren? Wat zijn bijzondere gebeurtenissen?
+Wat zijn problemen die je nog moet oplossen?>
+
+Reflectie:
+
+<Hoe werkt je aanpak? Waar had je achteraf gezien beter anders te werk kunnen gaan?
+Hoe ga je eventueel bijsturen? Welke aanpassingen zijn er nodig in je planning?>
+
+
+Zelfevaluatie:
+
+<Geef jezelf hier een score (gaande van 'NVT' tot 'A') voor de items die in het 
+evaluatiedocument een witte achtergrond hebben>
+
+
+Feedback vanwege mentor - <datum van ingave>:
+(Laat steeds de feedback van de mentor in het opvolgingsdocument staan tot het einde
+van het opleidingsonderdeel.) 
+
+<Hier komt de feedback en opmerkingen vanwege de mentor>
+
+
+
+=================================================================================
+(optioneel) Tweede tussenrapportering - <datum van ingave>
+=================================================================================
+
+Stand van zaken:
+
+<Geef hier een korte stand van zaken van wat er gebeurd is sinds vorige tussenrapportering: 
+Wat is er gerealiseerd? Wat moet nog gebeuren? Wat zijn bijzondere gebeurtenissen?
+Wat zijn problemen die je nog moet oplossen?>
+
+Reflectie:
+
+<Hoe werkt je aanpak? Waar had je achteraf gezien beter anders te werk kunnen gaan?
+Hebben vroegere bijsturingen het gewenste effect? Wat wil je nog wijzigen in je aanpak of planning?>
+
+
+Zelfevaluatie:
+
+<Geef jezelf hier een score (gaande van 'NVT' tot 'A') voor de items die in het 
+evaluatiedocument een witte achtergrond hebben>
+
+
+Feedback vanwege mentor - <datum van ingave>:
+
+<Hier komt de feedback en opmerkingen vanwege de mentor>
+
+
+
+=================================================================================
+Eindrapportering - <datum van ingave>
+=================================================================================
+
+
+Eindrapportering:
+
+<Geef hier een eindstand van wat je bereikt hebt (en wat niet).
+Hierin verwijs je ook naar eventuele bijkomende documenten of informatie om dit te onderbouwen.>
+
+Reflectie:
+
+<Geef hier een reflectie over je aanpak, je originele einddoelen, en je resultaat: Wat was goed?
+ Wat had beter gekund? Waren er alternatieven voor je aanpak? Wat zou je achteraf gezien anders
+ gedaan hebben? Hoe zou je je nog verder kunnen profileren in de richting van je onderwerp? >
+
+
+Inhoud Portfolio:
+
+<Geef hier een overzicht van de informatie die je portfolio bevat> 
+
+
+Bronnenlijst:
+
+<Geef hier een lijst van gebruikte bronnen volgens de IEEE-standaard>
+
+Zelfevaluatie:
+
+<Geef jezelf hier een score (gaande van 'NVT' tot 'A') voor de items die in het 
+evaluatiedocument een witte achtergrond hebben>
+
+
+
+
+
+
+
