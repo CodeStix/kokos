@@ -1,3 +1,4 @@
+extern kernel_main
 global start64
 
 section .text
@@ -11,6 +12,7 @@ start64:
     mov fs, ax
     mov gs, ax
 
-    mov dword [0xb8000], 0x2f4b2f4f
+    ; mov dword [0xb8000], 0x2f4b2f4f
+    call kernel_main
 
     hlt
