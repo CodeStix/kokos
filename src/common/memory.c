@@ -1,5 +1,10 @@
 #include "util.c"
 
+// Simple memory allocation strategy:
+// Every allocated block of memory starts with a header (MemoryChunk) and is linked together to the next and previous blocks of memory
+// When Allocating, the linked list of memory blocks is iterated and the first gap is filled. O(n)
+// When freeing, the memory block is removed from the linked list. O(1)
+
 struct MemoryChunk
 {
     struct MemoryChunk *next;
@@ -11,25 +16,29 @@ extern struct MemoryChunk memoryChunk;
 
 void memory_set(void *pointer, unsigned char value, int amount)
 {
-    if (IS_ALIGNED(amount, 8))
+    // if (IS_ALIGNED(amount, 8))
+    // {
+    //     unsigned long v = value | value << 8ul | value << 16ul | value << 24ul | value << 32ul | value << 40ul | value << 48ul | value << 56ul;
+    //     for (int i = 0; i < amount / sizeof(unsigned long); i++)
+    //     {
+    //         *((unsigned long *)pointer + i) = v;
+    //     }
+    // }
+    // else
+    if (IS_ALIGNED(amount, 4))
     {
-        for (int i = 0; i < amount / sizeof(unsigned long); i++)
-        {
-            *((unsigned long *)pointer + i) = value;
-        }
-    }
-    else if (IS_ALIGNED(amount, 4))
-    {
+        unsigned int v = value | value << 8u | value << 16u | value << 24u;
         for (int i = 0; i < amount / sizeof(unsigned int); i++)
         {
-            *((unsigned int *)pointer + i) = value;
+            *((unsigned int *)pointer + i) = v;
         }
     }
     else if (IS_ALIGNED(amount, 2))
     {
+        unsigned short v = value | value << 8u;
         for (int i = 0; i < amount / sizeof(unsigned short); i++)
         {
-            *((unsigned short *)pointer + i) = value;
+            *((unsigned short *)pointer + i) = v;
         }
     }
     else

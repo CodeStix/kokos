@@ -36,6 +36,8 @@ int kernel_main()
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
 
+    memory_set(videoMemory, 0x41, 60 * 25 * 2 - 8);
+
     void *ptr1 = memory_allocate(400);
     char *str1 = "this is a value\n";
     memory_copy(str1, ptr1, string_length(str1) + 1);
