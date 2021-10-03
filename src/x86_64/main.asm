@@ -1,5 +1,6 @@
 ; Give other files access to the 'start' address
 global start
+global memoryChunk
 extern start64
 
 ; Mark the following code to be in the text section, which typically stores code.
@@ -115,6 +116,12 @@ page_table_l3:
     resb 4096
 page_table_l2:
     resb 4096
+
+memoryChunk:
+    dq 0
+    dq 0
+    dw 0
+    resb 1024 * 64 * 16 - ($ - memoryChunk)
 
 section .rodata ; The rodata section contains read only data
 

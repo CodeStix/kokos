@@ -101,9 +101,23 @@ void console_print(const char *str)
     }
 }
 
-void console_print_number(int num)
+void console_print_i32(int num, int base)
 {
     char dest[11]; // 11 = max length of 32 bit integer with minus
     convert_i32_string(dest, num, 10);
+    console_print(dest);
+}
+
+void console_print_u32(unsigned int num, int base)
+{
+    char dest[10]; // 10 = max length of 32 bit integer
+    convert_u32_string(dest, num, 10);
+    console_print(dest);
+}
+
+void console_print_u64(unsigned long num, int base)
+{
+    char dest[20];
+    convert_u64_string(dest, num, base);
     console_print(dest);
 }

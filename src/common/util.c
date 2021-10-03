@@ -22,12 +22,12 @@ void convert_i32_string(char *dest, int num, int base)
     }
 
     // Convert number to ascii representation
-    while (num != 0)
+    do
     {
-        int digit = (num % base);
+        int digit = num % base;
         num /= base;
-        dest[i++] = (digit > 9 ? 'A' : '0') + digit;
-    }
+        dest[i++] = (digit > 9 ? 'A' + digit - 10 : '0' + digit);
+    } while (num != 0);
 
     // Add sign character
     if (isSigned)
@@ -46,12 +46,30 @@ void convert_u32_string(char *dest, unsigned int num, int base)
     int i = 0;
 
     // Convert number to ascii representation
-    while (num != 0)
+    do
     {
-        int digit = (num % base);
+        int digit = num % base;
         num /= base;
-        dest[i++] = (digit > 9 ? 'A' : '0') + digit;
-    }
+        dest[i++] = (digit > 9 ? 'A' + digit - 10 : '0' + digit);
+    } while (num != 0);
+
+    reverse_buffer(dest, i);
+
+    // Add null character
+    dest[i] = '\0';
+}
+
+void convert_u64_string(char *dest, unsigned long num, int base)
+{
+    int i = 0;
+
+    // Convert number to ascii representation
+    do
+    {
+        int digit = num % base;
+        num /= base;
+        dest[i++] = (digit > 9 ? 'A' + digit - 10 : '0' + digit);
+    } while (num != 0);
 
     reverse_buffer(dest, i);
 
