@@ -139,8 +139,17 @@ interrupt_handle_general_protection:
 
 interrupt_handle_page_fault:
     push rdi
+
     mov rdi, error_page_fault
     call console_print  
+
+    mov rdi, cr2                ; Address that caused the page fault is stored in cr2
+    mov rsi, 16
+    call console_print_u64
+
+    mov rdi, 0x16
+    call console_print_char
+
     pop rdi
     hlt
 
@@ -198,7 +207,7 @@ error_stack:
 error_general_protection:
     db "error: generatal protection exception!", 0xA, 0
 error_page_fault:
-    db "error: page fault!", 0xA, 0
+    db "error: page fault! process tried to access address 0x", 0
 info_registers:
     db "registers", 0
 info_rax:
