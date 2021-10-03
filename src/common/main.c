@@ -49,4 +49,7 @@ int kernel_main()
 
     memory_free(ptr1);
     memory_free(ptr2);
+
+    console_print_i32(100 / 0, 10);
+    console_print("end\n");
 }

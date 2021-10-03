@@ -20,4 +20,19 @@ SECTIONS
     {
         *(.text)
     }
+
+    .bss :
+    {
+        *(.bss)
+    }
+
+    .data :
+    {
+        *(.data)
+    }
+
+    .rodata :
+    {
+        *(.rodata)
+    }
 }

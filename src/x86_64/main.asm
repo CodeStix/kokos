@@ -1,6 +1,7 @@
 ; Give other files access to the 'start' address
 global start
 global memoryChunk
+global gdt64.code_segment
 extern start64
 
 ; Mark the following code to be in the text section, which typically stores code.
@@ -123,7 +124,7 @@ memoryChunk:
     dw 0
     resb 1024 * 64 * 16 - ($ - memoryChunk)
 
-section .rodata ; The rodata section contains read only data
+section .rodata ; The rodata section contains initialized read only data
 
 ; Create a global descriptor table, which we will not use, but is required 
 ; to enter protected mode (old way of virtual memory using segmentation) https://wiki.osdev.org/Global_Descriptor_Table
