@@ -8,7 +8,7 @@ hit_breakpoint:
     int3
     ret
 
-%include "src/x86_64/idt.asm"
+%include "src/x86_64/interrupts.asm"
 
 section .text
 bits 64     ; Tell the assembler that this file should create 64 bit instructions
