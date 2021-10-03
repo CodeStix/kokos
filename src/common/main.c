@@ -54,6 +54,7 @@ int kernel_main()
 
     memory_free(ptr1);
     memory_free(ptr2);
+    *((int *)0xffff324234) = 100;
 
     // console_print_i32(100 / 0, 10);
     console_print("end\n");

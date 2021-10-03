@@ -102,6 +102,48 @@ interrupt_handle_invalid_opcode:
     pop rdi
     hlt
 
+interrupt_handle_double_fault:
+    push rdi
+    mov rdi, error_double_fault
+    call console_print  
+    pop rdi
+    hlt
+
+interrupt_handle_invalid_tss:
+    push rdi
+    mov rdi, error_invalid_tss
+    call console_print  
+    pop rdi
+    hlt
+
+interrupt_handle_segment_not_found:
+    push rdi
+    mov rdi, error_invalid_tss
+    call console_print  
+    pop rdi
+    hlt
+
+interrupt_handle_stack:
+    push rdi
+    mov rdi, error_stack
+    call console_print  
+    pop rdi
+    hlt
+
+interrupt_handle_general_protection:
+    push rdi
+    mov rdi, error_general_protection
+    call console_print  
+    pop rdi
+    hlt
+
+interrupt_handle_page_fault:
+    push rdi
+    mov rdi, error_page_fault
+    call console_print  
+    pop rdi
+    hlt
+
 %macro register_interrupt_handler 2             
     mov rax, %1
     imul rax, 16        ; shl rax, 4
@@ -123,6 +165,12 @@ load_idt:
     register_interrupt_handler 4, interrupt_handle_overflow
     register_interrupt_handler 5, interrupt_handle_bound_range
     register_interrupt_handler 6, interrupt_handle_invalid_opcode
+    register_interrupt_handler 8, interrupt_handle_double_fault
+    register_interrupt_handler 10, interrupt_handle_invalid_tss
+    register_interrupt_handler 11, interrupt_handle_segment_not_found
+    register_interrupt_handler 12, interrupt_handle_stack
+    register_interrupt_handler 13, interrupt_handle_general_protection
+    register_interrupt_handler 14, interrupt_handle_page_fault
     lidt [idt64.pointer]
     ret
 
@@ -139,9 +187,20 @@ error_bound_range:
     db "error: bound range!", 0xA, 0
 error_invalid_opcode:
     db "error: invalid opcode!", 0xA, 0
+error_double_fault:
+    db "error: double fault!", 0xA, 0
+error_invalid_tss:
+    db "error: invalid task state segment!", 0xA, 0
+error_segment_not_present:
+    db "error: segment not present!", 0xA, 0
+error_stack:
+    db "error: stack problem!", 0xA, 0
+error_general_protection:
+    db "error: generatal protection exception!", 0xA, 0
+error_page_fault:
+    db "error: page fault!", 0xA, 0
 info_registers:
     db "registers", 0
-
 info_rax:
     db "rax=", 0
 info_rbx:
