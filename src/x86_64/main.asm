@@ -68,7 +68,7 @@ setup_page_tables:
     or eax, 0b11                ; Set present and read/write flag of entry https://wiki.osdev.org/Paging
     mov [page_table_l3], eax    ; Store address of the only level 2 table into first entry of level 3 table
 
-    mov ecx, 0
+    mov ecx, 0                  ; Fill the level 2 table with entries, no level 1 table is needed because huge pages are used 
 .loop:
     mov eax, 0x200000
     mul ecx 
@@ -111,7 +111,7 @@ stack_top:
 align 4096  ; Enforce the next address to be a multiple of 4096 (required for the page tables)
 
 page_table_l4:
-    resb 4096
+    resb 4096   ; Reserve 4096 bytes
 page_table_l3:
     resb 4096
 page_table_l2:

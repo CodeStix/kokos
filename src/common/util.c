@@ -1,3 +1,20 @@
+#pragma once
+
+#define ALIGN_TO_PREVIOUS(n, to) (n & -to)
+#define ALIGN_TO_NEXT(n, to) (((n - 1) & -to) + to)
+#define IS_ALIGNED(n, to) ((n & (to - 1)) == 0)
+
+int string_length(char *str)
+{
+    int i = 0;
+    while (*str)
+    {
+        i++;
+        str++;
+    }
+    return i;
+}
+
 void reverse_buffer(char *buffer, int size)
 {
     for (int j = 0; j < size / 2; j++)

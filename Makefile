@@ -7,7 +7,6 @@ build: src/x86_64/** src/common/**
 	nasm -f elf64 src/x86_64/main.asm -o build/x86_64/main.o
 	nasm -f elf64 src/x86_64/main64.asm -o build/x86_64/main64.o
 	nasm -f elf64 src/x86_64/multiboot2.asm -o build/x86_64/multiboot2.o
-	nasm -f elf64 src/x86_64/memory.asm -o build/x86_64/memory.o
 	x86_64-elf-gcc -c -I src/include -ffreestanding src/common/main.c -o build/common/main.o
 	x86_64-elf-ld -n -o build/x86_64/os.bin -T linker.ld build/x86_64/*.o build/common/*.o
 
