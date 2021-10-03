@@ -1,5 +1,6 @@
 extern kernel_main
 extern gdt64.code_segment
+extern console_print
 global start64
 
 section .text
@@ -15,14 +16,14 @@ start64:
     mov fs, ax
     mov gs, ax
 
-    ; mov dword [0xb8000], 0x2f4b2f4f
     call kernel_main
-
     hlt
 
 handle_divide_zero:
-    mov dword [0xb8000], 0x4f304f44
-    iretq
+    mov rdi, error_divide_by_zero
+    call console_print  ; Notes on calling c functions from assembly (using System V X86_64 calling convention): https://wiki.osdev.org/Calling_Conventions
+    hlt
+    ; iretq
 
 load_idt:
     mov rax, handle_divide_zero
@@ -36,6 +37,9 @@ load_idt:
 
 
 section .data ; The data section contains initialized data
+
+error_divide_by_zero:
+    db "error: divide by zero", 0xA, 0
 
 idt64:
 .irq0:                      ; https://wiki.osdev.org/Interrupt_Descriptor_Table
