@@ -10,36 +10,7 @@
 #define int64 signed long long
 #define uint64 unsigned long long
 
-// https://wiki.osdev.org/Interrupt_Descriptor_Table
-// struct Idt64Entry
-// {
-//     uint16 offset1;  // offset bits 0..15
-//     uint16 selector; // A code segment selector in GDT or LDT
-//     uint8 ist;       // Bits 0..2 holds Interrupt Stack Table offset, rest of bits zero.
-//     uint8 type;      // Type and attributes
-//     uint16 offset2;  // Offset bits 16..31
-//     uint32 offset3;  // Offset bits 32..63
-//     uint32 reserved; // Reserved
-// };
-
-// extern struct Idt64Entry idt[256];
-
-// void kernel_set_interrupt(unsigned char index, void *isr)
-// {
-//     uint8 privilegeLevel = 0;
-//     uint8 type = 0b1111; // 0b1111 (trap gate) or 0b1110 (interrupt gate)
-//     idt[index].offset1 = (uint64)isr;
-//     idt[index].offset2 = (uint64)isr >> 16;
-//     idt[index].offset2 = (uint64)isr >> 32;
-//     idt[index].selector = 8; // code_segment in gdt
-//     idt[index].ist = 0;
-//     idt[index].type = (1 << 7) | (privilegeLevel << 5) | type;
-// }
-
-// void kernel_clear_interrupt(unsigned char index)
-// {
-//     idt[index].type = 0; // Will clear 'present' bit
-// }
+extern void hit_breakpoint();
 
 void memory_debug()
 {
@@ -76,11 +47,14 @@ int kernel_main()
     ptr1 = memory_resize(ptr1, 6000);
 
     console_print(ptr1);
+
+    hit_breakpoint();
+
     console_print(ptr2);
 
     memory_free(ptr1);
     memory_free(ptr2);
 
-    console_print_i32(100 / 0, 10);
+    // console_print_i32(100 / 0, 10);
     console_print("end\n");
 }

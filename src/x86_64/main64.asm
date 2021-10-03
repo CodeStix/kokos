@@ -2,6 +2,11 @@ extern kernel_main
 extern gdt64.code_segment
 extern console_print
 global start64
+global hit_breakpoint
+
+hit_breakpoint:
+    int3
+    ret
 
 %include "src/x86_64/idt.asm"
 
