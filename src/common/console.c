@@ -1,3 +1,5 @@
+#include "util.c"
+
 #define CONSOLE_COLOR unsigned char
 #define CONSOLE_COLOR_BLACK (CONSOLE_COLOR)0x0
 #define CONSOLE_COLOR_BLUE (CONSOLE_COLOR)0x1
@@ -32,12 +34,32 @@ void console_set_color(CONSOLE_COLOR foreground, CONSOLE_COLOR background)
     currentConsoleColor = foreground | (background << 4);
 }
 
+void console_new_line()
+{
+    if (++y >= h)
+    {
+        for (int iy = 0; iy < h - 1; iy++)
+        {
+            for (int ix = 0; ix < w; ix++)
+            {
+                videoMemory[ix + iy * w] = videoMemory[ix + (iy + 1) * w];
+            }
+        }
+        y = h - 1;
+        for (int ix = 0; ix < w; ix++)
+        {
+            videoMemory[ix + y * w].charater = 0x0;
+            videoMemory[ix + y * w].color = 0x0;
+        }
+    }
+    x = 0;
+}
+
 void console_print_char(char c)
 {
     if (c == '\n')
     {
-        y++;
-        x = 0;
+        console_new_line();
     }
     else
     {
@@ -45,13 +67,12 @@ void console_print_char(char c)
         videoMemory[x + y * w].color = currentConsoleColor;
         if (++x >= w)
         {
-            y++;
-            x = 0;
+            console_new_line();
         }
     }
 }
 
-void set_cursor(unsigned int newX, unsigned int newY)
+void console_set_cursor(unsigned int newX, unsigned int newY)
 {
     x = newX;
     y = newY;
@@ -67,13 +88,22 @@ void console_clear()
             videoMemory[ix + iy * w].color = 0x0;
         }
     }
+    x = 0;
+    y = 0;
 }
 
-void console_print(char *str)
+void console_print(const char *str)
 {
     while (*str)
     {
         console_print_char(*str);
         str++;
     }
+}
+
+void console_print_number(int num)
+{
+    char dest[11]; // 11 = max length of 32 bit integer with minus
+    convert_i32_string(dest, num, 10);
+    console_print(dest);
 }
