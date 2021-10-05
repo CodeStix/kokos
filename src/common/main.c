@@ -39,45 +39,55 @@ void kernel_main()
     struct RSDTPointer *rsdp = acpi_find_rsdt_pointer();
     if (!rsdp)
     {
-        console_print("rsdp not found!\n");
+        console_print("acpi rsdp not found!\n");
         return;
     }
 
-    console_print("rsdp address: 0x");
+    console_print("acpi rsdp address: 0x");
     console_print_u64((unsigned long)rsdp, 16);
     console_new_line();
 
-    console_print("rsdp revision: ");
+    console_print("acpi rsdp revision: ");
     console_print_u32(rsdp->revision, 10);
     console_new_line();
 
-    console_print("rsdt address: 0x");
+    console_print("acpi rsdt address: 0x");
     console_print_u32(rsdp->address, 16);
     console_new_line();
 
-    console_print("rsdp oem: ");
+    console_print("acpi rsdp oem: ");
     console_print_length(rsdp->oemId, sizeof(rsdp->oemId));
     console_new_line();
 
     if (acpi_validate_rsdt_pointer(rsdp))
     {
-        console_print("rsdp checksum does not match!\n");
+        console_print("acpi rsdp checksum does not match!\n");
         return;
     }
 
     struct RSDT *rsdt = (struct RSDT *)rsdp->address;
     if (acpi_validate_rsdt(&rsdt->header))
     {
-        console_print("rsdt checksum does not match!\n");
+        console_print("acpi rsdt checksum does not match!\n");
         return;
     }
 
+    for (int i = 0; i < (rsdt->header.length - sizeof(rsdt->header)) / 4; i++)
+    {
+        struct RSDTHeader *header = (struct RSDTHeader *)rsdt->tableAddresses[i];
+        console_print("acpi table ");
+        console_print_length(header->signature, 4);
+        console_print(" at 0x");
+        console_print_u64((unsigned long)header, 16);
+        console_new_line("\n");
+    }
+
     void *ptr1 = memory_allocate(400);
-    char *str1 = "this is a value\n";
+    char *str1 = "memory allocation test 1\n";
     memory_copy(str1, ptr1, string_length(str1) + 1);
 
     void *ptr2 = memory_allocate(400);
-    char *str2 = "this is the second value\n";
+    char *str2 = "memory allocation test 2\n";
     memory_copy(str2, ptr2, string_length(str2) + 1);
 
     ptr1 = memory_resize(ptr1, 6000);
@@ -97,5 +107,5 @@ void kernel_main()
     // Trigger dividy by zero
     // console_print_i32(100 / 0, 10);
 
-    console_print("end\n");
+    console_print("reached end\n");
 }
