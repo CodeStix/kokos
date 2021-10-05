@@ -123,6 +123,13 @@ void console_print_u32(unsigned int num, int base)
     console_print(dest);
 }
 
+void console_print_i64(long num, int base)
+{
+    char dest[21];
+    convert_i64_string(dest, num, base);
+    console_print(dest);
+}
+
 void console_print_u64(unsigned long num, int base)
 {
     char dest[20];
