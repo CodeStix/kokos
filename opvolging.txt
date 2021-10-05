@@ -68,13 +68,16 @@ Planning - <datum van eerste ingave> (op te stellen nadat je voorstel is goedgek
 Logboek
 =================================================================================
 
-<Noteer hier je activiteiten, gevonden informatie, behaalde milestones, 
-belangrijke gebeurtenissen, problemen, oplossingen...
-Zet voor elke nieuwe entry op een aparte lijn je naam en de datum.
-Als je dat wil, mag je de zuiver technische informatie in een aanvullend 'technisch logboek'
-bijhouden (binnen je repository). In dat geval kan je hier bij de verschillende entries verwijzen
-naar dat technisch logboek.>
+01/10/2021: Aanmaken van project in Visual Studio Code
+            Compileren van een cross compiler (een compiler die compileert voor een ander platform van waarop het gebruikt word)
+            Eerste assembly bestand aangemaakt die checkt of cpuid en long mode supported zijn. Het klaarzetten van de Global Descriptor Table
+            en instellen van de page table zodat virtuele addressen direct overeenkomen met fysieke adressen (identity addressing).
+            Het aanzetten van long mode en 64 bit code. De eerste print op het scherm tonen door middel van de video buffer op adres 0xb8000.
+            C en assembly combineren.
 
+03/10/2021: Console api in C (console_clear, console_print ...)
+            Basic memory management algoritme geimplementeerd in C. (memory_allocate, memory_free ...)
+            De interrupt descriptor table inladen en naar de console printen wanneer er een interrupt getriggerd wordt.
 
 
 
