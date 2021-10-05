@@ -1,5 +1,6 @@
 #include "console.c"
 #include "memory.c"
+#include "rsdt.c"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -34,6 +35,27 @@ int kernel_main()
 {
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
+
+    struct RSDP *rsdp = rsdp_find();
+
+    if (rsdp)
+    {
+        console_print("rsdp address: ");
+        console_print_u64((unsigned long)rsdp, 16);
+        console_new_line();
+
+        console_print("rsdp version: ");
+        console_print_u32(rsdp->version, 10);
+        console_new_line();
+
+        console_print("rsdp oem: ");
+        console_print_length(rsdp->oemid, sizeof(rsdp->oemid));
+        console_new_line();
+    }
+    else
+    {
+        console_print("rsdp wasn't found\n");
+    }
 
     void *ptr1 = memory_allocate(400);
     char *str1 = "this is a value\n";

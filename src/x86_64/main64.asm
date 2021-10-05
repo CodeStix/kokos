@@ -4,6 +4,7 @@ extern console_print
 extern console_clear
 extern console_print_u64
 extern console_new_line
+extern console_print_length
 global start64
 global hit_breakpoint
 
@@ -30,15 +31,6 @@ start64:
 
     call enumerate_pci
 
-    mov rdi, info_load_rdsp
-    call console_print
-
-    call search_rsdp
-    mov rdi, rax
-    mov rsi, 16
-    call console_print_u64
-    call console_new_line
-
     mov rdi, info_done
     call console_print
 
@@ -61,5 +53,3 @@ info_load_idt:
     db "setting up interrupts", 0xA, 0
 info_load_pci:
     db "looking for devices", 0xA, 0
-info_load_rdsp:
-    db "looking for rdsp", 0xA, 0

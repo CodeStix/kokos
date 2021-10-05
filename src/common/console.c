@@ -101,6 +101,14 @@ void console_print(const char *str)
     }
 }
 
+void console_print_length(const char *str, unsigned int length)
+{
+    for (unsigned int i = 0; i < length; i++)
+    {
+        console_print_char(str[i]);
+    }
+}
+
 void console_print_i32(int num, int base)
 {
     char dest[11]; // 11 = max length of 32 bit integer with minus

@@ -1,3 +1,5 @@
+extern console_print
+extern console_new_line
 
 section .text
 bits 64
@@ -31,21 +33,52 @@ read_device:                ; https://wiki.osdev.org/PCI
 
     ret
 
-search_rsdp:                        ; The Root System Description Pointer is a structure found in memory, between address 0x000E0000 and 0x000FFFFF or between 0x00080000 and 0x0009FFFF
-    mov rcx, 0x00080000             ; https://wiki.osdev.org/RSDP
-    mov rax, 0x2052545020445352     ; "RSD PTR " in a packed long, the RSDP structure starts with this signature, we can use it to locate the table
-.loop:
-    cmp rax, [rcx]
-    je .exit
-    add rcx, 16
-    cmp rcx, 0x000FFFFF
-    je .exit_not_found
-    jmp .loop
-.exit_not_found:
+
+
+
+; The following function checks if at least APCI 2.0 is supported and checks its checksum
+check_rsdp:
+    mov rax, 0                  ; Check RSDP 1.0 checksum, the sum of all the bytes of the structure must have its lowest byte equal to 0
     mov rcx, 0
-.exit:
-    mov rax, rcx   
+.loop1:
+    add rax, [rdi + rcx]
+    inc rcx
+    cmp rcx, 20
+    jne .loop1
+    cmp al, 0
+    je .ok_checksum1
+    mov rax, 1
     ret
+.ok_checksum1:
+    mov byte rax, [rdi + 15]    ; Check RDSP version (must be at least 2)
+    cmp rax, 2
+    jnb .ok_version
+    mov rax, 2
+    ret
+.ok_version:
+    mov rax, 0                  ; Check RSDP 2.0 checksum, the sum of all the bytes of the structure must have its lowest byte equal to 0
+    mov rcx, 0
+.loop2:
+    add rax, [rdi + rcx]
+    inc rcx
+    cmp rcx, 36
+    jne .loop2
+    cmp al, 0
+    je .ok_checksum2
+    mov rax, 3
+    ret
+.ok_checksum2:
+    mov rax, 0
+    ret 
+
+
+
+
 
 enumerate_pci:
     ret
+
+section .rodata
+
+error_invalid_rdsp:
+    db "halt: rdsp has wrong checksum!", 0xA, 0x0
