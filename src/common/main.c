@@ -40,7 +40,7 @@ int kernel_main()
 
     if (rsdp)
     {
-        console_print("rsdp address: ");
+        console_print("rsdp address: 0x");
         console_print_u64((unsigned long)rsdp, 16);
         console_new_line();
 
@@ -48,9 +48,22 @@ int kernel_main()
         console_print_u32(rsdp->version, 10);
         console_new_line();
 
+        console_print("rsdt address: 0x");
+        console_print_u32(rsdp->address, 16);
+        console_new_line();
+
         console_print("rsdp oem: ");
         console_print_length(rsdp->oemid, sizeof(rsdp->oemid));
         console_new_line();
+
+        if (!rsdp_validate(rsdp))
+        {
+            console_print("rsdp is valid!\n");
+        }
+        else
+        {
+            console_print("rsdp is NOT valid!\n");
+        }
     }
     else
     {

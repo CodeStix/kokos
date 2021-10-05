@@ -36,6 +36,24 @@ struct RSDP *rsdp_find()
     return 0;
 }
 
-void rsdp_validate()
+// Returns 0 if the RSDP structure is valid
+int rsdp_validate(const struct RSDP *rsdp)
 {
+    unsigned int sum = 0;
+    for (int i = 0; i < sizeof(struct RSDP); i++)
+    {
+        sum += *(((unsigned char *)rsdp) + i);
+    }
+    return sum & 0xff;
+}
+
+// Returns 0 if the RSDP2 structure is valid
+int rsdp_validate2(const struct RSDP2 *rsdp)
+{
+    unsigned int sum = 0;
+    for (int i = 0; i < sizeof(struct RSDP2); i++)
+    {
+        sum += *(((unsigned char *)rsdp) + i);
+    }
+    return sum & 0xff;
 }
