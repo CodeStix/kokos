@@ -31,43 +31,38 @@ void memory_debug()
     }
 }
 
-int kernel_main()
+void kernel_main()
 {
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
 
     struct RSDP *rsdp = rsdp_find();
-
-    if (rsdp)
+    if (!rsdp)
     {
-        console_print("rsdp address: 0x");
-        console_print_u64((unsigned long)rsdp, 16);
-        console_new_line();
-
-        console_print("rsdp version: ");
-        console_print_u32(rsdp->version, 10);
-        console_new_line();
-
-        console_print("rsdt address: 0x");
-        console_print_u32(rsdp->address, 16);
-        console_new_line();
-
-        console_print("rsdp oem: ");
-        console_print_length(rsdp->oemid, sizeof(rsdp->oemid));
-        console_new_line();
-
-        if (!rsdp_validate(rsdp))
-        {
-            console_print("rsdp is valid!\n");
-        }
-        else
-        {
-            console_print("rsdp is NOT valid!\n");
-        }
+        console_print("rsdp not found!\n");
+        return;
     }
-    else
+
+    console_print("rsdp address: 0x");
+    console_print_u64((unsigned long)rsdp, 16);
+    console_new_line();
+
+    console_print("rsdp version: ");
+    console_print_u32(rsdp->version, 10);
+    console_new_line();
+
+    console_print("rsdt address: 0x");
+    console_print_u32(rsdp->address, 16);
+    console_new_line();
+
+    console_print("rsdp oem: ");
+    console_print_length(rsdp->oemid, sizeof(rsdp->oemid));
+    console_new_line();
+
+    if (rsdp_validate(rsdp))
     {
-        console_print("rsdp wasn't found\n");
+        console_print("rsdp checksum does not match!\n");
+        return;
     }
 
     void *ptr1 = memory_allocate(400);

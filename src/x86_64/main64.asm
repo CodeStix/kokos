@@ -17,7 +17,6 @@ bits 64     ; Tell the assembler that this file should create 64 bit instruction
 hit_breakpoint:
     int3
     ret
-
 start64:
     call console_clear
 
@@ -25,11 +24,6 @@ start64:
     call console_print
 
     call load_idt
-
-    mov rdi, info_load_pci
-    call console_print
-
-    call enumerate_pci
 
     mov rdi, info_done
     call console_print
@@ -51,5 +45,4 @@ info_done:
     db "entering c", 0xA, 0
 info_load_idt:
     db "setting up interrupts", 0xA, 0
-info_load_pci:
-    db "looking for devices", 0xA, 0
+
