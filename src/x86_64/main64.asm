@@ -1,20 +1,46 @@
 extern kernel_main
 extern gdt64.code_segment
 extern console_print
+extern console_clear
+extern console_print_u64
+extern console_new_line
 global start64
 global hit_breakpoint
+
+%include "src/x86_64/interrupts.asm"
+%include "src/x86_64/pci.asm"
+
+section .text
+bits 64     ; Tell the assembler that this file should create 64 bit instructions
 
 hit_breakpoint:
     int3
     ret
 
-%include "src/x86_64/interrupts.asm"
-
-section .text
-bits 64     ; Tell the assembler that this file should create 64 bit instructions
-
 start64:
+    call console_clear
+
+    mov rdi, info_load_idt
+    call console_print
+
     call load_idt
+
+    mov rdi, info_load_pci
+    call console_print
+
+    call enumerate_pci
+
+    mov rdi, info_load_rdsp
+    call console_print
+
+    call search_rsdp
+    mov rdi, rax
+    mov rsi, 16
+    call console_print_u64
+    call console_new_line
+
+    mov rdi, info_done
+    call console_print
 
     mov ax, 0       ; Clear registers before entering c
     mov ss, ax
@@ -27,3 +53,13 @@ start64:
     hlt
 
 
+section .rodata
+
+info_done:
+    db "entering c", 0xA, 0
+info_load_idt:
+    db "setting up interrupts", 0xA, 0
+info_load_pci:
+    db "looking for devices", 0xA, 0
+info_load_rdsp:
+    db "looking for rdsp", 0xA, 0

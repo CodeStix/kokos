@@ -70,6 +70,7 @@ interrupt_handle_divide_zero:
     push rdi
     mov rdi, error_divide_by_zero
     call console_print  ; Notes on calling c functions from assembly (using System V X86_64 calling convention): https://wiki.osdev.org/Calling_Conventions
+    call print_registers
     pop rdi
     hlt
 

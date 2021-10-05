@@ -32,11 +32,8 @@ void memory_debug()
 
 int kernel_main()
 {
-    console_clear();
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
-
-    memory_set(videoMemory, 0x41, 60 * 25 * 2 - 8);
 
     void *ptr1 = memory_allocate(400);
     char *str1 = "this is a value\n";
@@ -58,7 +55,7 @@ int kernel_main()
     memory_free(ptr2);
 
     // Trigger page fault
-    *((int *)0xffff324234) = 100;
+    // *((int *)0xffff324234) = 100;
 
     // Trigger dividy by zero
     // console_print_i32(100 / 0, 10);
