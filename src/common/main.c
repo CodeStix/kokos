@@ -1,6 +1,6 @@
 #include "console.c"
 #include "memory.c"
-#include "rsdt.c"
+#include "acpi.c"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -36,7 +36,7 @@ void kernel_main()
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
 
-    struct RSDP *rsdp = rsdp_find();
+    struct RSDTPointer *rsdp = acpi_find_rsdt_pointer();
     if (!rsdp)
     {
         console_print("rsdp not found!\n");
@@ -47,8 +47,8 @@ void kernel_main()
     console_print_u64((unsigned long)rsdp, 16);
     console_new_line();
 
-    console_print("rsdp version: ");
-    console_print_u32(rsdp->version, 10);
+    console_print("rsdp revision: ");
+    console_print_u32(rsdp->revision, 10);
     console_new_line();
 
     console_print("rsdt address: 0x");
@@ -56,12 +56,19 @@ void kernel_main()
     console_new_line();
 
     console_print("rsdp oem: ");
-    console_print_length(rsdp->oemid, sizeof(rsdp->oemid));
+    console_print_length(rsdp->oemId, sizeof(rsdp->oemId));
     console_new_line();
 
-    if (rsdp_validate(rsdp))
+    if (acpi_validate_rsdt_pointer(rsdp))
     {
         console_print("rsdp checksum does not match!\n");
+        return;
+    }
+
+    struct RSDT *rsdt = (struct RSDT *)rsdp->address;
+    if (acpi_validate_rsdt(&rsdt->header))
+    {
+        console_print("rsdt checksum does not match!\n");
         return;
     }
 
