@@ -1,18 +1,10 @@
-#include "util.c"
+#include "../include/util.h"
+#include "../include/memory.h"
 
 // Simple memory allocation strategy:
 // Every allocated block of memory starts with a header (MemoryChunk) and is linked together to the next and previous blocks of memory
 // When Allocating, the linked list of memory blocks is iterated and the first gap is filled. O(n)
 // When freeing, the memory block is removed from the linked list. O(1)
-
-typedef struct MemoryChunk
-{
-    struct MemoryChunk *next;
-    struct MemoryChunk *previous;
-    int size;
-} MemoryChunk;
-
-extern MemoryChunk memory_chunk;
 
 void memory_set(void *pointer, unsigned char value, int amount)
 {

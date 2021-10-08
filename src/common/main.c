@@ -1,7 +1,8 @@
-#include "console.c"
-#include "memory.c"
-#include "acpi.c"
-#include "pci.c"
+#include "../include/console.h"
+#include "../include/util.h"
+#include "../include/pci.h"
+#include "../include/acpi.h"
+#include "../include/memory.h"
 
 #define uint8 unsigned char
 #define int8 signed char

@@ -1,26 +1,5 @@
-typedef struct
-{
-    unsigned char bus;
-    unsigned char slot;
-    unsigned char function;
-
-    unsigned short device_id;
-    unsigned short vendor_id;
-
-    unsigned short status;
-    unsigned short command;
-
-    unsigned char class;
-    unsigned char subclass;
-    unsigned char progif;
-    unsigned char revision;
-
-    unsigned char bist;
-    unsigned char header_type;
-    unsigned char latency_timer;
-    unsigned char cache_line_size;
-
-} PCIHeader;
+#include "../include/pci.h"
+#include "../include/console.h"
 
 // This function reads a part at offset from the pci header for bus, slot, function.
 extern unsigned int pci_read_device(int bus, int slot, int function, int offset);

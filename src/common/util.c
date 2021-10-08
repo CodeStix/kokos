@@ -1,8 +1,4 @@
-#pragma once
-
-#define ALIGN_TO_PREVIOUS(n, to) (n & -to)
-#define ALIGN_TO_NEXT(n, to) (((n - 1) & -to) + to)
-#define IS_ALIGNED(n, to) ((n & (to - 1)) == 0)
+#include "../include/util.h"
 
 int string_length(const char *str)
 {
