@@ -23,6 +23,7 @@ void pci_scan()
     {
         for (int slot = 0; slot < 0b11111; slot++)
         {
+            int is_multifunction = 0;
             for (int function = 0; function < 8; function++)
             {
                 unsigned int dev = pci_config_read32(bus, slot, function, 0);
@@ -32,8 +33,7 @@ void pci_scan()
                     unsigned short device = pci_config_read16(bus, slot, function, 0x2);
                     unsigned short class = pci_config_read8(bus, slot, function, 0xb);
                     unsigned char subclass = pci_config_read8(bus, slot, function, 0xa);
-                    unsigned char header_type = pci_config_read8(bus, slot, function, 0xe) & 0b01111111;
-                    unsigned char multifunction = pci_config_read8(bus, slot, function, 0xe) >> 7;
+                    unsigned char header_type = pci_config_read8(bus, slot, function, 0xe);
 
                     console_print("pci device at\n bus=");
                     console_print_u32(bus, 10);
@@ -58,12 +58,18 @@ void pci_scan()
                     console_new_line();
 
                     console_print(" header_type=0x");
-                    console_print_u32(header_type, 16);
+                    console_print_u32(header_type & 0b01111111, 16);
                     console_print(", multifunction=");
-                    console_print_u32(multifunction, 10);
+                    console_print_u32(header_type >> 7, 10);
                     console_new_line();
 
-                    if (!multifunction)
+                    // Check if the multifunction bit is set, if so, we should check all functions of the current device
+                    if ((header_type & 0b10000000) == 0b10000000)
+                    {
+                        is_multifunction = 1;
+                    }
+
+                    if (!is_multifunction)
                     {
                         break;
                     }

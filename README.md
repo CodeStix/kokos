@@ -20,3 +20,5 @@ You can build the cross compiler using the `build_cross_compiler.sh` script. Thi
 ## Notes
 
  - https://en.wikipedia.org/wiki/Input/output_base_address
+ - https://bochs.sourceforge.io/techspec/PORTS.LST
+ - https://github.com/qemu/qemu/blob/master/docs/specs/standard-vga.txt
