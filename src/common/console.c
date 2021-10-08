@@ -18,20 +18,20 @@
 #define CONSOLE_COLOR_YELLOW (CONSOLE_COLOR)0xE
 #define CONSOLE_COLOR_WHITE (CONSOLE_COLOR)0xF
 
-struct VideoChar
+typedef struct
 {
     char charater;
     unsigned char color;
-};
+} VideoChar;
 
-volatile struct VideoChar *videoMemory = (struct VideoChar *)0xb8000;
+volatile VideoChar *video_memory = (VideoChar *)0xb8000;
 
-unsigned char currentConsoleColor = 0x0f;
+unsigned char current_console_color = 0x0f;
 unsigned int x = 0, y = 0, w = 80, h = 25;
 
 void console_set_color(CONSOLE_COLOR foreground, CONSOLE_COLOR background)
 {
-    currentConsoleColor = foreground | (background << 4);
+    current_console_color = foreground | (background << 4);
 }
 
 void console_new_line()
@@ -42,14 +42,14 @@ void console_new_line()
         {
             for (int ix = 0; ix < w; ix++)
             {
-                videoMemory[ix + iy * w] = videoMemory[ix + (iy + 1) * w];
+                video_memory[ix + iy * w] = video_memory[ix + (iy + 1) * w];
             }
         }
         y = h - 1;
         for (int ix = 0; ix < w; ix++)
         {
-            videoMemory[ix + y * w].charater = 0x0;
-            videoMemory[ix + y * w].color = 0x0;
+            video_memory[ix + y * w].charater = 0x0;
+            video_memory[ix + y * w].color = 0x0;
         }
     }
     x = 0;
@@ -63,8 +63,8 @@ void console_print_char(char c)
     }
     else
     {
-        videoMemory[x + y * w].charater = c;
-        videoMemory[x + y * w].color = currentConsoleColor;
+        video_memory[x + y * w].charater = c;
+        video_memory[x + y * w].color = current_console_color;
         if (++x >= w)
         {
             console_new_line();
@@ -84,8 +84,8 @@ void console_clear()
     {
         for (int iy = 0; iy < h; iy++)
         {
-            videoMemory[ix + iy * w].charater = 0x0;
-            videoMemory[ix + iy * w].color = 0x0;
+            video_memory[ix + iy * w].charater = 0x0;
+            video_memory[ix + iy * w].color = 0x0;
         }
     }
     x = 0;

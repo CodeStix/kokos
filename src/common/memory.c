@@ -5,14 +5,14 @@
 // When Allocating, the linked list of memory blocks is iterated and the first gap is filled. O(n)
 // When freeing, the memory block is removed from the linked list. O(1)
 
-struct MemoryChunk
+typedef struct MemoryChunk
 {
     struct MemoryChunk *next;
     struct MemoryChunk *previous;
     int size;
-};
+} MemoryChunk;
 
-extern struct MemoryChunk memoryChunk;
+extern MemoryChunk memory_chunk;
 
 void memory_set(void *pointer, unsigned char value, int amount)
 {
@@ -86,22 +86,22 @@ void *memory_allocate(int bytes)
 {
     bytes = ALIGN_TO_NEXT(bytes, sizeof(void *));
 
-    struct MemoryChunk *chk = &memoryChunk;
+    MemoryChunk *chk = &memory_chunk;
     while (chk)
     {
-        if (!chk->next || (unsigned char *)chk->next - ((unsigned char *)chk + chk->size) > bytes + sizeof(struct MemoryChunk) * 2)
+        if (!chk->next || (unsigned char *)chk->next - ((unsigned char *)chk + chk->size) > bytes + sizeof(MemoryChunk) * 2)
         {
             // Insert memory chunk after chk
-            struct MemoryChunk *newChunk = (struct MemoryChunk *)((unsigned char *)chk + sizeof(struct MemoryChunk) + chk->size);
-            newChunk->size = bytes;
-            newChunk->next = chk->next;
-            newChunk->previous = chk;
+            MemoryChunk *new_chunk = (MemoryChunk *)((unsigned char *)chk + sizeof(MemoryChunk) + chk->size);
+            new_chunk->size = bytes;
+            new_chunk->next = chk->next;
+            new_chunk->previous = chk;
             if (chk->next)
             {
-                chk->next->previous = newChunk;
+                chk->next->previous = new_chunk;
             }
-            chk->next = newChunk;
-            return (void *)((unsigned char *)newChunk + sizeof(struct MemoryChunk));
+            chk->next = new_chunk;
+            return (void *)((unsigned char *)new_chunk + sizeof(MemoryChunk));
         }
 
         chk = chk->next;
@@ -112,7 +112,7 @@ void *memory_allocate(int bytes)
 
 void memory_free(void *pointer)
 {
-    struct MemoryChunk *header = (struct MemoryChunk *)((unsigned char *)pointer - sizeof(struct MemoryChunk));
+    MemoryChunk *header = (MemoryChunk *)((unsigned char *)pointer - sizeof(MemoryChunk));
 
     if (header->previous)
     {
@@ -128,7 +128,7 @@ void *memory_resize(void *pointer, int bytes)
 {
     bytes = ALIGN_TO_NEXT(bytes, sizeof(void *));
 
-    struct MemoryChunk *header = (struct MemoryChunk *)((unsigned char *)pointer - sizeof(struct MemoryChunk));
+    MemoryChunk *header = (MemoryChunk *)((unsigned char *)pointer - sizeof(MemoryChunk));
 
     if (!header->next || (unsigned char *)header + header->size >= (unsigned char *)header->next)
     {
@@ -137,9 +137,9 @@ void *memory_resize(void *pointer, int bytes)
     }
     else
     {
-        void *newPointer = memory_allocate(bytes);
-        memory_copy(pointer, newPointer, bytes);
+        void *new_pointer = memory_allocate(bytes);
+        memory_copy(pointer, new_pointer, bytes);
         memory_free(pointer);
-        return newPointer;
+        return new_pointer;
     }
 }

@@ -15,7 +15,7 @@ extern void hit_breakpoint();
 
 void memory_debug()
 {
-    struct MemoryChunk *chk = &memoryChunk;
+    MemoryChunk *chk = &memory_chunk;
     while (chk)
     {
         console_print("0x");
@@ -36,7 +36,7 @@ void kernel_main()
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
 
-    struct RSDTPointer *rsdp = acpi_find_rsdt_pointer();
+    RSDTPointer *rsdp = acpi_find_rsdt_pointer();
     if (!rsdp)
     {
         console_print("acpi rsdp not found!\n");
@@ -65,7 +65,7 @@ void kernel_main()
         return;
     }
 
-    struct RSDT *rsdt = (struct RSDT *)rsdp->address;
+    RSDT *rsdt = (RSDT *)rsdp->address;
     if (acpi_validate_rsdt(&rsdt->header))
     {
         console_print("acpi rsdt checksum does not match!\n");
@@ -74,7 +74,7 @@ void kernel_main()
 
     for (int i = 0; i < (rsdt->header.length - sizeof(rsdt->header)) / 4; i++)
     {
-        struct RSDTHeader *header = (struct RSDTHeader *)rsdt->tableAddresses[i];
+        RSDTHeader *header = (RSDTHeader *)rsdt->tableAddresses[i];
         console_print("acpi table ");
         console_print_length(header->signature, 4);
         console_print(" at 0x");
