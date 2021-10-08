@@ -15,3 +15,8 @@ sudo apt-get install -y wget gcc libgmp3-dev libmpfr-dev libisl-dev libcloog-isl
 ```
 
 You can build the cross compiler using the `build_cross_compiler.sh` script. This compiler is required to build the operating system.
+
+
+## Notes
+
+ - https://en.wikipedia.org/wiki/Input/output_base_address

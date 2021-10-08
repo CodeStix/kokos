@@ -1,7 +1,4 @@
-global pci_read_device
-
-extern console_print
-extern console_new_line
+global pci_config_read32
 
 section .text
 bits 64
@@ -11,7 +8,7 @@ bits 64
 ; rsi contains slot number
 ; rdx contains function number
 ; rcx contains which part of the pci register to read (must be a multiple of 4)
-pci_read_device:               
+pci_config_read32:               
     mov rax, 1 << 31        ; The enable bit at position 31
 
     and rdi, 0b11111111     ; The bus number at position 16, is 8 bits in size
@@ -37,8 +34,3 @@ pci_read_device:
     in eax, dx            ; Read pci configuration space
 
     ret
-
-section .rodata
-
-error_invalid_rdsp:
-    db "halt: rdsp has wrong checksum!", 0xA, 0x0
