@@ -216,7 +216,7 @@ error_page_fault:
 info_registers:
     db "registers", 0
 info_all_registers:
-    db "rax=", 0   
+    db "rax=", 0    ; Each register string is 5 bytes
     db "rbx=", 0
     db "rcx=", 0
     db "rdx=", 0

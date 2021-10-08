@@ -1,6 +1,7 @@
 #include "console.c"
 #include "memory.c"
 #include "acpi.c"
+#include "pci.c"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -12,7 +13,6 @@
 #define uint64 unsigned long long
 
 extern void hit_breakpoint();
-extern int read_device();
 
 void memory_debug()
 {
@@ -119,10 +119,7 @@ void kernel_main()
     // hit_breakpoint();
     // hit_breakpoint();
 
-    console_print("device:vendor = ");
-    unsigned int dev = (unsigned int)read_device(0, 0, 0, 0);
-    console_print_u32(dev, 16);
-    console_new_line();
+    pci_scan();
 
     console_print("reached end\n");
 }
