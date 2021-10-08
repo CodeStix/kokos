@@ -1,3 +1,5 @@
+global read_device
+
 extern console_print
 extern console_new_line
 
@@ -26,10 +28,12 @@ read_device:                ; https://wiki.osdev.org/PCI
 
     and rcx, 0b11111100     ; Which part of the pci regsister
 
-    out 0xCF8, eax,         ; Send which part of pci configuration space to read
+    mov edx, 0xCF8
+    out dx, eax         ; Send which part of pci configuration space to read
 
     mov eax, 0
-    in eax, 0xCFC           ; Read pci configuration space
+    mov edx, 0xCFC
+    in eax, dx            ; Read pci configuration space
 
     ret
 

@@ -12,6 +12,7 @@
 #define uint64 unsigned long long
 
 extern void hit_breakpoint();
+extern int read_device();
 
 void memory_debug()
 {
@@ -29,6 +30,31 @@ void memory_debug()
         console_new_line();
         chk = chk->next;
     }
+}
+
+void test_memory()
+{
+    void *ptr1 = memory_allocate(400);
+    char *str1 = "memory allocation test 1\n";
+    memory_copy(str1, ptr1, string_length(str1) + 1);
+
+    void *ptr2 = memory_allocate(400);
+    char *str2 = "memory allocation test 2\n";
+    memory_copy(str2, ptr2, string_length(str2) + 1);
+
+    ptr1 = memory_resize(ptr1, 6000);
+
+    console_print(ptr1);
+    console_print(ptr2);
+
+    memory_free(ptr1);
+    memory_free(ptr2);
+
+    // Trigger page fault
+    // *((int *)0xffff324234) = 100;
+
+    // Trigger dividy by zero
+    // console_print_i32(100 / 0, 10);
 }
 
 void kernel_main()
@@ -82,30 +108,21 @@ void kernel_main()
         console_new_line("\n");
     }
 
-    void *ptr1 = memory_allocate(400);
-    char *str1 = "memory allocation test 1\n";
-    memory_copy(str1, ptr1, string_length(str1) + 1);
+    // hit_breakpoint();
+    // hit_breakpoint();
+    // hit_breakpoint();
+    // hit_breakpoint();
+    // hit_breakpoint();
+    // hit_breakpoint();
+    // hit_breakpoint();
+    // hit_breakpoint();
+    // hit_breakpoint();
+    // hit_breakpoint();
 
-    void *ptr2 = memory_allocate(400);
-    char *str2 = "memory allocation test 2\n";
-    memory_copy(str2, ptr2, string_length(str2) + 1);
-
-    ptr1 = memory_resize(ptr1, 6000);
-
-    console_print(ptr1);
-
-    hit_breakpoint();
-
-    console_print(ptr2);
-
-    memory_free(ptr1);
-    memory_free(ptr2);
-
-    // Trigger page fault
-    // *((int *)0xffff324234) = 100;
-
-    // Trigger dividy by zero
-    // console_print_i32(100 / 0, 10);
+    console_print("device:vendor = ");
+    unsigned int dev = (unsigned int)read_device(0, 0, 0, 0);
+    console_print_u32(dev, 16);
+    console_new_line();
 
     console_print("reached end\n");
 }
