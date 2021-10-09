@@ -3,6 +3,7 @@
 #include "../include/pci.h"
 #include "../include/acpi.h"
 #include "../include/memory.h"
+#include "../include/keyboard.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -133,6 +134,8 @@ void kernel_main()
     // hit_breakpoint();
 
     // pci_scan();
+
+    keyboard_init();
 
     console_print("reached end\n");
 }
