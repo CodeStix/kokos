@@ -99,7 +99,7 @@ void kernel_main()
         return;
     }
 
-    for (int i = 0; i < (rsdt->header.length - sizeof(rsdt->header)) / 4; i++)
+    for (int i = 0; i < acpi_rsdt_entry_count(rsdt); i++)
     {
         RSDTHeader *header = (RSDTHeader *)rsdt->tableAddresses[i];
         console_print("acpi table ");
@@ -120,7 +120,7 @@ void kernel_main()
     // hit_breakpoint();
     // hit_breakpoint();
 
-    pci_scan();
+    // pci_scan();
 
     console_print("reached end\n");
 }

@@ -25,12 +25,19 @@ typedef struct
 
 typedef struct
 {
+    // The signature of this table, which will consist of 4 ascii codes. This will determine what kind of table it is
     char signature[4];
+    // Contains the length (in bytes) of the entire table, including this header
     unsigned int length;
+    // The version of this table
     unsigned char revision;
+    // The checksum of this table, this table is valid if the sum of the entire table's lower byte is zero (see acpi_validate_rsdt)
     unsigned char checksum;
+    // The vendor that created this table
     char oemId[6];
+    // The vendor specific id of this table
     char oemTableId[8];
+    // The vendor specific version of this table
     unsigned int oemRevision;
     unsigned int creatorId;
     unsigned int creatorRevision;
@@ -39,6 +46,7 @@ typedef struct
 typedef struct
 {
     RSDTHeader header;
+    // The length of this array can be calculated using apci_rsdt
     unsigned int tableAddresses[];
 } __attribute__((packed)) RSDT;
 
@@ -60,3 +68,9 @@ int acpi_validate_xsdt_pointer(const XSDTPointer *rsdp);
 
 // Returns 0 if the RSDT or XSDT structure is valid
 int acpi_validate_rsdt(const RSDTHeader *rsdt);
+
+// Returns the length of the RSDT.tableAddresses array
+int acpi_rsdt_entry_count(RSDT *rsdt);
+
+// Returns the length of the XSDT.tableAddresses array
+int acpi_xsdt_entry_count(XSDT *xsdt);

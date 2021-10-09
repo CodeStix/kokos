@@ -41,3 +41,13 @@ int acpi_validate_rsdt(const RSDTHeader *rsdt)
     }
     return sum;
 }
+
+int acpi_rsdt_entry_count(RSDT *rsdt)
+{
+    return (rsdt->header.length - sizeof(rsdt->header)) / 4;
+}
+
+int acpi_xsdt_entry_count(XSDT *xsdt)
+{
+    return (xsdt->header.length - sizeof(xsdt->header)) / 8;
+}
