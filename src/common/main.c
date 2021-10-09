@@ -102,8 +102,20 @@ void kernel_main()
     for (int i = 0; i < acpi_rsdt_entry_count(rsdt); i++)
     {
         RSDTHeader *header = (RSDTHeader *)rsdt->tableAddresses[i];
+        if (acpi_validate_rsdt(header))
+        {
+            console_print("invalid ");
+        }
         console_print("acpi table ");
         console_print_length(header->signature, 4);
+        if (header->signature[0] == 'F' && header->signature[1] == 'A' && header->signature[2] == 'C' && header->signature[3] == 'P')
+        {
+            FADT *fadt = (FADT *)header;
+            console_print(" (fadt.smi_command = 0x");
+            console_print_u32(fadt->smi_commandport, 16);
+            console_print(") ");
+        }
+
         console_print(" at 0x");
         console_print_u64((unsigned long)header, 16);
         console_new_line("\n");

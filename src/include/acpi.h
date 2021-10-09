@@ -74,3 +74,87 @@ int acpi_rsdt_entry_count(RSDT *rsdt);
 
 // Returns the length of the XSDT.tableAddresses array
 int acpi_xsdt_entry_count(XSDT *xsdt);
+
+// An address structure used in the FADT table below
+typedef struct
+{
+    unsigned char address_space;
+    unsigned char bit_width;
+    unsigned char bit_offset;
+    unsigned char access_size;
+    unsigned long address;
+} __attribute__((packed)) FADTAddress;
+
+// The FADT is a ACPI table with signature 'FACP'
+// https://wiki.osdev.org/FADT
+// The extended fields are only used when the addresses do not fit in their non-extended variants
+typedef struct
+{
+    RSDTHeader header;
+
+    unsigned int firmware_control;
+    unsigned int dsdt;
+
+    // field used in ACPI 1.0; no longer in use, for compatibility only
+    unsigned char unused;
+
+    unsigned char preferred_power_management_profile;
+    unsigned short sci_interrupt;
+    unsigned int smi_commandport;
+    unsigned char acpi_enable;
+    unsigned char acpi_disable;
+    unsigned char s4_bios_req;
+    unsigned char pstate_control;
+    unsigned int pm1a_event_block;
+    unsigned int pm1b_event_block;
+    unsigned int pm1a_control_block;
+    unsigned int pm1b_control_block;
+    unsigned int pm2_control_block;
+    unsigned int pm_timer_block;
+    unsigned int gpe0_block;
+    unsigned int gpe1_block;
+    unsigned char pm1_event_length;
+    unsigned char pm1_control_length;
+    unsigned char pm2_control_length;
+    unsigned char pm_timer_length;
+    unsigned char gpe0_length;
+    unsigned char gpe1_length;
+    unsigned char gpe1_base;
+    unsigned char cstate_control;
+    unsigned short worst_c2_latency;
+    unsigned short worst_c3_latency;
+    unsigned short flush_size;
+    unsigned short flush_stride;
+    unsigned char duty_offset;
+    unsigned char duty_width;
+    unsigned char day_alarm;
+    unsigned char month_alarm;
+    unsigned char century;
+    // Only available on ACPI 2.0+
+    unsigned short extended_boot_architecture_flags;
+    unsigned char unused2;
+    unsigned int flags;
+    FADTAddress reset_register;
+    unsigned char reset_value;
+    unsigned char unused3[3];
+    // Only available on ACPI 2.0+
+    unsigned long extended_firmware_control;
+    // Only available on ACPI 2.0+
+    unsigned long extended_dsdt;
+    // Only available on ACPI 2.0+
+    FADTAddress extended_pm1a_event_block;
+    // Only available on ACPI 2.0+
+    FADTAddress extended_pm1b_event_block;
+    // Only available on ACPI 2.0+
+    FADTAddress extended_pm1a_control_block;
+    // Only available on ACPI 2.0+
+    FADTAddress extended_pm1b_control_block;
+    // Only available on ACPI 2.0+
+    FADTAddress extended_pm2_control_block;
+    // Only available on ACPI 2.0+
+    FADTAddress extended_pm_timer_block;
+    // Only available on ACPI 2.0+
+    FADTAddress extended_gpe0_block;
+    // Only available on ACPI 2.0+
+    FADTAddress extended_gpe1_block;
+} __attribute__((packed)) FADT;
