@@ -4,6 +4,7 @@
 #include "../include/acpi.h"
 #include "../include/memory.h"
 #include "../include/keyboard.h"
+#include "../include/apic.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -120,6 +121,21 @@ void kernel_main()
         console_print(" at 0x");
         console_print_u64((unsigned long)header, 16);
         console_new_line("\n");
+    }
+
+    // Step 0: disable normal pic
+    // Step 1: check if supported
+    // Step 2: write 0x1B to apic base address register msr
+
+    apic_disable_pic();
+
+    if (apic_check_supported())
+    {
+        console_print("apic is supported!\n");
+    }
+    else
+    {
+        console_print("apic is NOT supported!\n");
     }
 
     // hit_breakpoint();
