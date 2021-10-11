@@ -5,7 +5,7 @@ AcpiRsdtp *acpi_find_rsdt_pointer()
 {
     for (unsigned char *a = (unsigned char *)0x00080000; a < (unsigned char *)0x000FFFFF; a += 16)
     {
-        if (*(long *)a == 0x2052545020445352)
+        if (*(long *)a == ACPI_RSDTP_SIGNATURE)
         {
             return (AcpiRsdtp *)a;
         }

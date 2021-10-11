@@ -98,14 +98,31 @@ void kernel_main()
 
     apic_disable_pic();
 
-    if (apic_check_supported())
-    {
-        console_print("apic is supported!\n");
-    }
-    else
+    if (!apic_check_supported())
     {
         console_print("apic is NOT supported!\n");
+        return;
     }
+
+    AcpiMadt *madt = (AcpiMadt *)acpi_rsdt_get_table(rsdt, ACPI_MADT_SIGNATURE);
+    if (!madt)
+    {
+        console_print("madt not found!!!\n");
+    }
+
+    Apic *apic = (Apic *)madt->local_apic_address;
+    console_print("apic size ");
+    console_print_u32(sizeof(Apic), 10);
+    console_new_line();
+    console_print("location of spurious 0x");
+    console_print_u64((unsigned char *)(&apic->spurious_interrupt_vector) - (unsigned char *)apic, 16);
+    console_new_line();
+    console_print("apic id ");
+    console_print_u32(apic->id, 10);
+    console_new_line();
+    console_print("apic version ");
+    console_print_u32(apic->version, 10);
+    console_new_line();
 
     // hit_breakpoint();
 

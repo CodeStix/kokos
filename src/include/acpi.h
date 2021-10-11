@@ -1,5 +1,5 @@
 // The signature that identifies the RSDP structure, ascii "RSD PTR " in a packed long
-#define ACPI_RSDP_SIGNATURE 0x2052545020445352
+#define ACPI_RSDTP_SIGNATURE 0x2052545020445352
 
 // The signature that identifies the MADT structure, ascii "ACPI" in a packed int. To be used with the acpi_get_table function
 #define ACPI_MADT_SIGNATURE 0x43495041
@@ -265,11 +265,11 @@ int acpi_rsdt_entry_count(const AcpiRsdt *rsdt);
 // Returns the length of the AcpiXsdt.table_addresses array
 int acpi_xsdt_entry_count(const AcpiXsdt *xsdt);
 
-// Returns a RSD table with the passed signature
-AcpiSdt *acpi_rsdt_get_table(const AcpiRsdt *table, unsigned int table_signature);
+// Returns a Root System Description table with the passed signature
+AcpiSdt *acpi_rsdt_get_table(const AcpiRsdt *root_table, unsigned int table_signature);
 
-// Returns a RSD table with the passed signature
-AcpiSdt *acpi_xsdt_get_table(const AcpiXsdt *table, unsigned int table_signature);
+// Returns a Root System Description table with the passed signature
+AcpiSdt *acpi_xsdt_get_table(const AcpiXsdt *root_table, unsigned int table_signature);
 
 void acpi_print_madt(const AcpiMadt *madt);
 

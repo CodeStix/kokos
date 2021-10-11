@@ -1,6 +1,6 @@
 # make build && cp build/x86_64/build.iso /mnt/c/Users/Stijn/Downloads/build.iso
 
-build: src/x86_64/** src/common/**
+build: src/x86_64/** src/common/** src/include/**
 	rm -rf build
 
 	mkdir build build/x86_64 build/common
