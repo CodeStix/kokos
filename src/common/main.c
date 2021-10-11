@@ -65,69 +65,31 @@ void kernel_main()
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
 
-    AcpiRsdtp *rsdp = acpi_find_rsdt_pointer();
-    if (!rsdp)
+    AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
+    if (!rsdtp)
     {
         console_print("acpi rsdp not found!\n");
         return;
     }
 
-    console_print("acpi rsdp address: 0x");
-    console_print_u64((unsigned long)rsdp, 16);
-    console_new_line();
+    acpi_print_rsdtp(rsdtp);
 
-    console_print("acpi rsdp revision: ");
-    console_print_u32(rsdp->revision, 10);
-    console_new_line();
-
-    console_print("acpi rsdt address: 0x");
-    console_print_u32(rsdp->address, 16);
-    console_new_line();
-
-    console_print("acpi rsdp oem: ");
-    console_print_length(rsdp->oem_id, sizeof(rsdp->oem_id));
-    console_new_line();
-
-    if (acpi_validate_rsdt_pointer(rsdp))
+    if (acpi_validate_rsdt_pointer(rsdtp))
     {
         console_print("acpi rsdp checksum does not match!\n");
         return;
     }
 
-    AcpiRsdt *rsdt = (AcpiRsdt *)rsdp->address;
+    AcpiRsdt *rsdt = (AcpiRsdt *)rsdtp->address;
     if (acpi_validate_rsdt(&rsdt->base))
     {
         console_print("acpi rsdt checksum does not match!\n");
         return;
     }
 
-    for (int i = 0; i < acpi_rsdt_entry_count(rsdt); i++)
-    {
-        AcpiSdt *header = (AcpiSdt *)rsdt->table_addresses[i];
-        if (acpi_validate_rsdt(header))
-        {
-            console_print("invalid ");
-        }
-        console_print("acpi table ");
-        console_print_length(header->signature_string, 4);
-        console_print(" 0x");
-        console_print_u32(header->signature, 16);
-        if (header->signature == ACPI_FADT_SIGNATURE)
-        {
-            AcpiFadt *fadt = (AcpiFadt *)header;
-            console_print(" (fadt.smi_command = 0x");
-            console_print_u32(fadt->smi_commandport, 16);
-            console_print(") ");
-        }
-        else if (header->signature == ACPI_MADT_SIGNATURE)
-        {
-            acpi_print_madt((AcpiMadt *)header);
-        }
+    acpi_print_rsdt(rsdt);
 
-        console_print(" at 0x");
-        console_print_u64((unsigned long)header, 16);
-        console_new_line("\n");
-    }
+    // TODO support XSDT
 
     // Step 0: disable normal pic
     // Step 1: check if supported
@@ -144,15 +106,6 @@ void kernel_main()
         console_print("apic is NOT supported!\n");
     }
 
-    // hit_breakpoint();
-    // hit_breakpoint();
-    // hit_breakpoint();
-    // hit_breakpoint();
-    // hit_breakpoint();
-    // hit_breakpoint();
-    // hit_breakpoint();
-    // hit_breakpoint();
-    // hit_breakpoint();
     // hit_breakpoint();
 
     // pci_scan();

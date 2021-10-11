@@ -174,3 +174,62 @@ AcpiSdt *acpi_xsdt_get_table(const AcpiXsdt *root_table, unsigned int table_sign
     }
     return 0;
 }
+
+void acpi_print_sdt(const AcpiSdt *sdt)
+{
+    if (acpi_validate_rsdt(sdt))
+    {
+        console_print("!!INVALID!! ");
+    }
+
+    console_print("acpi table ");
+    console_print_length(sdt->signature_string, 4);
+    console_print(" 0x");
+    console_print_u32(sdt->signature, 16);
+
+    if (sdt->signature == ACPI_MADT_SIGNATURE)
+    {
+        acpi_print_madt((AcpiMadt *)sdt);
+    }
+
+    console_print(" at 0x");
+    console_print_u64((unsigned long)sdt, 16);
+    console_new_line("\n");
+}
+
+void acpi_print_rsdt(const AcpiRsdt *rsdt)
+{
+    for (int i = 0; i < acpi_rsdt_entry_count(rsdt); i++)
+    {
+        AcpiSdt *header = (AcpiSdt *)rsdt->table_addresses[i];
+        acpi_print_sdt(header);
+    }
+}
+
+void acpi_print_xsdt(const AcpiXsdt *xsdt)
+{
+    for (int i = 0; i < acpi_xsdt_entry_count(xsdt); i++)
+    {
+        AcpiSdt *header = (AcpiSdt *)xsdt->table_addresses[i];
+        acpi_print_sdt(header);
+    }
+}
+
+void acpi_print_rsdtp(const AcpiRsdtp *rsdtp)
+{
+    console_print("acpi rsdtp address: 0x");
+    console_print_u64((unsigned long)rsdtp, 16);
+    console_new_line();
+
+    console_print("acpi rsdtp revision: ");
+    console_print_u32(rsdtp->revision, 10);
+    console_new_line();
+
+    console_print("acpi rsdt address: 0x");
+    console_print_u32(rsdtp->address, 16);
+    console_new_line();
+
+    console_print("acpi rsdtp oem: ");
+    console_print_length(rsdtp->oem_id, sizeof(rsdtp->oem_id));
+    console_new_line();
+}

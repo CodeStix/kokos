@@ -61,13 +61,14 @@ typedef struct
 typedef struct
 {
     AcpiSdt base;
-    // The length of this array can be calculated using apci_rsdt
+    // The length of this array can be calculated using acpi_rsdt_entry_count
     unsigned int table_addresses[];
 } __attribute__((packed)) AcpiRsdt;
 
 typedef struct
 {
     AcpiSdt base;
+    // The length of this array can be calculated using acpi_xsdt_entry_count
     unsigned long long table_addresses[];
 } __attribute__((packed)) AcpiXsdt;
 
@@ -271,3 +272,11 @@ AcpiSdt *acpi_rsdt_get_table(const AcpiRsdt *table, unsigned int table_signature
 AcpiSdt *acpi_xsdt_get_table(const AcpiXsdt *table, unsigned int table_signature);
 
 void acpi_print_madt(const AcpiMadt *madt);
+
+void acpi_print_rsdt(const AcpiRsdt *rsdt);
+
+void acpi_print_xsdt(const AcpiXsdt *xsdt);
+
+void acpi_print_sdt(const AcpiSdt *sdt);
+
+void acpi_print_rsdtp(const AcpiRsdtp *rsdtp);
