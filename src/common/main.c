@@ -119,21 +119,7 @@ void kernel_main()
         }
         else if (header->signature[0] == 'A' && header->signature[1] == 'P' && header->signature[2] == 'I' && header->signature[3] == 'C')
         {
-            MADT *madt = (MADT *)header;
-            console_print("(madt.local_apic_address = 0x");
-            console_print_u32(madt->local_apic_address, 16);
-            console_print(")\n");
-
-            for (int i = sizeof(MADT); i < madt->header.length;)
-            {
-                MADTEntryHeader *madt_entry = (MADTEntryHeader *)(((unsigned char *)madt) + i);
-                console_print("  > madt entry of type ");
-                console_print_u32(madt_entry->type, 10);
-                console_new_line();
-                i += madt_entry->length;
-            }
-
-            console_new_line();
+            acpi_print_madt((MADT *)header);
         }
 
         console_print(" at 0x");

@@ -70,10 +70,10 @@ int acpi_validate_xsdt_pointer(const XSDTPointer *rsdp);
 int acpi_validate_rsdt(const RSDTHeader *rsdt);
 
 // Returns the length of the RSDT.tableAddresses array
-int acpi_rsdt_entry_count(RSDT *rsdt);
+int acpi_rsdt_entry_count(const RSDT *rsdt);
 
 // Returns the length of the XSDT.tableAddresses array
-int acpi_xsdt_entry_count(XSDT *xsdt);
+int acpi_xsdt_entry_count(const XSDT *xsdt);
 
 // An address structure used in the FADT table below
 typedef struct
@@ -184,7 +184,7 @@ typedef struct
     unsigned char apic_processor_id;
     unsigned char apic_id;
     unsigned int flags;
-} __attribute__((packed)) MADTEntryProcessorLocalAPIC;
+} __attribute__((packed)) MADTEntry0LocalAPIC;
 
 // MADT entry of type 1
 // Represents an IO APIC
@@ -195,7 +195,7 @@ typedef struct
     unsigned char unused;
     unsigned int io_apic_address;
     unsigned int global_system_interrupt_base;
-} __attribute__((packed)) MADTEntryIOAPIC;
+} __attribute__((packed)) MADTEntry1IOAPIC;
 
 // MADT entry of type 2
 // Represents a IO APIC source
@@ -206,7 +206,7 @@ typedef struct
     unsigned char irq_source;
     unsigned int global_system_interrupt;
     unsigned short flags;
-} __attribute__((packed)) MADTEntryIOAPICSource;
+} __attribute__((packed)) MADTEntry2IOAPICSource;
 
 // MADT entry of type 3
 // Specifies which IO APIC interrupt inputs should be enabled as non-maskable
@@ -217,7 +217,7 @@ typedef struct
     unsigned char unused;
     unsigned short flags;
     unsigned int global_system_interrupt;
-} __attribute__((packed)) MADTEntryIOAPICNonMaskable;
+} __attribute__((packed)) MADTEntry3IOAPICNonMaskable;
 
 // MADT entry of type 4
 typedef struct
@@ -227,7 +227,7 @@ typedef struct
     unsigned short flags;
     // Should be 0 to trigger LINT0 and 1 to trigger LINT1 on the processor's local APIC
     unsigned char local_interrupt_target;
-} __attribute__((packed)) MADTEntryLocalAPICNonMaskable;
+} __attribute__((packed)) MADTEntry4LocalAPICNonMaskable;
 
 // MADT entry of type 5
 // Provides the 64 bit address of the local APIC, this one should be used instead of the MADT's local_apic_address
@@ -236,14 +236,17 @@ typedef struct
     MADTEntryHeader header;
     unsigned short unused;
     unsigned long local_apic_address;
-} __attribute__((packed)) MADTEntryLocalAPICAddressOverride;
+} __attribute__((packed)) MADTEntry5LocalAPICAddressOverride;
 
 // MADT entry of type 9
+// Same as type 0 but bigger
 typedef struct
 {
     MADTEntryHeader header;
     unsigned short unused;
-    unsigned int x2_apic_id;
+    unsigned int apic_processor_id;
     unsigned int flags;
     unsigned int apic_id;
-} __attribute__((packed)) MADTEntryProcessorLocalX2APIC;
+} __attribute__((packed)) MADTEntry9LocalX2APIC;
+
+void acpi_print_madt(const MADT *madt);
