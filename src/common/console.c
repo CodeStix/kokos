@@ -1,7 +1,7 @@
 #include "../include/console.h"
 #include "../include/util.h"
 
-volatile VideoChar *video_memory = (VideoChar *)0xb8000;
+volatile ConsoleVideoChar *video_memory = (ConsoleVideoChar *)0xb8000;
 
 unsigned char current_console_color = 0x0f;
 unsigned int x = 0, y = 0, w = 80, h = 25;
@@ -88,28 +88,28 @@ void console_print_length(const char *str, unsigned int length)
 
 void console_print_i32(int num, int base)
 {
-    char dest[11]; // 11 = max length of 32 bit integer with minus
+    char dest[sizeof(int) * 8 + 1];
     convert_i32_string(dest, num, base);
     console_print(dest);
 }
 
 void console_print_u32(unsigned int num, int base)
 {
-    char dest[10]; // 10 = max length of 32 bit integer
+    char dest[sizeof(unsigned int) * 8 + 1];
     convert_u32_string(dest, num, base);
     console_print(dest);
 }
 
 void console_print_i64(long num, int base)
 {
-    char dest[21];
+    char dest[sizeof(long) * 8 + 1];
     convert_i64_string(dest, num, base);
     console_print(dest);
 }
 
 void console_print_u64(unsigned long num, int base)
 {
-    char dest[20];
+    char dest[sizeof(unsigned long) * 8 + 1];
     convert_u64_string(dest, num, base);
     console_print(dest);
 }

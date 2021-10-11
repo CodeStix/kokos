@@ -22,7 +22,7 @@ typedef struct
 {
     char charater;
     unsigned char color;
-} VideoChar;
+} ConsoleVideoChar;
 
 void console_set_color(CONSOLE_COLOR foreground, CONSOLE_COLOR background);
 void console_new_line();

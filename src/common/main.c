@@ -65,6 +65,7 @@ void kernel_main()
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
 
+    // Find the root system description table pointer
     AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
     if (!rsdtp)
     {
