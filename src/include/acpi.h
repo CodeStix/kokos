@@ -158,3 +158,92 @@ typedef struct
     // Only available on ACPI 2.0+
     FADTAddress extended_gpe1_block;
 } __attribute__((packed)) FADT;
+
+// Every MADT entry starts with this header
+typedef struct
+{
+    unsigned char type;
+    unsigned char length;
+} __attribute__((packed)) MADTEntryHeader;
+
+// The MADT ACPI table has signature 'APIC', it contains information about the different programmable interrupt controllers (PIC, APIC, IOAPIC) in the system
+// After this struct, a variable list of MADT entries are stored.
+// https://wiki.osdev.org/MADT
+typedef struct
+{
+    RSDTHeader header;
+    unsigned int local_apic_address;
+    unsigned int flags;
+} __attribute__((packed)) MADT;
+
+// MADT entry of type 0
+// This type represents a single physical processor and its local interrupt controller.
+typedef struct
+{
+    MADTEntryHeader header;
+    unsigned char apic_processor_id;
+    unsigned char apic_id;
+    unsigned int flags;
+} __attribute__((packed)) MADTEntryProcessorLocalAPIC;
+
+// MADT entry of type 1
+// Represents an IO APIC
+typedef struct
+{
+    MADTEntryHeader header;
+    unsigned char io_apic_id;
+    unsigned char unused;
+    unsigned int io_apic_address;
+    unsigned int global_system_interrupt_base;
+} __attribute__((packed)) MADTEntryIOAPIC;
+
+// MADT entry of type 2
+// Represents a IO APIC source
+typedef struct
+{
+    MADTEntryHeader header;
+    unsigned char bus_source;
+    unsigned char irq_source;
+    unsigned int global_system_interrupt;
+    unsigned short flags;
+} __attribute__((packed)) MADTEntryIOAPICSource;
+
+// MADT entry of type 3
+// Specifies which IO APIC interrupt inputs should be enabled as non-maskable
+typedef struct
+{
+    MADTEntryHeader header;
+    unsigned char non_maskable_interrupt_source;
+    unsigned char unused;
+    unsigned short flags;
+    unsigned int global_system_interrupt;
+} __attribute__((packed)) MADTEntryIOAPICNonMaskable;
+
+// MADT entry of type 4
+typedef struct
+{
+    MADTEntryHeader header;
+    unsigned char acpi_processor_id_target;
+    unsigned short flags;
+    // Should be 0 to trigger LINT0 and 1 to trigger LINT1 on the processor's local APIC
+    unsigned char local_interrupt_target;
+} __attribute__((packed)) MADTEntryLocalAPICNonMaskable;
+
+// MADT entry of type 5
+// Provides the 64 bit address of the local APIC, this one should be used instead of the MADT's local_apic_address
+typedef struct
+{
+    MADTEntryHeader header;
+    unsigned short unused;
+    unsigned long local_apic_address;
+} __attribute__((packed)) MADTEntryLocalAPICAddressOverride;
+
+// MADT entry of type 9
+typedef struct
+{
+    MADTEntryHeader header;
+    unsigned short unused;
+    unsigned int x2_apic_id;
+    unsigned int flags;
+    unsigned int apic_id;
+} __attribute__((packed)) MADTEntryProcessorLocalX2APIC;
