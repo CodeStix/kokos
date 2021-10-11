@@ -21,7 +21,7 @@ One of the mail goals of this operating system is readability. That is why the f
     ```
 
 - Use `lower_snake_case` for function names. `string_length(...)`
-- Use `UpperCaseCamelCase` for struct names.
+- Use `UpperCaseCamelCase` for struct names. (even shorts like `ACPI` are written as `Acpi`, to stop confusion like this: `ACPIXSDT` -> `AcpiXsdt`)
 - Use typedef for every struct.
 
     ```c
@@ -29,6 +29,19 @@ One of the mail goals of this operating system is readability. That is why the f
         char* name;
         int32 age;
     } Person;
+    ```
+
+- Every struct name should be prefixed with ist namespace
+
+    ```c
+    // in memory.c
+
+    typedef struct {
+        void* location;
+        unsigned int size;
+        unsigned short flags;
+    } MemoryAllocatedChunk;
+
     ```
 
 - Use `lower_snake_case` for variables:
@@ -47,4 +60,25 @@ One of the mail goals of this operating system is readability. That is why the f
         // The following line prints to the screen.
         console_print("text here");
     }
+    ```
+
+- When using a shared/header struct between multiple types, use 'base' as the name for the 'inherited' struct:
+
+    ```c
+
+    typedef struct {
+        int type; // this field can determine if it is a PointerTable or a PICTable
+        int length;
+    } Table;
+
+    typedef struct {
+        Table base; // always call it base
+        void* pointer;
+    } PointerTable;
+
+    typedef struct {
+        Table base; // always call it base
+        unsigned short pic_number;
+    } PICTable;
+
     ```

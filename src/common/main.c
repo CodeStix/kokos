@@ -65,7 +65,7 @@ void kernel_main()
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
 
-    RSDTPointer *rsdp = acpi_find_rsdt_pointer();
+    AcpiRsdtp *rsdp = acpi_find_rsdt_pointer();
     if (!rsdp)
     {
         console_print("acpi rsdp not found!\n");
@@ -85,7 +85,7 @@ void kernel_main()
     console_new_line();
 
     console_print("acpi rsdp oem: ");
-    console_print_length(rsdp->oemId, sizeof(rsdp->oemId));
+    console_print_length(rsdp->oem_id, sizeof(rsdp->oem_id));
     console_new_line();
 
     if (acpi_validate_rsdt_pointer(rsdp))
@@ -94,8 +94,8 @@ void kernel_main()
         return;
     }
 
-    RSDT *rsdt = (RSDT *)rsdp->address;
-    if (acpi_validate_rsdt(&rsdt->header))
+    AcpiRsdt *rsdt = (AcpiRsdt *)rsdp->address;
+    if (acpi_validate_rsdt(&rsdt->base))
     {
         console_print("acpi rsdt checksum does not match!\n");
         return;
@@ -103,23 +103,25 @@ void kernel_main()
 
     for (int i = 0; i < acpi_rsdt_entry_count(rsdt); i++)
     {
-        RSDTHeader *header = (RSDTHeader *)rsdt->tableAddresses[i];
+        AcpiSdt *header = (AcpiSdt *)rsdt->table_addresses[i];
         if (acpi_validate_rsdt(header))
         {
             console_print("invalid ");
         }
         console_print("acpi table ");
-        console_print_length(header->signature, 4);
-        if (header->signature[0] == 'F' && header->signature[1] == 'A' && header->signature[2] == 'C' && header->signature[3] == 'P')
+        console_print_length(header->signature_string, 4);
+        console_print(" 0x");
+        console_print_u32(header->signature, 16);
+        if (header->signature == ACPI_FADT_SIGNATURE)
         {
-            FADT *fadt = (FADT *)header;
+            AcpiFadt *fadt = (AcpiFadt *)header;
             console_print(" (fadt.smi_command = 0x");
             console_print_u32(fadt->smi_commandport, 16);
             console_print(") ");
         }
-        else if (header->signature[0] == 'A' && header->signature[1] == 'P' && header->signature[2] == 'I' && header->signature[3] == 'C')
+        else if (header->signature == ACPI_MADT_SIGNATURE)
         {
-            acpi_print_madt((MADT *)header);
+            acpi_print_madt((AcpiMadt *)header);
         }
 
         console_print(" at 0x");

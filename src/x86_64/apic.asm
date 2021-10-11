@@ -4,6 +4,8 @@ global apic_check_supported
 section .text
 bits 64
 
+; TODO check if APIC is enabled in MSR
+
 ; Because we will use the newer APIC (advanced programmable interrupt controller) instead of the old PICs
 ; we need to disable the old PIC. Because PIC's can generate random interrupts (by electric noise ect), we must also offset these interrupts to an unused
 ; region of interrupt vectors, so it does not trigger random system interrupts (worse: exception interrupts)

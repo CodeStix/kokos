@@ -42,6 +42,21 @@ void memory_set(void *pointer, unsigned char value, int amount)
     }
 }
 
+int memory_compare(void *a, void *b, unsigned long amount)
+{
+    for (unsigned long i = 0; i < amount; i++)
+    {
+        if (*((unsigned char *)a) != *((unsigned char *)b))
+        {
+            return 0;
+        }
+
+        a = ((unsigned char *)a) + 1;
+        b = ((unsigned char *)b) + 1;
+    }
+    return 1;
+}
+
 void memory_copy(void *from, void *to, int amount)
 {
     if (IS_ALIGNED(amount, 8))
