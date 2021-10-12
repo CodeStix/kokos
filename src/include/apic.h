@@ -1,6 +1,6 @@
 #define ALIGN16 __attribute__((aligned(16)))
 
-// This structure defines all the APIC (advanced programmable interrupt controller)  egisters
+// This structure defines all the APIC (advanced programmable interrupt controller) registers
 typedef struct
 {
     unsigned int unused ALIGN16;

@@ -4,6 +4,7 @@
         "memory.h": "c",
         "string.h": "c",
         "stdarg.h": "c",
-        "console.h": "c"
+        "console.h": "c",
+        "paging.h": "c"
     }
 }

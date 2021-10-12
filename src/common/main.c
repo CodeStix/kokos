@@ -5,6 +5,7 @@
 #include "../include/memory.h"
 #include "../include/keyboard.h"
 #include "../include/apic.h"
+#include "../include/paging.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -111,6 +112,9 @@ void kernel_main()
     }
 
     Apic *apic = (Apic *)madt->local_apic_address;
+    console_print("address test: 0x");
+    console_print_u64((unsigned long)paging_get_physical_address(apic), 16);
+    console_new_line();
     console_print("apic size ");
     console_print_u32(sizeof(Apic), 10);
     console_new_line();

@@ -2,6 +2,7 @@
 global start
 global memory_chunk
 global gdt64.code_segment
+global page_table_level4
 extern start64
 
 ; Mark the following code to be in the text section, which typically stores code.
@@ -61,25 +62,25 @@ check_long_mode:            ; (64 bit mode)
     hlt
 
 setup_page_tables:
-    mov eax, page_table_l3      ; Store address of level 3 table (page directory pointer table) 
+    mov eax, page_table_level3      ; Store address of level 3 table (page directory pointer table) 
     or eax, 0b11                ; Set present and read/write flag of entry https://wiki.osdev.org/Paging
-    mov [page_table_l4], eax    ; Store address of the only level 3 table into first entry of level 4 table (page map level 4 table)
+    mov [page_table_level4], eax    ; Store address of the only level 3 table into first entry of level 4 table (page map level 4 table)
 
-    mov eax, page_table_l2      ; Store address of level 2 table (page directory table)
+    mov eax, page_table_level2      ; Store address of level 2 table (page directory table)
     or eax, 0b11                ; Set present and read/write flag of entry https://wiki.osdev.org/Paging
-    mov [page_table_l3], eax    ; Store address of the only level 2 table into first entry of level 3 table
+    mov [page_table_level3], eax    ; Store address of the only level 2 table into first entry of level 3 table
 
     mov ecx, 0                  ; Fill the level 2 table with entries, no level 1 table is needed because huge pages are used 
 .loop:
     mov eax, 0x200000
     mul ecx 
     or eax, 0b10000011	                    ; Set present, read/write and huge page flag of page (see AMD Volume 2 '2-Mbyte PDE—PAE Paging Legacy-Mode')
-    mov [page_table_l2 + ecx * 8], eax      
+    mov [page_table_level2 + ecx * 8], eax      
     inc ecx
     cmp ecx, 512
     jne .loop
 
-    mov eax, page_table_l4      ; Store the address of the 4th level table into cr3
+    mov eax, page_table_level4      ; Store the address of the 4th level table into cr3
     mov cr3, eax
     ret
 
@@ -111,11 +112,11 @@ stack_top:
 
 align 4096  ; Enforce the next address to be a multiple of 4096 (required for the page tables)
 
-page_table_l4:
+page_table_level4:
     resb 4096   ; Reserve 4096 bytes
-page_table_l3:
+page_table_level3:
     resb 4096
-page_table_l2:
+page_table_level2:
     resb 4096
 
 memory_chunk:
