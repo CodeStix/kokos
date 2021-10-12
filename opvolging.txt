@@ -79,6 +79,15 @@ Logboek
             Basic memory management algoritme geimplementeerd in C. (memory_allocate, memory_free ...)
             De interrupt descriptor table inladen en naar de console printen wanneer er een interrupt getriggerd wordt.
 
+05/10/2021: Find the RSDP (Root System Description Table Pointer) in memory and iterate its child tables. Validate these tables using
+            the provided checksum.
+            Implement string_compare function.
+
+08/10/2021: Enumerate the PCI bus and print some device information to the screen.
+
+09/10/2021: Setting up the ps2/keyboard controller, realizing that I have to enable interrupts first.         
+
+11/10/2021: Disabling the old PIC and trying to understand APIC. Updating the ACPI (the RSDT ect) api.
 
 
 
