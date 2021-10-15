@@ -89,6 +89,10 @@ Logboek
 
 11/10/2021: Disabling the old PIC and trying to understand APIC. Updating the ACPI (the RSDT ect) api.
 
+15/10/2021: Implementatie fysieke memory allocator, het systeem kan een page (regio van 4096 bytes) opvragen (memory.c:paging_physical_allocate) en vrijgeven (memory.c:paging_physical_free). 
+            Het lezen van de memory map uit de multiboot2 boot informatie. Deze informatie gebruiken om verschillende pages te reserveren zodat deze later niet
+            opgevraagd kunnen worden.
+
 
 
 
