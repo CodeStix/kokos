@@ -17,8 +17,11 @@ void paging_physical_free(void *physical_address);
 // Allocates a single 4096 byte chunk of physical memory and returns the physical address to it
 void *paging_physical_allocate();
 
+// Returns 1 if the passed address has been reserved or allocated
+int paging_physical_allocated(void *physical_address);
+
 // Returs the amount of pages allocated
-unsigned long paging_physical_allocated();
+unsigned long paging_physical_allocated_count();
 
 // Allocates multiple consecutive 262144 byte chunks of physical memory and returns the physical address to it
 // Use paging_physical_allocate_consecutive(8) to allocate a 2MB chunk

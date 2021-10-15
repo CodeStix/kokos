@@ -3,7 +3,7 @@ ENTRY(start32)
 SECTIONS 
 {
     /* set current writing address to 0x8000 */
-    . = 0x8000;
+    . = 0x00100000;
 
     /* create the boot section, which contains our multiboot2 header */
     .boot : 

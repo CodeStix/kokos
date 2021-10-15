@@ -82,3 +82,6 @@ One of the mail goals of this operating system is readability. That is why the f
     } PICTable;
 
     ```
+
+- Length refers to the amount of item in a sequence, array or list.
+- Size refers to the amount of bytes some structure takes.

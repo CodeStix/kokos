@@ -89,13 +89,13 @@ void kernel_main()
     }
 
     // Find total amount of memory
-    unsigned long total_memory = 0;
+    unsigned long max_address = 0;
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
         Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
-        if (entry->type == 1)
+        if (entry->type == 1 && entry->address + entry->length > max_address)
         {
-            total_memory += entry->length;
+            max_address = entry->address + entry->length;
         }
 
         console_print("memory at 0x");
@@ -104,25 +104,27 @@ void kernel_main()
         console_print_u64(entry->length, 16);
         console_print(" with type ");
         console_print_u32(entry->type, 10);
+        console_print(" (0x");
+        console_print_u64(max_address, 16);
+        console_print(")");
         console_new_line();
     }
 
     console_print("total usable ram = ");
-    console_print_u64(total_memory, 10);
-    console_new_line();
-    console_print("from 0x0 ... 0x");
-    console_print_u64(total_memory, 16);
+    console_print_u64(max_address, 10);
+    console_print(" from 0x0 ... 0x");
+    console_print_u64(max_address, 16);
     console_new_line();
 
-    // Find first memory spot that could fit allocation table
+    // Find first memory region that can fit allocation table
     // Each bit (8 per byte) in the allocation will determine if a memory region of 4096 bytes is taken or not
-    unsigned long allocation_table_size = total_memory / 4096 / 8;
+    unsigned long allocation_table_size = max_address / 4096 / 8;
 
     console_print("allocation_table_size = ");
-    console_print_u64(allocation_table_size, 16);
+    console_print_u64(allocation_table_size, 10);
     console_new_line();
 
-    void *allocation_table_start = 0xFFFFFFFF;
+    void *allocation_table_start = (void *)0xFFFFFFFF;
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
         Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
@@ -133,45 +135,41 @@ void kernel_main()
         }
     }
 
-    if (allocation_table_start == 0xFFFFFFFF)
+    if (allocation_table_start == (void *)0xFFFFFFFF)
     {
         console_print("fatal: could not find spot for allocation table\n");
         return;
     }
 
     console_print("allocation table at 0x");
-    console_print_u64(allocation_table_start, 16);
+    console_print_u64((unsigned long)allocation_table_start, 16);
     console_new_line();
 
-    paging_physical_initialize(allocation_table_start, total_memory);
+    paging_physical_initialize(allocation_table_start, max_address);
 
     // Reserve memory for the allocation table itself
     paging_physical_reserve(allocation_table_start, allocation_table_size);
-    // Reserve memory for the kernel itself (starting at 0x8000, size ~50kb)
-    paging_physical_reserve(0x8000, 0x50000);
 
-    // Reserve memory for all
+    // Reserve memory for the kernel itself (starting at 0x8000, size ~100kb)
+    paging_physical_reserve((void *)0x00100000, 0x100000);
+
+    // Reserve memory for all non-usable (type != 1) memory regions
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
         Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
-        if (entry->type == 2)
+        if (entry->type != 1)
         {
             paging_physical_reserve((void *)entry->address, entry->length);
         }
     }
 
-    for (int i = 0; i < 2; i++)
-    {
-        void *address = paging_physical_allocate();
-        console_print("allocation test 0x");
-        console_print_u64(address, 16);
-        console_new_line();
-        // paging_physical_free(address);
-    }
-
-    while (1)
-    {
-    }
+    // for (int i = 0; i < 20; i++)
+    // {
+    //     void *address = paging_physical_allocate();
+    //     console_print("allocation test 0x");
+    //     console_print_u64((unsigned long)address, 16);
+    //     console_new_line();
+    // }
 
     // Find the root system description table pointer
     AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
@@ -196,7 +194,7 @@ void kernel_main()
         return;
     }
 
-    acpi_print_rsdt(rsdt);
+    // acpi_print_rsdt(rsdt);
 
     // TODO support XSDT
 
@@ -221,6 +219,9 @@ void kernel_main()
     Apic *apic = (Apic *)madt->local_apic_address;
     console_print("address test: 0x");
     console_print_u64((unsigned long)paging_get_physical_address(apic), 16);
+    console_new_line();
+    console_print("address: 0x");
+    console_print_u64((unsigned long)apic, 16);
     console_new_line();
     console_print("apic size ");
     console_print_u32(sizeof(Apic), 10);

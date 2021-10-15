@@ -53,11 +53,11 @@ void paging_physical_reserve(void *physical_address, unsigned long bytes)
     {
         if (index >= allocation_table_length || index < 0)
         {
-            console_print("warning: paging_physical_reserve out of memory range 0x");
+            console_print("warning: paging_physical_reserve out of physical memory range (0x");
             console_print_u64((unsigned long)physical_address, 16);
             console_print(" ... 0x");
             console_print_u64((unsigned long)physical_address + bytes, 16);
-            console_print(" \n");
+            console_print(")\n");
             break;
         }
 
@@ -87,6 +87,12 @@ void paging_physical_free(void *physical_address)
 
     // & 0b111111 is the same as modulo 64
     unsigned char bit = index & 0b111111;
+
+    if (byte >= allocation_table_length)
+    {
+        console_print("warning: invalid address passed to paging_physical_free\n");
+        return;
+    }
 
     // Set bit bit of allocation_table[byte] to zero
     if (allocation_table[byte] & (1 << bit))
@@ -179,7 +185,24 @@ void *paging_physical_allocate_consecutive(unsigned int chunk_count)
     return (void *)(((spot << 6) << 12));
 }
 
-unsigned long paging_physical_allocated()
+int paging_physical_allocated(void *phyisical_address)
+{
+    unsigned long index = ((unsigned long)phyisical_address) >> 12;
+
+    if (index >= allocation_table_length)
+    {
+        console_print("warning: invalid address passed to paging_physical_allocated, returning 1: 0x");
+        console_print_u64((unsigned long)phyisical_address, 16);
+        console_new_line();
+        return 1;
+    }
+
+    unsigned int byte = index >> 6;
+    unsigned char bit = index & 0b111111;
+    return (allocation_table[index] >> bit) & 0b1;
+}
+
+unsigned long paging_physical_allocated_count()
 {
     return pages_taken;
 }
