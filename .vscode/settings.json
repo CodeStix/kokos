@@ -5,6 +5,7 @@
         "string.h": "c",
         "stdarg.h": "c",
         "console.h": "c",
-        "paging.h": "c"
+        "paging.h": "c",
+        "util.h": "c"
     }
 }

@@ -1,5 +1,6 @@
 #include "../include/paging.h"
 #include "../include/console.h"
+#include "../include/util.h"
 
 // Every page entry types start with the following bits:
 // 0: present bit (0 for absent, 1 for present)
@@ -19,6 +20,128 @@
 // Bits 29:21 index into the 512-entry page-directory table.
 // Bits 20:12 index into the 512-entry page table.
 // Bits 11:0 provide the byte offset into the physical page.
+
+// Points to a table that contains bits that indicate which physical chunks are allocated
+static unsigned long *allocation_table;
+// Points to the location where allocation starts
+static void *allocation_start;
+// The current position in the allocation_table, this number increases until the end of the table is reached (end of physical RAM)
+static unsigned long allocation_index = 0;
+// The amount of unsigned long entries in the allocation table
+static unsigned long allocation_table_length = 0;
+
+void paging_physical_allocate_initialize(unsigned long total_memory)
+{
+    unsigned long page_count = (total_memory / 4096);
+    allocation_table = 0xFFFFFF;
+    // Can store 8 bits in each allocation table byte
+    allocation_start = (unsigned char *)ALIGN_TO_NEXT((unsigned long)allocation_table + (unsigned long)(page_count / 8), 4096);
+    // Can store 8 bytes in each allocation table entry
+    allocation_table_length = page_count / 64;
+}
+
+// Reserves a physical address so it can't be allocated using paging_physical_allocate
+void paging_physical_reserve(void *physical_address)
+{
+    // >> 12 is the same as divide by 4096
+    unsigned long index = ((unsigned long)physical_address) >> 12;
+    // >> 6 is the same as divide by 64
+    unsigned int byte = index >> 6;
+    // & 0b111111 is the same as modulo 64
+    unsigned char bit = index & 0b111111;
+    // Set bit bit of allocation_table[byte] to one
+    allocation_table[byte] |= 1 << bit;
+}
+
+// Frees a physical page
+void paging_physical_free(void *physical_address)
+{
+    // >> 12 is the same as divide by 4096
+    unsigned long index = ((unsigned long)physical_address) >> 12;
+    // >> 6 is the same as divide by 64
+    unsigned int byte = index >> 6;
+    // & 0b111111 is the same as modulo 64
+    unsigned char bit = index & 0b111111;
+    // Set bit bit of allocation_table[byte] to zero
+    allocation_table[byte] &= ~(1 << bit);
+}
+
+// Allocates a single 4096 byte chunk of physical memory and returns the physical address to it
+void *paging_physical_allocate()
+{
+    // TODO this is infinite loop when no memory is available
+    // Find first empty spot where a single bit is 0 (0xFFFFFFFF represents all bits set to 1)
+    unsigned long spot = allocation_index;
+    while (allocation_table[spot] == 0xFFFFFFFF)
+    {
+        if (++spot >= allocation_table_length)
+        {
+            spot = 0;
+        }
+    }
+
+    // TODO bsr instruction to find first 0 bit
+    // Find the index of the first bit that is zero
+    unsigned long bits = allocation_table[spot];
+    unsigned long bit = 0;
+    while (bits & 0b1)
+    {
+        bit++;
+        bits >>= 1;
+    }
+
+    if (bit >= 64)
+    {
+        console_print("bit scan did not find bit, this cannot happen");
+        return 0;
+    }
+
+    // Set bit bit of allocation_table[spot] to zero
+    allocation_table[spot] |= 1 << bit;
+    allocation_index = spot;
+
+    return (void *)((unsigned char *)allocation_start + (((spot << 6) + bit) << 12));
+}
+
+// Allocates multiple consecutive 262144 byte chunks of physical memory and returns the physical address to it
+// Use paging_physical_allocate_consecutive(8) to allocate a 2MB chunk
+// Use paging_physical_allocate_consecutive(4096) to allocate a 2GB chunk
+void *paging_physical_allocate_consecutive(unsigned int chunk_count)
+{
+    // TODO this is infinite loop when no memory is available
+    unsigned long spot = allocation_index;
+    unsigned int consecutive = 0;
+    while (1)
+    {
+        if (allocation_table[spot] == 0)
+        {
+            if (++consecutive >= chunk_count)
+            {
+                spot -= consecutive - 1;
+                break;
+            }
+        }
+        else
+        {
+            consecutive = 0;
+        }
+
+        if (++spot >= allocation_table_length)
+        {
+            spot = 0;
+            consecutive = 0;
+        }
+    }
+
+    // Set all 'taken' flags
+    for (unsigned int i = 0; i < chunk_count; i++)
+    {
+        allocation_table[spot + i] = 0xFFFFFFFF;
+    }
+
+    allocation_index = spot + chunk_count;
+    return (void *)((unsigned char *)allocation_start + ((spot << 6) << 12));
+}
 
 void *paging_get_physical_address(void *virtual_address)
 {
