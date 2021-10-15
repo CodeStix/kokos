@@ -18,7 +18,6 @@
 #define uint64 unsigned long long
 
 extern void hit_breakpoint();
-extern Multiboot2Info *multiboot2_info;
 
 void memory_debug()
 {
@@ -76,34 +75,29 @@ void kernel_main()
     console_print_u64((unsigned long)multiboot2_info, 16);
     console_new_line();
 
-    console_print("multiboot2 total_size = ");
-    console_print_u32(multiboot2_info->total_size, 10);
-    console_new_line();
-
-    console_print("multiboot2 unused = ");
-    console_print_u32(multiboot2_info->unused, 10);
-    console_new_line();
-
-    for (int i = sizeof(Multiboot2Info);;)
+    if (!multiboot2_info_available())
     {
-        Multiboot2InfoTag *tag = (Multiboot2InfoTag *)(((unsigned char *)multiboot2_info) + i);
-        if (tag->type == 0)
-        {
-            break;
-        }
-        i += ALIGN_TO_NEXT(tag->size, 8);
-
-        console_print("multiboot2 tag of type ");
-        console_print_u32(tag->type, 10);
-        console_print(" and size ");
-        console_print_u32(tag->size, 10);
-        console_new_line();
+        console_print("fatal: multiboot2 boot information is not available\n");
+        return;
     }
 
-    console_print("end of multiboot");
-
-    while (1)
+    Multiboot2InfoTagMemoryMap *memtag = (Multiboot2InfoTagMemoryMap *)multiboot2_info_get(MULTIBOOT2_TYPE_MEMORY_MAP);
+    if (!memtag)
     {
+        console_print("no memory information available\n");
+        return;
+    }
+
+    for (int i = 0; i * memtag->entry_size < memtag->base.size; i++)
+    {
+        Multiboot2InfoTagMemoryMapEntry *entry = &memtag->entries[i];
+        console_print("memory at 0x");
+        console_print_u64(entry->address, 16);
+        console_print(" with length 0x");
+        console_print_u64(entry->length, 16);
+        console_print(" with type ");
+        console_print_u32(entry->type, 10);
+        console_new_line();
     }
 
     // Find the root system description table pointer
