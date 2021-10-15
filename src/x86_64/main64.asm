@@ -17,6 +17,7 @@ bits 64     ; Tell the assembler that this file should create 64 bit instruction
 hit_breakpoint:
     int3
     ret
+
 start64:
     call console_clear
 

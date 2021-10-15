@@ -1,17 +1,17 @@
-ENTRY(start)
+ENTRY(start32)
 
 SECTIONS 
 {
-    /* reserve 1 megabyte of unused space */
-    . = 1M;
+    /* set current writing address to 0x8000 */
+    . = 0x8000;
 
     /* create the boot section, which contains our multiboot2 header */
     .boot : 
     {
-        /* KEEP: output even if nothing in multiboot2_header is referenced.
-           This is needed because a linker links code and removes code that will not be used. Our
-           multiboot2_header does not contain any code and thus will not be referenced, but we 
-           want to include it in the binary. */
+        /*  KEEP: output even if nothing in multiboot2_header is referenced.
+            This is needed because a linker links code and removes code that will not be used. Our
+            multiboot2_header does not contain any code and thus will not be referenced, but we 
+            want to include it in the binary. */
         KEEP(*(.multiboot2_header))
     }
 

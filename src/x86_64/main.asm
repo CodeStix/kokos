@@ -1,8 +1,10 @@
 ; Give other files access to the 'start' address
-global start
+global start32
 global memory_chunk
 global gdt64.code_segment
 global page_table_level4
+global memory_map
+global multiboot2_info
 extern start64
 
 ; Mark the following code to be in the text section, which typically stores code.
@@ -12,11 +14,14 @@ section .text
 bits 32
 
 ; Name the following block of code 'start', when refernced, start will contain the address of its first instruction (mov)
-start:
+start32:
     mov esp, stack_top      ; Set the address of the stack, so that push and pop instructions will work correctly
+    mov [multiboot2_info], ebx
 
     call check_cpuid_supported
     call check_long_mode
+
+    ; call get_memory_map
 
     call setup_page_tables
     call enable_pae
@@ -60,6 +65,10 @@ check_long_mode:            ; (64 bit mode)
 .no_long_mode:
     mov dword [0xb8000], 0x4f314f45 ; Print E1 in red to screen https://wiki.osdev.org/Printing_To_Screen
     hlt
+
+; This function uses the BIOS to get a memory map of the system
+get_memory_map:
+    ret
 
 setup_page_tables:
     mov eax, page_table_level3      ; Store address of level 3 table (page directory pointer table) 
@@ -119,11 +128,14 @@ page_table_level3:
 page_table_level2:
     resb 4096
 
+multiboot2_info:
+    dq 0
+
 memory_chunk:
     dq 0
     dq 0
-    dw 0
-    resb 1024 * 64 * 16 - ($ - memory_chunk)
+    dq 0
+    ; resb 1024 * 64 * 16 - ($ - memory_chunk)
 
 section .rodata ; The rodata section contains initialized read only data
 

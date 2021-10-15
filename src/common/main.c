@@ -6,6 +6,7 @@
 #include "../include/keyboard.h"
 #include "../include/apic.h"
 #include "../include/paging.h"
+#include "../include/multiboot2.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -17,6 +18,7 @@
 #define uint64 unsigned long long
 
 extern void hit_breakpoint();
+extern Multiboot2Info *multiboot2_info;
 
 void memory_debug()
 {
@@ -65,6 +67,44 @@ void kernel_main()
 {
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
+
+    console_print("address of main = 0x");
+    console_print_u64((unsigned long)kernel_main, 16);
+    console_new_line();
+
+    console_print("address of multiboot2_info = 0x");
+    console_print_u64((unsigned long)multiboot2_info, 16);
+    console_new_line();
+
+    console_print("multiboot2 total_size = ");
+    console_print_u32(multiboot2_info->total_size, 10);
+    console_new_line();
+
+    console_print("multiboot2 unused = ");
+    console_print_u32(multiboot2_info->unused, 10);
+    console_new_line();
+
+    for (int i = sizeof(Multiboot2Info);;)
+    {
+        Multiboot2InfoTag *tag = (Multiboot2InfoTag *)(((unsigned char *)multiboot2_info) + i);
+        if (tag->type == 0)
+        {
+            break;
+        }
+        i += ALIGN_TO_NEXT(tag->size, 8);
+
+        console_print("multiboot2 tag of type ");
+        console_print_u32(tag->type, 10);
+        console_print(" and size ");
+        console_print_u32(tag->size, 10);
+        console_new_line();
+    }
+
+    console_print("end of multiboot");
+
+    while (1)
+    {
+    }
 
     // Find the root system description table pointer
     AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
