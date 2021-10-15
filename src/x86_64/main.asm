@@ -21,8 +21,6 @@ start32:
     call check_cpuid_supported
     call check_long_mode
 
-    ; call get_memory_map
-
     call setup_page_tables
     call enable_pae
     call enable_long_mode
@@ -65,10 +63,6 @@ check_long_mode:            ; (64 bit mode)
 .no_long_mode:
     mov dword [0xb8000], 0x4f314f45 ; Print E1 in red to screen https://wiki.osdev.org/Printing_To_Screen
     hlt
-
-; This function uses the BIOS to get a memory map of the system
-get_memory_map:
-    ret
 
 setup_page_tables:
     mov eax, page_table_level3      ; Store address of level 3 table (page directory pointer table) 

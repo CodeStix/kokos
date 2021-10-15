@@ -22,35 +22,58 @@
 // Bits 11:0 provide the byte offset into the physical page.
 
 // Points to a table that contains bits that indicate which physical chunks are allocated
-static unsigned long *allocation_table;
-// Points to the location where allocation starts
-static void *allocation_start;
+static unsigned long *allocation_table = 0;
 // The current position in the allocation_table, this number increases until the end of the table is reached (end of physical RAM)
 static unsigned long allocation_index = 0;
 // The amount of unsigned long entries in the allocation table
 static unsigned long allocation_table_length = 0;
+static unsigned long pages_taken = 0;
 
-void paging_physical_allocate_initialize(unsigned long total_memory)
+void paging_physical_initialize(void *allocation_table_location, unsigned long total_memory)
 {
-    unsigned long page_count = (total_memory / 4096);
-    allocation_table = 0xFFFFFF;
-    // Can store 8 bits in each allocation table byte
-    allocation_start = (unsigned char *)ALIGN_TO_NEXT((unsigned long)allocation_table + (unsigned long)(page_count / 8), 4096);
+    allocation_table = allocation_table_location;
+    allocation_index = 0;
     // Can store 8 bytes in each allocation table entry
-    allocation_table_length = page_count / 64;
+    allocation_table_length = (total_memory / 4096) / 64;
+
+    // Clear the table, all memory pages (chunks of 4096 bytes) are free upon initialize
+    for (unsigned long i = 0; i < allocation_table_length; i++)
+    {
+        allocation_table[i] = 0;
+    }
 }
 
-// Reserves a physical address so it can't be allocated using paging_physical_allocate
-void paging_physical_reserve(void *physical_address)
+void paging_physical_reserve(void *physical_address, unsigned long bytes)
 {
     // >> 12 is the same as divide by 4096
-    unsigned long index = ((unsigned long)physical_address) >> 12;
-    // >> 6 is the same as divide by 64
-    unsigned int byte = index >> 6;
-    // & 0b111111 is the same as modulo 64
-    unsigned char bit = index & 0b111111;
-    // Set bit bit of allocation_table[byte] to one
-    allocation_table[byte] |= 1 << bit;
+    unsigned long start_index = ((unsigned long)physical_address) >> 12;
+    unsigned long end_index = start_index + (bytes >> 12);
+
+    for (unsigned long index = start_index; index <= end_index; index++)
+    {
+        if (index >= allocation_table_length || index < 0)
+        {
+            console_print("warning: paging_physical_reserve out of memory range 0x");
+            console_print_u64((unsigned long)physical_address, 16);
+            console_print(" ... 0x");
+            console_print_u64((unsigned long)physical_address + bytes, 16);
+            console_print(" \n");
+            break;
+        }
+
+        // >> 6 is the same as divide by 64
+        unsigned int byte = index >> 6;
+
+        // & 0b111111 is the same as modulo 64
+        unsigned char bit = index & 0b111111;
+
+        // Set bit bit of allocation_table[byte] to one
+        if (!(allocation_table[byte] & (1 << bit)))
+        {
+            allocation_table[byte] |= 1 << bit;
+            pages_taken++;
+        }
+    }
 }
 
 // Frees a physical page
@@ -58,21 +81,33 @@ void paging_physical_free(void *physical_address)
 {
     // >> 12 is the same as divide by 4096
     unsigned long index = ((unsigned long)physical_address) >> 12;
+
     // >> 6 is the same as divide by 64
     unsigned int byte = index >> 6;
+
     // & 0b111111 is the same as modulo 64
     unsigned char bit = index & 0b111111;
+
     // Set bit bit of allocation_table[byte] to zero
-    allocation_table[byte] &= ~(1 << bit);
+    if (allocation_table[byte] & (1 << bit))
+    {
+        allocation_table[byte] &= ~(1 << bit);
+        pages_taken--;
+    }
+    else
+    {
+        console_print("warning: paging_physical_free called on already freed page 0x");
+        console_print_u64((unsigned long)physical_address, 16);
+        console_new_line();
+    }
 }
 
-// Allocates a single 4096 byte chunk of physical memory and returns the physical address to it
 void *paging_physical_allocate()
 {
     // TODO this is infinite loop when no memory is available
-    // Find first empty spot where a single bit is 0 (0xFFFFFFFF represents all bits set to 1)
+    // Find first empty spot where a single bit is 0 (0xFFFFFFFFFFFFFFFFull represents all bits set to 1)
     unsigned long spot = allocation_index;
-    while (allocation_table[spot] == 0xFFFFFFFF)
+    while (allocation_table[spot] == 0xFFFFFFFFFFFFFFFFull)
     {
         if (++spot >= allocation_table_length)
         {
@@ -92,20 +127,21 @@ void *paging_physical_allocate()
 
     if (bit >= 64)
     {
-        console_print("bit scan did not find bit, this cannot happen");
+        // This cannot happen
+        console_print("error: paging_physical_allocate bit scan did not find bit in\n");
+        console_print_u64(allocation_table[spot], 2);
+        console_new_line();
         return 0;
     }
 
     // Set bit bit of allocation_table[spot] to zero
     allocation_table[spot] |= 1 << bit;
     allocation_index = spot;
+    pages_taken++;
 
-    return (void *)((unsigned char *)allocation_start + (((spot << 6) + bit) << 12));
+    return (void *)((((spot << 6) + bit) << 12));
 }
 
-// Allocates multiple consecutive 262144 byte chunks of physical memory and returns the physical address to it
-// Use paging_physical_allocate_consecutive(8) to allocate a 2MB chunk
-// Use paging_physical_allocate_consecutive(4096) to allocate a 2GB chunk
 void *paging_physical_allocate_consecutive(unsigned int chunk_count)
 {
     // TODO this is infinite loop when no memory is available
@@ -136,11 +172,16 @@ void *paging_physical_allocate_consecutive(unsigned int chunk_count)
     // Set all 'taken' flags
     for (unsigned int i = 0; i < chunk_count; i++)
     {
-        allocation_table[spot + i] = 0xFFFFFFFF;
+        allocation_table[spot + i] = 0xFFFFFFFFFFFFFFFFull;
     }
 
     allocation_index = spot + chunk_count;
-    return (void *)((unsigned char *)allocation_start + ((spot << 6) << 12));
+    return (void *)(((spot << 6) << 12));
+}
+
+unsigned long paging_physical_allocated()
+{
+    return pages_taken;
 }
 
 void *paging_get_physical_address(void *virtual_address)

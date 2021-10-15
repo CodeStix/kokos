@@ -44,6 +44,7 @@ typedef struct
 {
     unsigned long address;
     unsigned long length;
+    // Type = 1 means usable ram, 3 means ACPI, 5 means defective ram, other values reserved
     unsigned int type;
     unsigned int unused;
 } __attribute__((packed)) Multiboot2InfoTagMemoryMapEntry;
@@ -55,6 +56,8 @@ typedef struct
     unsigned int entry_version;
     Multiboot2InfoTagMemoryMapEntry entries[];
 } __attribute__((packed)) Multiboot2InfoTagMemoryMap;
+
+// TODO create all multiboot2 structures
 
 Multiboot2Info *multiboot2_info;
 

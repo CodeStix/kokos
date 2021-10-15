@@ -81,16 +81,23 @@ void kernel_main()
         return;
     }
 
-    Multiboot2InfoTagMemoryMap *memtag = (Multiboot2InfoTagMemoryMap *)multiboot2_info_get(MULTIBOOT2_TYPE_MEMORY_MAP);
-    if (!memtag)
+    Multiboot2InfoTagMemoryMap *memory_information = (Multiboot2InfoTagMemoryMap *)multiboot2_info_get(MULTIBOOT2_TYPE_MEMORY_MAP);
+    if (!memory_information)
     {
-        console_print("no memory information available\n");
+        console_print("fatal: no memory information available\n");
         return;
     }
 
-    for (int i = 0; i * memtag->entry_size < memtag->base.size; i++)
+    // Find total amount of memory
+    unsigned long total_memory = 0;
+    for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
-        Multiboot2InfoTagMemoryMapEntry *entry = &memtag->entries[i];
+        Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
+        if (entry->type == 1)
+        {
+            total_memory += entry->length;
+        }
+
         console_print("memory at 0x");
         console_print_u64(entry->address, 16);
         console_print(" with length 0x");
@@ -98,6 +105,72 @@ void kernel_main()
         console_print(" with type ");
         console_print_u32(entry->type, 10);
         console_new_line();
+    }
+
+    console_print("total usable ram = ");
+    console_print_u64(total_memory, 10);
+    console_new_line();
+    console_print("from 0x0 ... 0x");
+    console_print_u64(total_memory, 16);
+    console_new_line();
+
+    // Find first memory spot that could fit allocation table
+    // Each bit (8 per byte) in the allocation will determine if a memory region of 4096 bytes is taken or not
+    unsigned long allocation_table_size = total_memory / 4096 / 8;
+
+    console_print("allocation_table_size = ");
+    console_print_u64(allocation_table_size, 16);
+    console_new_line();
+
+    void *allocation_table_start = 0xFFFFFFFF;
+    for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
+    {
+        Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
+        if (entry->type == 1 && entry->length >= allocation_table_size)
+        {
+            allocation_table_start = (void *)entry->address;
+            break;
+        }
+    }
+
+    if (allocation_table_start == 0xFFFFFFFF)
+    {
+        console_print("fatal: could not find spot for allocation table\n");
+        return;
+    }
+
+    console_print("allocation table at 0x");
+    console_print_u64(allocation_table_start, 16);
+    console_new_line();
+
+    paging_physical_initialize(allocation_table_start, total_memory);
+
+    // Reserve memory for the allocation table itself
+    paging_physical_reserve(allocation_table_start, allocation_table_size);
+    // Reserve memory for the kernel itself (starting at 0x8000, size ~50kb)
+    paging_physical_reserve(0x8000, 0x50000);
+
+    // Reserve memory for all
+    for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
+    {
+        Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
+        if (entry->type == 2)
+        {
+            paging_physical_reserve((void *)entry->address, entry->length);
+        }
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        void *address = paging_physical_allocate();
+        console_print("allocation test 0x");
+        console_print_u64(address, 16);
+        console_new_line();
+        // paging_physical_free(address);
+    }
+
+    while (1)
+    {
     }
 
     // Find the root system description table pointer
