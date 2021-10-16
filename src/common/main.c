@@ -19,6 +19,7 @@
 #define uint64 unsigned long long
 
 extern void hit_breakpoint();
+extern unsigned long page_table_level4[512];
 
 void memory_debug()
 {
@@ -36,31 +37,6 @@ void memory_debug()
         console_new_line();
         chk = chk->next;
     }
-}
-
-void test_memory()
-{
-    void *ptr1 = memory_allocate(400);
-    char *str1 = "memory allocation test 1\n";
-    memory_copy(str1, ptr1, string_length(str1) + 1);
-
-    void *ptr2 = memory_allocate(400);
-    char *str2 = "memory allocation test 2\n";
-    memory_copy(str2, ptr2, string_length(str2) + 1);
-
-    ptr1 = memory_resize(ptr1, 6000);
-
-    console_print(ptr1);
-    console_print(ptr2);
-
-    memory_free(ptr1);
-    memory_free(ptr2);
-
-    // Trigger page fault
-    // *((int *)0xffff324234) = 100;
-
-    // Trigger dividy by zero
-    // console_print_i32(100 / 0, 10);
 }
 
 void kernel_main()
@@ -164,6 +140,8 @@ void kernel_main()
         }
     }
 
+    paging_initialize(page_table_level4);
+
     // for (int i = 0; i < 20; i++)
     // {
     //     void *address = memory_physical_allocate();
@@ -171,6 +149,20 @@ void kernel_main()
     //     console_print_u64((unsigned long)address, 16);
     //     console_new_line();
     // }
+
+    for (int i = 0; i < 4; i++)
+    {
+        console_print("virtual address: 0x");
+        int *test_address = paging_allocate(PAGE_FLAG_WRITABLE | PAGE_FLAG_PRESENT);
+        console_print_u64((unsigned long)test_address, 16);
+        console_new_line();
+        *test_address = i + 100;
+    }
+
+    console_print("[end]\n");
+    while (1)
+    {
+    }
 
     // Find the root system description table pointer
     AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
