@@ -112,6 +112,7 @@ void *paging_physical_allocate()
 {
     // TODO this is infinite loop when no memory is available
     // Find first empty spot where a single bit is 0 (0xFFFFFFFFFFFFFFFFull represents all bits set to 1)
+    // This will scan 64 pages per iterations for a spot (262144 bytes) (~30000 iterations worst case, when all ram is used on a 16gb pc)
     unsigned long spot = allocation_index;
     while (allocation_table[spot] == 0xFFFFFFFFFFFFFFFFull)
     {
@@ -294,7 +295,7 @@ static unsigned long current_level1_index = 0;
 #define PAGE_FLAG_NO_EXECUTE 0x8000000000000000
 
 // Bits 11-9 in each page table entry are user definable (AVL bits, available for software) and can be used for anything, in this case for the following:
-// This flag is set by the os to indicate that the underlaying page entries are all allocated
+// This flag indicates that the underlaying page table does not contain at least 1 empty entry
 #define PAGE_FLAG_FULL 0b1000000000
 
 // Physical memory allocation must be initialized first!
@@ -407,12 +408,6 @@ static unsigned long *paging_next_level2_table()
             // Insert new table
             current_level3_table[current_level3_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
 
-            if (++current_level3_index >= 512)
-            {
-                current_level3_table = paging_next_level3_table();
-                current_level3_index = 0;
-            }
-
             return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
         }
     }
@@ -422,6 +417,7 @@ static unsigned long *paging_next_level1_table()
 {
     if (++current_level2_index >= 512)
     {
+        current_level3_table[current_level3_index] |= PAGE_FLAG_FULL;
         current_level2_table = paging_next_level3_table();
         current_level2_index = 0;
     }
@@ -442,6 +438,7 @@ static unsigned long *paging_next_level1_table()
                 // This entry is skipped because it is full
                 if (++current_level2_index >= 512)
                 {
+                    current_level3_table[current_level3_index] |= PAGE_FLAG_FULL;
                     current_level2_table = paging_next_level3_table();
                     current_level2_index = 0;
                 }
@@ -469,6 +466,13 @@ static unsigned long *paging_next_level1_table()
 // Allocates a single page and returns the virtual address to it
 void *paging_allocate()
 {
+    if (++current_level1_index >= 512)
+    {
+        current_level2_table[current_level2_index] |= PAGE_FLAG_FULL;
+        current_level1_table = paging_next_level1_table();
+        current_level1_index = 0;
+    }
+
     while (1)
     {
         unsigned long entry = current_level1_table[current_level1_index];
@@ -477,6 +481,7 @@ void *paging_allocate()
             // Check next entry
             if (++current_level1_index >= 512)
             {
+                current_level2_table[current_level2_index] |= PAGE_FLAG_FULL;
                 current_level1_table = paging_next_level1_table();
                 current_level1_index = 0;
             }
@@ -489,12 +494,6 @@ void *paging_allocate()
             // Insert new table
             current_level1_table[current_level1_index] = ((unsigned long)new_page) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
 
-            if (++current_level1_index >= 512)
-            {
-                current_level1_table = paging_next_level1_table();
-                current_level1_index = 0;
-            }
-
             // Create virtual address
             return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
         }
@@ -504,4 +503,42 @@ void *paging_allocate()
 // Frees a single page allocated using paging_allocate
 void paging_free(void *virtual_address)
 {
+    // TODO is there an instruction for this slow mess?
+
+    unsigned int level4_index = ((unsigned long)virtual_address >> 39) & 0b111111111;
+    unsigned int level3_index = ((unsigned long)virtual_address >> 30) & 0b111111111;
+    unsigned int level2_index = ((unsigned long)virtual_address >> 21) & 0b111111111;
+    unsigned int level1_index = ((unsigned long)virtual_address >> 12) & 0b111111111;
+
+    unsigned long level3_table = current_level4_table[level4_index]; //0x7FFFFFFFFFFFF000
+    if (!(level3_table & PAGE_FLAG_PRESENT))
+    {
+        console_print("warning: paging_free tried to free invalid page (level4_table)\n");
+        return;
+    }
+
+    unsigned long level2_table = ((unsigned long *)(level3_table & 0x7FFFFFFFFFFFF000))[level3_index];
+    if (!(level2_table & PAGE_FLAG_PRESENT))
+    {
+        console_print("warning: paging_free tried to free invalid page (level3_table)\n");
+        return;
+    }
+
+    unsigned long level1_table = ((unsigned long *)(level2_table & 0x7FFFFFFFFFFFF000))[level2_index];
+    if (!(level1_table & PAGE_FLAG_PRESENT))
+    {
+        console_print("warning: paging_free tried to free invalid page (level2_table)\n");
+        return;
+    }
+
+    unsigned long *level1_table_address = (unsigned long *)(level1_table & 0x7FFFFFFFFFFFF000);
+    unsigned long entry = level1_table_address[level1_index];
+    if (!(entry & PAGE_FLAG_PRESENT))
+    {
+        console_print("warning: paging_free tried to free invalid page (level1_table)\n");
+        return;
+    }
+
+    // Remove present flag
+    level1_table_address[level1_index] &= ~PAGE_FLAG_PRESENT;
 }
