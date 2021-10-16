@@ -265,3 +265,234 @@ void *paging_get_physical_address(void *virtual_address)
     unsigned int offset = a & 0b111111111111; // Offset is 12 bits because each page is 4096 bytes in size
     return (void *)((level1_entry & 0xFFFFFFFFFF000) + offset);
 }
+
+static unsigned long min_virtual_address = 0x10000000ull;
+static unsigned long max_virtual_address = 0xF00000000000ull; // Just under the 48 bit limit
+static unsigned long available_pages;
+
+static unsigned long *current_level4_table = 0;
+static unsigned short current_level4_index = 1;
+static unsigned long *current_level3_table = 0;
+static unsigned short current_level3_index = 0;
+static unsigned long *current_level2_table = 0;
+static unsigned short current_level2_index = 0;
+static unsigned long *current_level1_table = 0;
+static unsigned short current_level1_index = 0;
+
+#define PAGE_FLAG_PRESENT 0b000000001
+#define PAGE_FLAG_WRITABLE 0b000000010
+#define PAGE_FLAG_EVERYONE_ACCESS 0b000000100
+#define PAGE_FLAG_WRITETHROUGH 0b000001000
+#define PAGE_FLAG_CACHE_DISABLED 0b000010000
+#define PAGE_FLAG_ACCESSED 0b000100000
+// This flag is only present in the lowest table
+#define PAGE_FLAG_DIRTY 0b001000000
+// This flag is only present in the level 2 and level 3 tables
+#define PAGE_FLAG_SIZE 0b010000000
+// This flag is only present in the lowest table
+#define PAGE_FLAG_GLOBAL 0b100000000
+#define PAGE_FLAG_NO_EXECUTE 0x8000000000000000
+
+// Bits 11-9 in each page table entry are user definable (AVL bits, available for software) and can be used for anything, in this case for the following:
+// This flag is set by the os to indicate that the underlaying page entries are all allocated
+#define PAGE_FLAG_FULL 0b1000000000
+
+// Physical memory allocation must be initialized first!
+void paging_initialize()
+{
+    available_pages = (max_virtual_address - min_virtual_address) >> 12;
+    current_level4_table = page_table_level4;
+    current_level4_index = 1;
+    current_level3_table = 0;
+    current_level3_index = 0;
+    current_level2_table = 0;
+    current_level2_index = 0;
+    current_level1_table = 0;
+    current_level1_index = 0;
+}
+
+void *paging_next_page()
+{
+    while (1)
+    {
+        unsigned long entry = current_level1_table[current_level1_index];
+        if (entry & PAGE_FLAG_PRESENT)
+        {
+            // Check next entry
+            if (++current_level1_index >= 512)
+            {
+                current_level1_table = paging_next_level1_table();
+                current_level1_index = 0;
+            }
+        }
+        else
+        {
+            // This page table is not present, create and enter it
+            unsigned long *new_page = paging_physical_allocate();
+
+            // Insert new table
+            current_level1_table[current_level1_index] = ((unsigned long)new_page) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
+
+            if (++current_level1_index >= 512)
+            {
+                current_level1_table = paging_next_level1_table();
+                current_level1_index = 0;
+            }
+
+            return new_page;
+        }
+    }
+}
+
+void *paging_next_level1_table()
+{
+    while (1)
+    {
+        unsigned long entry = current_level2_table[current_level2_index];
+        if (entry & PAGE_FLAG_PRESENT)
+        {
+            if (++current_level2_index >= 512)
+            {
+                current_level2_table = paging_next_level3_table();
+                current_level2_index = 0;
+            }
+
+            if (!(entry & PAGE_FLAG_FULL))
+            {
+                // This page table is not full and present, select it
+                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set, which only masks the address
+                return entry & 0x7FFFFFFFFFFFF000;
+            }
+            else
+            {
+                // This entry is skipped because it is full
+            }
+        }
+        else
+        {
+            // This page table is not present, create and enter it
+            unsigned long *new_table = paging_physical_allocate();
+
+            // Clear table
+            for (int i = 0; i < 512; i++)
+            {
+                new_table[i] = 0;
+            }
+
+            // Insert new table
+            current_level2_table[current_level2_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
+
+            if (++current_level2_index >= 512)
+            {
+                current_level2_table = paging_next_level3_table();
+                current_level2_index = 0;
+            }
+
+            return new_table; // TODO convert to virtual
+        }
+    }
+}
+
+void *paging_next_level2_table()
+{
+
+    while (1)
+    {
+        unsigned long entry = current_level3_table[current_level3_index];
+        if (entry & PAGE_FLAG_PRESENT)
+        {
+            if (++current_level3_index >= 512)
+            {
+                current_level3_table = paging_next_level3_table();
+                current_level3_index = 0;
+            }
+
+            if (!(entry & PAGE_FLAG_FULL))
+            {
+                // This page table is not full and available, select it
+                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set
+                return entry & 0x7FFFFFFFFFFFF000;
+            }
+            else
+            {
+                // This entry is skipped because it is full
+            }
+        }
+        else
+        {
+            // This page table is not present, create and enter it
+            unsigned long *new_table = paging_physical_allocate();
+
+            // Clear table
+            for (int i = 0; i < 512; i++)
+            {
+                new_table[i] = 0;
+            }
+
+            // Insert new table
+            current_level3_table[current_level3_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
+
+            if (++current_level3_index >= 512)
+            {
+                current_level3_table = paging_next_level3_table();
+                current_level3_index = 0;
+            }
+
+            return new_table;
+        }
+    }
+}
+
+unsigned long *paging_next_level3_table()
+{
+    if (available_pages <= 0)
+    {
+        console_print("warning: paging_next_level3_table no pages available\n");
+    }
+
+    while (1)
+    {
+        unsigned long entry = current_level4_table[current_level4_index];
+        if (entry & PAGE_FLAG_PRESENT)
+        {
+            if (++current_level4_index >= 512)
+            {
+                // Reached end of table, wrap around
+                current_level4_index = 0;
+            }
+
+            if (!(entry & PAGE_FLAG_FULL))
+            {
+                // This page table is not full and available, select it
+                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set
+                return entry & 0x7FFFFFFFFFFFF000;
+            }
+            else
+            {
+                // This entry is skipped because it is full
+            }
+        }
+        else
+        {
+            // This page table is not present, create and enter it
+            unsigned long *new_table = paging_physical_allocate();
+
+            // Clear table
+            for (int i = 0; i < 512; i++)
+            {
+                new_table[i] = 0;
+            }
+
+            // Insert new table
+            current_level4_table[current_level4_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
+
+            if (++current_level4_index >= 512)
+            {
+                // Reached end of table, wrap around
+                current_level4_index = 0;
+            }
+
+            return new_table;
+        }
+    }
+}

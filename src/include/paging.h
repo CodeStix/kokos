@@ -15,6 +15,7 @@ void paging_physical_reserve(void *physical_address, unsigned long bytes);
 void paging_physical_free(void *physical_address);
 
 // Allocates a single 4096 byte chunk of physical memory and returns the physical address to it
+// This chunk is always aligned to 4096 bytes
 void *paging_physical_allocate();
 
 // Returns 1 if the passed address has been reserved or allocated
