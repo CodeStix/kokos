@@ -258,8 +258,7 @@ static unsigned long *paging_next_level1_table()
     }
 }
 
-// Allocates a single page and returns the virtual address to it
-void *paging_allocate()
+void *paging_map(void *physical_address, unsigned short flags)
 {
     if (++current_level1_index >= 512)
     {
@@ -273,7 +272,7 @@ void *paging_allocate()
         unsigned long entry = current_level1_table[current_level1_index];
         if (entry & PAGE_FLAG_PRESENT)
         {
-            // Check next entry
+            // Check next entry, this entry is already used
             if (++current_level1_index >= 512)
             {
                 current_level2_table[current_level2_index] |= PAGE_FLAG_FULL;
@@ -283,11 +282,8 @@ void *paging_allocate()
         }
         else
         {
-            // This page table is not present, create and enter it
-            unsigned long *new_page = memory_physical_allocate();
-
-            // Insert new table
-            current_level1_table[current_level1_index] = ((unsigned long)new_page) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
+            // Insert new entry
+            current_level1_table[current_level1_index] = ((unsigned long)physical_address) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
 
             // Create virtual address
             return (unsigned long *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
@@ -295,7 +291,12 @@ void *paging_allocate()
     }
 }
 
-// Frees a single page allocated using paging_allocate
+void *paging_allocate(unsigned short flags)
+{
+    unsigned long *new_page = memory_physical_allocate();
+    return paging_map(new_page, flags);
+}
+
 void paging_free(void *virtual_address)
 {
     // TODO is there an instruction for this slow mess?
@@ -336,4 +337,12 @@ void paging_free(void *virtual_address)
 
     // Remove present flag
     level1_table_address[level1_index] = level1_entry & ~PAGE_FLAG_PRESENT;
+}
+
+void paging()
+{
+}
+
+void paging_allocate_consecutive(unsigned long pages)
+{
 }

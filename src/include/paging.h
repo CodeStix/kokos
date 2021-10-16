@@ -21,5 +21,17 @@
 
 extern unsigned long page_table_level4[512];
 
+// Sets up paging
+void paging_initialize();
+
 // Returns the physical address for virtual address and returns 0 if the virtual address is not mapped
 void *paging_get_physical_address(void *virtual_address);
+
+// Maps the given physical address to a virtual address
+void *paging_map(void *physical_address, unsigned short flags);
+
+// Allocates a new page and returns its virtual address
+void *paging_allocate(unsigned short flags);
+
+// Frees a single page allocated using paging_allocate or paging_map
+void paging_free(void *virtual_address);
