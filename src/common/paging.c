@@ -271,13 +271,13 @@ static unsigned long max_virtual_address = 0xF00000000000ull; // Just under the 
 static unsigned long available_pages;
 
 static unsigned long *current_level4_table = 0;
-static unsigned short current_level4_index = 1;
+static unsigned long current_level4_index = 1;
 static unsigned long *current_level3_table = 0;
-static unsigned short current_level3_index = 0;
+static unsigned long current_level3_index = 0;
 static unsigned long *current_level2_table = 0;
-static unsigned short current_level2_index = 0;
+static unsigned long current_level2_index = 0;
 static unsigned long *current_level1_table = 0;
-static unsigned short current_level1_index = 0;
+static unsigned long current_level1_index = 0;
 
 #define PAGE_FLAG_PRESENT 0b000000001
 #define PAGE_FLAG_WRITABLE 0b000000010
@@ -311,7 +311,163 @@ void paging_initialize()
     current_level1_index = 0;
 }
 
-void *paging_next_page()
+static unsigned long *paging_next_level3_table()
+{
+    if (available_pages <= 0)
+    {
+        console_print("warning: paging_next_level3_table no pages available\n");
+    }
+
+    if (++current_level4_index >= 512)
+    {
+        // Reached end of table, wrap around
+        current_level4_index = 0;
+    }
+
+    while (1)
+    {
+        unsigned long entry = current_level4_table[current_level4_index];
+        if (entry & PAGE_FLAG_PRESENT)
+        {
+            if (!(entry & PAGE_FLAG_FULL))
+            {
+                // This page table is not full and available, select it
+                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set
+                return entry & 0x7FFFFFFFFFFFF000;
+            }
+            else
+            {
+                // This entry is skipped because it is full
+                if (++current_level4_index >= 512)
+                {
+                    // Reached end of table, wrap around
+                    current_level4_index = 0;
+                }
+            }
+        }
+        else
+        {
+            // This page table is not present, create and enter it
+            unsigned long *new_table = paging_physical_allocate();
+
+            // Clear table
+            for (int i = 0; i < 512; i++)
+            {
+                new_table[i] = 0;
+            }
+
+            // Insert new table
+            current_level4_table[current_level4_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
+
+            return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
+        }
+    }
+}
+
+static unsigned long *paging_next_level2_table()
+{
+    if (++current_level3_index >= 512)
+    {
+        current_level3_table = paging_next_level3_table();
+        current_level3_index = 0;
+    }
+
+    while (1)
+    {
+        unsigned long entry = current_level3_table[current_level3_index];
+        if (entry & PAGE_FLAG_PRESENT)
+        {
+            if (!(entry & (PAGE_FLAG_FULL | PAGE_FLAG_SIZE)))
+            {
+                // This page table is not full and not huge and available, select it
+                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set
+                return entry & 0x7FFFFFFFFFFFF000;
+            }
+            else
+            {
+                // This entry is skipped because it is full
+                if (++current_level3_index >= 512)
+                {
+                    current_level3_table = paging_next_level3_table();
+                    current_level3_index = 0;
+                }
+            }
+        }
+        else
+        {
+            // This page table is not present, create and enter it
+            unsigned long *new_table = paging_physical_allocate();
+
+            // Clear table
+            for (int i = 0; i < 512; i++)
+            {
+                new_table[i] = 0;
+            }
+
+            // Insert new table
+            current_level3_table[current_level3_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
+
+            if (++current_level3_index >= 512)
+            {
+                current_level3_table = paging_next_level3_table();
+                current_level3_index = 0;
+            }
+
+            return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
+        }
+    }
+}
+
+static unsigned long *paging_next_level1_table()
+{
+    if (++current_level2_index >= 512)
+    {
+        current_level2_table = paging_next_level3_table();
+        current_level2_index = 0;
+    }
+
+    while (1)
+    {
+        unsigned long entry = current_level2_table[current_level2_index];
+        if (entry & PAGE_FLAG_PRESENT)
+        {
+            if (!(entry & (PAGE_FLAG_FULL | PAGE_FLAG_SIZE)))
+            {
+                // This page table is not full and not huge and present, select it
+                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set, which only masks the address
+                return entry & 0x7FFFFFFFFFFFF000;
+            }
+            else
+            {
+                // This entry is skipped because it is full
+                if (++current_level2_index >= 512)
+                {
+                    current_level2_table = paging_next_level3_table();
+                    current_level2_index = 0;
+                }
+            }
+        }
+        else
+        {
+            // This page table is not present, create and enter it
+            unsigned long *new_table = paging_physical_allocate();
+
+            // Clear table
+            for (int i = 0; i < 512; i++)
+            {
+                new_table[i] = 0;
+            }
+
+            // Insert new table
+            current_level2_table[current_level2_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
+
+            return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
+        }
+    }
+}
+
+// Allocates a single page and returns the virtual address to it
+void *paging_allocate()
 {
     while (1)
     {
@@ -339,160 +495,13 @@ void *paging_next_page()
                 current_level1_index = 0;
             }
 
-            return new_page;
+            // Create virtual address
+            return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
         }
     }
 }
 
-void *paging_next_level1_table()
+// Frees a single page allocated using paging_allocate
+void paging_free(void *virtual_address)
 {
-    while (1)
-    {
-        unsigned long entry = current_level2_table[current_level2_index];
-        if (entry & PAGE_FLAG_PRESENT)
-        {
-            if (++current_level2_index >= 512)
-            {
-                current_level2_table = paging_next_level3_table();
-                current_level2_index = 0;
-            }
-
-            if (!(entry & PAGE_FLAG_FULL))
-            {
-                // This page table is not full and present, select it
-                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set, which only masks the address
-                return entry & 0x7FFFFFFFFFFFF000;
-            }
-            else
-            {
-                // This entry is skipped because it is full
-            }
-        }
-        else
-        {
-            // This page table is not present, create and enter it
-            unsigned long *new_table = paging_physical_allocate();
-
-            // Clear table
-            for (int i = 0; i < 512; i++)
-            {
-                new_table[i] = 0;
-            }
-
-            // Insert new table
-            current_level2_table[current_level2_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
-
-            if (++current_level2_index >= 512)
-            {
-                current_level2_table = paging_next_level3_table();
-                current_level2_index = 0;
-            }
-
-            return new_table; // TODO convert to virtual
-        }
-    }
-}
-
-void *paging_next_level2_table()
-{
-
-    while (1)
-    {
-        unsigned long entry = current_level3_table[current_level3_index];
-        if (entry & PAGE_FLAG_PRESENT)
-        {
-            if (++current_level3_index >= 512)
-            {
-                current_level3_table = paging_next_level3_table();
-                current_level3_index = 0;
-            }
-
-            if (!(entry & PAGE_FLAG_FULL))
-            {
-                // This page table is not full and available, select it
-                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set
-                return entry & 0x7FFFFFFFFFFFF000;
-            }
-            else
-            {
-                // This entry is skipped because it is full
-            }
-        }
-        else
-        {
-            // This page table is not present, create and enter it
-            unsigned long *new_table = paging_physical_allocate();
-
-            // Clear table
-            for (int i = 0; i < 512; i++)
-            {
-                new_table[i] = 0;
-            }
-
-            // Insert new table
-            current_level3_table[current_level3_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
-
-            if (++current_level3_index >= 512)
-            {
-                current_level3_table = paging_next_level3_table();
-                current_level3_index = 0;
-            }
-
-            return new_table;
-        }
-    }
-}
-
-unsigned long *paging_next_level3_table()
-{
-    if (available_pages <= 0)
-    {
-        console_print("warning: paging_next_level3_table no pages available\n");
-    }
-
-    while (1)
-    {
-        unsigned long entry = current_level4_table[current_level4_index];
-        if (entry & PAGE_FLAG_PRESENT)
-        {
-            if (++current_level4_index >= 512)
-            {
-                // Reached end of table, wrap around
-                current_level4_index = 0;
-            }
-
-            if (!(entry & PAGE_FLAG_FULL))
-            {
-                // This page table is not full and available, select it
-                // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set
-                return entry & 0x7FFFFFFFFFFFF000;
-            }
-            else
-            {
-                // This entry is skipped because it is full
-            }
-        }
-        else
-        {
-            // This page table is not present, create and enter it
-            unsigned long *new_table = paging_physical_allocate();
-
-            // Clear table
-            for (int i = 0; i < 512; i++)
-            {
-                new_table[i] = 0;
-            }
-
-            // Insert new table
-            current_level4_table[current_level4_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
-
-            if (++current_level4_index >= 512)
-            {
-                // Reached end of table, wrap around
-                current_level4_index = 0;
-            }
-
-            return new_table;
-        }
-    }
 }
