@@ -6,6 +6,7 @@
         "stdarg.h": "c",
         "console.h": "c",
         "paging.h": "c",
-        "util.h": "c"
+        "util.h": "c",
+        "memory_physical.h": "c"
     }
 }

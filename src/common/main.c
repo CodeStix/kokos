@@ -7,7 +7,7 @@
 #include "../include/apic.h"
 #include "../include/paging.h"
 #include "../include/multiboot2.h"
-#include "../include/physical_memory.h"
+#include "../include/memory_physical.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -146,13 +146,13 @@ void kernel_main()
     console_print_u64((unsigned long)allocation_table_start, 16);
     console_new_line();
 
-    paging_physical_initialize(allocation_table_start, max_address);
+    memory_physical_initialize(allocation_table_start, max_address);
 
     // Reserve memory for the allocation table itself
-    paging_physical_reserve(allocation_table_start, allocation_table_size);
+    memory_physical_reserve(allocation_table_start, allocation_table_size);
 
     // Reserve memory for the kernel itself (starting at 0x8000, size ~100kb)
-    paging_physical_reserve((void *)0x00100000, 0x100000);
+    memory_physical_reserve((void *)0x00100000, 0x100000);
 
     // Reserve memory for all non-usable (type != 1) memory regions
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
@@ -160,13 +160,13 @@ void kernel_main()
         Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
         if (entry->type != 1)
         {
-            paging_physical_reserve((void *)entry->address, entry->length);
+            memory_physical_reserve((void *)entry->address, entry->length);
         }
     }
 
     // for (int i = 0; i < 20; i++)
     // {
-    //     void *address = paging_physical_allocate();
+    //     void *address = memory_physical_allocate();
     //     console_print("allocation test 0x");
     //     console_print_u64((unsigned long)address, 16);
     //     console_new_line();

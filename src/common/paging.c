@@ -1,7 +1,7 @@
 #include "../include/paging.h"
 #include "../include/console.h"
 #include "../include/util.h"
-#include "../include/physical_memory.h"
+#include "../include/memory_physical.h"
 
 void *paging_get_physical_address(void *virtual_address)
 {
@@ -144,7 +144,7 @@ static unsigned long *paging_next_level3_table()
         else
         {
             // This page table is not present, create and enter it
-            unsigned long *new_table = paging_physical_allocate();
+            unsigned long *new_table = memory_physical_allocate();
 
             // Clear table
             for (int i = 0; i < 512; i++)
@@ -192,7 +192,7 @@ static unsigned long *paging_next_level2_table()
         else
         {
             // This page table is not present, create and enter it
-            unsigned long *new_table = paging_physical_allocate();
+            unsigned long *new_table = memory_physical_allocate();
 
             // Clear table
             for (int i = 0; i < 512; i++)
@@ -242,7 +242,7 @@ static unsigned long *paging_next_level1_table()
         else
         {
             // This page table is not present, create and enter it
-            unsigned long *new_table = paging_physical_allocate();
+            unsigned long *new_table = memory_physical_allocate();
 
             // Clear table
             for (int i = 0; i < 512; i++)
@@ -284,7 +284,7 @@ void *paging_allocate()
         else
         {
             // This page table is not present, create and enter it
-            unsigned long *new_page = paging_physical_allocate();
+            unsigned long *new_page = memory_physical_allocate();
 
             // Insert new table
             current_level1_table[current_level1_index] = ((unsigned long)new_page) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
