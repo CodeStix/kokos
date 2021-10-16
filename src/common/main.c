@@ -7,6 +7,7 @@
 #include "../include/apic.h"
 #include "../include/paging.h"
 #include "../include/multiboot2.h"
+#include "../include/physical_memory.h"
 
 #define uint8 unsigned char
 #define int8 signed char

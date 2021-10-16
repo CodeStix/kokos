@@ -17,6 +17,7 @@ build: src/x86_64/** src/common/** src/include/**
 	x86_64-elf-gcc -c -I src/include -ffreestanding src/common/apic.c -o build/common/apic.o
 	x86_64-elf-gcc -c -I src/include -ffreestanding src/common/paging.c -o build/common/paging.o
 	x86_64-elf-gcc -c -I src/include -ffreestanding src/common/multiboot2.c -o build/common/multiboot2.o
+	x86_64-elf-gcc -c -I src/include -ffreestanding src/common/physical_memory.c -o build/common/physical_memory.o
 	x86_64-elf-gcc -c -I src/include -ffreestanding src/common/main.c -o build/common/main.o
 	x86_64-elf-ld -n -o build/x86_64/os.bin -T linker.ld build/x86_64/*.o build/common/*.o  
 
