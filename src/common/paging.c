@@ -334,7 +334,7 @@ static unsigned long *paging_next_level3_table()
             {
                 // This page table is not full and available, select it
                 // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set
-                return entry & 0x7FFFFFFFFFFFF000;
+                return (unsigned long *)(entry & 0x7FFFFFFFFFFFF000ull);
             }
             else
             {
@@ -360,7 +360,7 @@ static unsigned long *paging_next_level3_table()
             // Insert new table
             current_level4_table[current_level4_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
 
-            return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
+            return (unsigned long *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
         }
     }
 }
@@ -382,7 +382,7 @@ static unsigned long *paging_next_level2_table()
             {
                 // This page table is not full and not huge and available, select it
                 // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set
-                return entry & 0x7FFFFFFFFFFFF000;
+                return (unsigned long *)(entry & 0x7FFFFFFFFFFFF000ull);
             }
             else
             {
@@ -408,7 +408,7 @@ static unsigned long *paging_next_level2_table()
             // Insert new table
             current_level3_table[current_level3_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
 
-            return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
+            return (unsigned long *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
         }
     }
 }
@@ -431,7 +431,7 @@ static unsigned long *paging_next_level1_table()
             {
                 // This page table is not full and not huge and present, select it
                 // 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set, which only masks the address
-                return entry & 0x7FFFFFFFFFFFF000;
+                return (unsigned long *)(entry & 0x7FFFFFFFFFFFF000ull);
             }
             else
             {
@@ -458,7 +458,7 @@ static unsigned long *paging_next_level1_table()
             // Insert new table
             current_level2_table[current_level2_index] = ((unsigned long)new_table) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
 
-            return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
+            return (unsigned long *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
         }
     }
 }
@@ -495,7 +495,7 @@ void *paging_allocate()
             current_level1_table[current_level1_index] = ((unsigned long)new_page) | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITABLE;
 
             // Create virtual address
-            return (void *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
+            return (unsigned long *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
         }
     }
 }
@@ -510,35 +510,35 @@ void paging_free(void *virtual_address)
     unsigned int level2_index = ((unsigned long)virtual_address >> 21) & 0b111111111;
     unsigned int level1_index = ((unsigned long)virtual_address >> 12) & 0b111111111;
 
-    unsigned long level3_table = current_level4_table[level4_index]; //0x7FFFFFFFFFFFF000
-    if (!(level3_table & PAGE_FLAG_PRESENT))
+    unsigned long level4_entry = current_level4_table[level4_index];
+    if (!(level4_entry & PAGE_FLAG_PRESENT))
     {
-        console_print("warning: paging_free tried to free invalid page (level4_table)\n");
+        console_print("warning: paging_free tried to free invalid page (level4_entry)\n");
         return;
     }
 
-    unsigned long level2_table = ((unsigned long *)(level3_table & 0x7FFFFFFFFFFFF000))[level3_index];
-    if (!(level2_table & PAGE_FLAG_PRESENT))
+    unsigned long level3_entry = ((unsigned long *)(level4_entry & 0x7FFFFFFFFFFFF000ull))[level3_index];
+    if (!(level3_entry & PAGE_FLAG_PRESENT))
     {
-        console_print("warning: paging_free tried to free invalid page (level3_table)\n");
+        console_print("warning: paging_free tried to free invalid page (level3_entry)\n");
         return;
     }
 
-    unsigned long level1_table = ((unsigned long *)(level2_table & 0x7FFFFFFFFFFFF000))[level2_index];
-    if (!(level1_table & PAGE_FLAG_PRESENT))
+    unsigned long level2_entry = ((unsigned long *)(level3_entry & 0x7FFFFFFFFFFFF000ull))[level2_index];
+    if (!(level2_entry & PAGE_FLAG_PRESENT))
     {
-        console_print("warning: paging_free tried to free invalid page (level2_table)\n");
+        console_print("warning: paging_free tried to free invalid page (level2_entry)\n");
         return;
     }
 
-    unsigned long *level1_table_address = (unsigned long *)(level1_table & 0x7FFFFFFFFFFFF000);
-    unsigned long entry = level1_table_address[level1_index];
-    if (!(entry & PAGE_FLAG_PRESENT))
+    unsigned long *level1_table_address = (unsigned long *)(level2_entry & 0x7FFFFFFFFFFFF000ull);
+    unsigned long level1_entry = level1_table_address[level1_index];
+    if (!(level1_entry & PAGE_FLAG_PRESENT))
     {
-        console_print("warning: paging_free tried to free invalid page (level1_table)\n");
+        console_print("warning: paging_free tried to free invalid page (level1_entry)\n");
         return;
     }
 
     // Remove present flag
-    level1_table_address[level1_index] &= ~PAGE_FLAG_PRESENT;
+    level1_table_address[level1_index] = level1_entry & ~PAGE_FLAG_PRESENT;
 }
