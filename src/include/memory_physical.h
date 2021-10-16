@@ -1,6 +1,7 @@
 #pragma once
 
-// Sets up the physical allocation table at the specified address
+// Initializes the physical memory system. The allocation_table_location should point to a reserved location
+// that can hold (total_memory / 4096 / 8) bytes
 void memory_physical_initialize(void *allocation_table_location, unsigned long total_memory);
 
 // Reserves a physical address so it can't be allocated using memory_physical_allocate
@@ -16,8 +17,8 @@ void *memory_physical_allocate();
 // Returns 1 if the passed address has been reserved or allocated
 int memory_physical_allocated(void *physical_address);
 
-// Returs the amount of pages allocated
-unsigned long memory_physical_allocated_count();
+// Returs the number of used physical pages
+unsigned long memory_physical_used_pages();
 
 // Allocates multiple consecutive 262144 byte chunks of physical memory and returns the physical address to it
 // Use memory_physical_allocate_consecutive(8) to allocate a 2MB chunk

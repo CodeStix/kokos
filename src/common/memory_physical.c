@@ -7,7 +7,7 @@ static unsigned long *allocation_table = 0;
 static unsigned long allocation_index = 0;
 // The amount of unsigned long entries in the allocation table
 static unsigned long allocation_table_length = 0;
-static unsigned long pages_taken = 0;
+static unsigned long used_physical_pages = 0;
 
 void memory_physical_initialize(void *allocation_table_location, unsigned long total_memory)
 {
@@ -27,9 +27,12 @@ void memory_physical_reserve(void *physical_address, unsigned long bytes)
 {
     // >> 12 is the same as divide by 4096
     unsigned long start_index = ((unsigned long)physical_address) >> 12;
-    unsigned long end_index = start_index + (bytes >> 12);
+    bytes += (unsigned long)physical_address & 0b111111111111;
 
-    for (unsigned long index = start_index; index <= end_index; index++)
+    // This formula will calculate the minimum amount of pages needed to allocate bytes
+    unsigned long page_count = ((bytes - 1) >> 12) + 1;
+
+    for (unsigned long index = start_index; index < start_index + page_count; index++)
     {
         if (index >= allocation_table_length || index < 0)
         {
@@ -51,7 +54,7 @@ void memory_physical_reserve(void *physical_address, unsigned long bytes)
         if (!(allocation_table[byte] & (1 << bit)))
         {
             allocation_table[byte] |= 1 << bit;
-            pages_taken++;
+            used_physical_pages++;
         }
     }
 }
@@ -78,7 +81,7 @@ void memory_physical_free(void *physical_address)
     if (allocation_table[byte] & (1 << bit))
     {
         allocation_table[byte] &= ~(1 << bit);
-        pages_taken--;
+        used_physical_pages--;
     }
     else
     {
@@ -124,7 +127,7 @@ void *memory_physical_allocate()
     // Set bit bit of allocation_table[spot] to zero
     allocation_table[spot] |= 1 << bit;
     allocation_index = spot;
-    pages_taken++;
+    used_physical_pages++;
 
     return (void *)((((spot << 6) + bit) << 12));
 }
@@ -183,7 +186,7 @@ int memory_physical_allocated(void *phyisical_address)
     return (allocation_table[index] >> bit) & 0b1;
 }
 
-unsigned long memory_physical_allocated_count()
+unsigned long memory_physical_used_pages()
 {
-    return pages_taken;
+    return used_physical_pages;
 }

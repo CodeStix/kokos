@@ -35,3 +35,6 @@ void *paging_allocate(unsigned short flags);
 
 // Frees a single page allocated using paging_allocate or paging_map
 void paging_free(void *virtual_address);
+
+// Returs the number of used virtual pages
+unsigned long paging_used_pages();
