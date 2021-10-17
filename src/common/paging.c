@@ -134,7 +134,6 @@ static unsigned long *paging_next_level2_table()
     }
 }
 
-// Returns the physical
 static unsigned long *paging_next_level1_table()
 {
     if (++current_level2_index >= 512)
@@ -277,6 +276,35 @@ void *paging_map_at(void *virtual_address, void *physical_address, unsigned long
         level1_table[level1_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
         used_virtual_pages++;
         return virtual_address;
+    }
+}
+
+void *paging_map_consecutive(void *physical_address, unsigned long bytes, unsigned short flags)
+{
+    // Calculate how mush pages are needed to fit bytes bytes
+    // >> 12 is the same as divide by 4096
+    unsigned long pages = ((bytes - 1) >> 12) + 1;
+
+    if (pages >= 512)
+    {
+        if (pages >= 512 * 512)
+        {
+            // Use 1GB pages
+            unsigned long hugepages = pages >> 9 >> 9;
+
+            // Allocate 'hugepages' consecutive 1GB pages
+        }
+        else
+        {
+            // Use 2MB pages
+            unsigned long hugepages = pages >> 9;
+
+            // Allocate 'hugepages' consecutive 2MB pages
+        }
+    }
+    else
+    {
+        // Allocate 'hugepages' consecutive 4096 bytes pages
     }
 }
 

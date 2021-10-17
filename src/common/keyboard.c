@@ -13,25 +13,25 @@ extern unsigned char port_in8(unsigned short port);
 #define KEYBOARD_COMMAND_REGISTER 0x64
 
 // Blocks until data is available, this is determined by the input buffer status flag at bit 0 of the status register
-void keyboard_wait_can_read()
+static inline void keyboard_wait_can_read()
 {
-    while (!(port_in8(KEYBOARD_COMMAND_REGISTER) & 0x1))
+    while (!(port_in8(KEYBOARD_COMMAND_REGISTER) & 0b00000001))
     {
     }
 }
 
 // Blocks until you can write to the controller's registers, this is determined by the input buffer status flag at bit 1 of the status register
-void keyboard_wait_can_write()
+static inline void keyboard_wait_can_write()
 {
-    while (port_in8(KEYBOARD_COMMAND_REGISTER) & 0x2)
+    while (port_in8(KEYBOARD_COMMAND_REGISTER) & 0b00000010)
     {
     }
 }
 
 // Read all remaining data from the data port at 0x60 while there is data in the output buffer
-void keyboard_clear_buffer()
+static inline void keyboard_clear_buffer()
 {
-    while (port_in8(KEYBOARD_COMMAND_REGISTER) & 0x1)
+    while (port_in8(KEYBOARD_COMMAND_REGISTER) & 0b00000001)
     {
         port_in8(KEYBOARD_DATA_REGISTER);
     }
@@ -100,10 +100,7 @@ void keyboard_init()
     keyboard_wait_can_read();
 
     unsigned char port1_test_result = port_in8(KEYBOARD_DATA_REGISTER);
-    if (port1_test_result != 0)
-    {
-        console_print("warning: port 1 test failed!\n");
-    }
+    unsigned char port2_test_result = 1;
 
     // Check if the 'disable second ps2 port' bit is set, if not, we know that this controller doesn't support a second ps2 port because it didn't disable it at step 1
     if (config & 0b00010000)
@@ -117,12 +114,98 @@ void keyboard_init()
 
         keyboard_wait_can_read();
 
-        unsigned char port2_test_result = port_in8(KEYBOARD_DATA_REGISTER);
-        if (port2_test_result != 0)
+        port2_test_result = port_in8(KEYBOARD_DATA_REGISTER);
+    }
+
+    keyboard_wait_can_write();
+    port_out8(KEYBOARD_COMMAND_REGISTER, 0x20);
+    keyboard_wait_can_read();
+    config = port_in8(KEYBOARD_DATA_REGISTER);
+
+    if (port1_test_result != 0)
+    {
+        console_print("warning: port 1 test failed!\n");
+    }
+    else
+    {
+        keyboard_wait_can_write();
+
+        // Enable first ps/2 port
+        port_out8(KEYBOARD_COMMAND_REGISTER, 0xAE);
+
+        // Enable first ps/2 interrupt
+        config |= 0b00000001;
+    }
+
+    if (port2_test_result != 0)
+    {
+        console_print("warning: port 2 test failed!\n");
+    }
+    else
+    {
+        keyboard_wait_can_write();
+
+        // Enable second ps/2 port
+        port_out8(KEYBOARD_COMMAND_REGISTER, 0xA8);
+
+        // Enable second ps/2 interrupt
+        config |= 0b00000010;
+    }
+
+    keyboard_wait_can_write();
+    port_out8(KEYBOARD_COMMAND_REGISTER, 0x60);
+    keyboard_wait_can_write();
+    port_out8(KEYBOARD_DATA_REGISTER, config);
+
+    // Reset ps/2
+    if (port1_test_result == 0)
+    {
+        // Send reset command to device
+        keyboard_wait_can_write();
+        port_out8(KEYBOARD_DATA_REGISTER, 0xFF);
+        // Wait for the device 'ACK'
+        keyboard_wait_can_read();
+        port_in8(KEYBOARD_DATA_REGISTER);
+        // Wait for device reset response, 0xAA meaning ok
+        keyboard_wait_can_read();
+        if (0xAA != port_in8(KEYBOARD_DATA_REGISTER))
         {
-            console_print("warning: port 2 test failed!\n");
+            // Invalid response from device
+            console_print("invalid response from ps/2 device 1\n");
+            port1_test_result = 1;
+        }
+    }
+    if (port2_test_result == 0)
+    {
+        // Select port 2
+        keyboard_wait_can_write();
+        port_out8(KEYBOARD_COMMAND_REGISTER, 0xD4);
+        // Send reset command to device
+        keyboard_wait_can_write();
+        port_out8(KEYBOARD_DATA_REGISTER, 0xFF);
+        // Wait for the device 'ACK'
+        keyboard_wait_can_read();
+        port_in8(KEYBOARD_DATA_REGISTER);
+        // Wait for device reset response, 0xAA meaning ok
+        keyboard_wait_can_read();
+        if (0xAA != port_in8(KEYBOARD_DATA_REGISTER))
+        {
+            // Invalid response from device
+            console_print("invalid response from ps/2 device 2\n");
+            port2_test_result = 1;
         }
     }
 
+    // console_clear();
     console_print("ps2 controller initialized\n");
+
+    // while (1)
+    // {
+    //     keyboard_wait_can_read();
+
+    //     unsigned char input = port_in8(KEYBOARD_DATA_REGISTER);
+    //     console_print("received ");
+    //     console_print_u32(input, 16);
+    //     console_new_line();
+    // }
 }
