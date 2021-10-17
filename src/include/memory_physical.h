@@ -20,7 +20,7 @@ int memory_physical_allocated(void *physical_address);
 // Returs the number of used physical pages
 unsigned long memory_physical_used_pages();
 
-// Allocates multiple consecutive 262144 byte chunks of physical memory and returns the physical address to it
-// Use memory_physical_allocate_consecutive(8) to allocate a 2MB chunk
-// Use memory_physical_allocate_consecutive(4096) to allocate a 1GB chunk
-void *memory_physical_allocate_consecutive(unsigned int chunk_count);
+// Allocates multiple consecutive pages (4096 bytes) of physical memory and returns the physical address to it
+// Use memory_physical_allocate_consecutive(512) to allocate a 2MB chunk
+// Use memory_physical_allocate_consecutive(512 * 512) to allocate a 1GB chunk
+void *memory_physical_allocate_consecutive(unsigned long pages);

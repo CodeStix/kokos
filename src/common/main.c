@@ -164,7 +164,7 @@ void kernel_main()
     {
         console_print("1gb pages not supported, using 2mb pages to identity map memory\n");
 
-        // The first GB of pages were already identity mapped using 2MB pages in main.asm, start at 1GB
+        // Identity map whole memory using 2MB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
         {
             paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_2MB | PAGING_FLAG_REPLACE);
@@ -194,10 +194,10 @@ void kernel_main()
         *virt = i * 500;
     }
 
-    console_print("[end]\n");
-    while (1)
-    {
-    }
+    // console_print("[end]\n");
+    // while (1)
+    // {
+    // }
 
     // Find the root system description table pointer
     AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
@@ -244,12 +244,13 @@ void kernel_main()
         console_print("madt not found!!!\n");
     }
 
-    Apic *apic = (Apic *)madt->local_apic_address;
+    Apic *apic = (Apic *)paging_map(madt->local_apic_address, 0);
     console_print("address test: 0x");
     console_print_u64((unsigned long)paging_get_physical_address(apic), 16);
     console_new_line();
     console_print("address: 0x");
     console_print_u64((unsigned long)apic, 16);
+
     console_new_line();
     console_print("apic size ");
     console_print_u32(sizeof(Apic), 10);

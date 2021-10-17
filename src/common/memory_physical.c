@@ -128,9 +128,10 @@ void *memory_physical_allocate()
     return (void *)((((spot << 6) + bit) << 12));
 }
 
-void *memory_physical_allocate_consecutive(unsigned int chunk_count)
+void *memory_physical_allocate_consecutive(unsigned long pages)
 {
     // TODO this is infinite loop when no memory is available
+    unsigned long chunk_count = pages >> 6;
     unsigned long spot = allocation_index;
     unsigned int consecutive = 0;
     while (1)
