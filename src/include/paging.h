@@ -24,7 +24,7 @@
 // Bits 20:12 index into the 512-entry page table.
 // Bits 11:0 provide the byte offset into the physical page.
 
-// 0111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 0000 0000 0000 (the table is always aligned to 4096 bytes, or, first 12 bits set to 0)
+// 0x7FFFFFFFFFFFF000 = all ones without the 63 and first 12 bits set, which only masks the address
 #define PAGING_ADDRESS_MASK 0x7FFFFFFFFFFFF000ull
 #define PAGING_MAX_VIRTUAL_PAGES 512ul * 512ul * 512ul * 512ul
 

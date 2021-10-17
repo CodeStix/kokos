@@ -155,7 +155,7 @@ void kernel_main()
         // Identity map whole memory using 1GB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x40000000ul); address += 0x40000000ul)
         {
-            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_1GB);
+            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_1GB | PAGING_FLAG_REPLACE);
         }
 
         console_print("done\n");
@@ -165,27 +165,33 @@ void kernel_main()
         console_print("1gb pages not supported, using 2mb pages to identity map memory\n");
 
         // The first GB of pages were already identity mapped using 2MB pages in main.asm, start at 1GB
-        for (unsigned long address = 0x40000000ul; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
+        for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
         {
-            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_2MB);
+            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_2MB | PAGING_FLAG_REPLACE);
         }
 
         console_print("done\n");
     }
 
-    console_print("done\n");
-    console_print("mapped 0x04ffe0000: ");
-    console_print_u64((unsigned long)paging_get_physical_address((unsigned long *)0x04ffe0000), 16);
-    console_new_line();
-
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 3; i++)
     {
-        console_print("alloc test: 0x");
-        void *virt = paging_allocate(0);
+        console_print("identity test: 0x");
+        int *virt = (int *)0x000fe0000 + i;
         console_print_u64((unsigned long)virt, 16);
         console_print(" -> 0x");
         console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
         console_print("\n");
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        console_print("alloc test: 0x");
+        int *virt = paging_allocate(0);
+        console_print_u64((unsigned long)virt, 16);
+        console_print(" -> 0x");
+        console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
+        console_print("\n");
+        *virt = i * 500;
     }
 
     console_print("[end]\n");
