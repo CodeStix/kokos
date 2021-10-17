@@ -155,7 +155,7 @@ void kernel_main()
         // Identity map whole memory using 1GB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x40000000ul); address += 0x40000000ul)
         {
-            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGE_FLAG_1GB);
+            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_1GB);
         }
 
         console_print("done\n");
@@ -167,7 +167,7 @@ void kernel_main()
         // The first GB of pages were already identity mapped using 2MB pages in main.asm, start at 1GB
         for (unsigned long address = 0x40000000ul; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
         {
-            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGE_FLAG_2MB);
+            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_2MB);
         }
 
         console_print("done\n");

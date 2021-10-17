@@ -26,29 +26,28 @@
 
 // 0111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 0000 0000 0000 (the table is always aligned to 4096 bytes, or, first 12 bits set to 0)
 #define PAGING_ADDRESS_MASK 0x7FFFFFFFFFFFF000ull
+#define PAGING_MAX_VIRTUAL_PAGES 512ul * 512ul * 512ul * 512ul
 
-#define PAGE_FLAG_PRESENT 0b000000001
-#define PAGE_FLAG_WRITABLE 0b000000010
-#define PAGE_FLAG_EVERYONE_ACCESS 0b000000100
-#define PAGE_FLAG_WRITETHROUGH 0b000001000
-#define PAGE_FLAG_CACHE_DISABLED 0b000010000
-#define PAGE_FLAG_ACCESSED 0b000100000
+// The following PAGING_ENTRY_FLAG are used in the page tables
+#define PAGING_ENTRY_FLAG_PRESENT 0b000000001
+#define PAGING_ENTRY_FLAG_WRITABLE 0b000000010
+#define PAGING_ENTRY_FLAG_EVERYONE_ACCESS 0b000000100
+#define PAGING_ENTRY_FLAG_WRITETHROUGH 0b000001000
+#define PAGING_ENTRY_FLAG_CACHE_DISABLED 0b000010000
+#define PAGING_ENTRY_FLAG_ACCESSED 0b000100000
 // This flag is only present in the lowest table
-#define PAGE_FLAG_DIRTY 0b001000000
+#define PAGING_ENTRY_FLAG_DIRTY 0b001000000
 // This flag is only present in the level 2 and level 3 tables
-#define PAGE_FLAG_SIZE 0b010000000
+#define PAGING_ENTRY_FLAG_SIZE 0b010000000
 // This flag is only present in the lowest table
-#define PAGE_FLAG_GLOBAL 0b100000000
-#define PAGE_FLAG_NO_EXECUTE 0x8000000000000000ull
-
+#define PAGING_ENTRY_FLAG_GLOBAL 0b100000000
+#define PAGING_ENTRY_FLAG_NO_EXECUTE 0x8000000000000000ull
 // Bits 11-9 in each page table entry are user definable (AVL bits, available for software) and can be used for anything, in this case for the following:
 // This flag indicates that the underlaying page table does not contain at least 1 empty entry
-#define PAGE_FLAG_FULL 0b1000000000
+#define PAGING_ENTRY_FLAG_FULL 0b1000000000
 
-#define PAGE_FLAG_1GB 0x2000000000000000ull
-#define PAGE_FLAG_2MB 0x4000000000000000ull
-
-#define PAGING_MAX_VIRTUAL_PAGES 512ul * 512ul * 512ul * 512ul
+#define PAGING_FLAG_1GB 0x2000000000000000ull
+#define PAGING_FLAG_2MB 0x4000000000000000ull
 
 // Sets up paging.
 // Physical memory allocation must be initialized first!
