@@ -178,6 +178,16 @@ void kernel_main()
     console_print_u64((unsigned long)paging_get_physical_address((unsigned long *)0x04ffe0000), 16);
     console_new_line();
 
+    for (int i = 0; i < 5; i++)
+    {
+        console_print("alloc test: 0x");
+        void *virt = paging_allocate(0);
+        console_print_u64((unsigned long)virt, 16);
+        console_print(" -> 0x");
+        console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
+        console_print("\n");
+    }
+
     console_print("[end]\n");
     while (1)
     {

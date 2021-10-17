@@ -46,8 +46,20 @@
 // This flag indicates that the underlaying page table does not contain at least 1 empty entry
 #define PAGING_ENTRY_FLAG_FULL 0b1000000000
 
-#define PAGING_FLAG_1GB 0x2000000000000000ull
-#define PAGING_FLAG_2MB 0x4000000000000000ull
+// This flag indicates that reading is enabled is enabled for this page
+#define PAGING_FLAG_READ 0b1
+// This flag indicates that writing is enabled for this page, reading must be enabled too to ensure write access
+#define PAGING_FLAG_WRITE 0b10
+// This flag indicates that the processor may execute code inside this page
+#define PAGING_FLAG_EXECUTE 0b100
+// This flag indicates that this page can be accessed by privilege level 3 when it is readable/writable
+#define PAGING_FLAG_USER 0b1000
+// This flag indicates that paging_map_at should use 1GB pages
+#define PAGING_FLAG_1GB 0b10000
+// This flag indicates that paging_map_at should use 2MB pages
+#define PAGING_FLAG_2MB 0b100000
+// This flag indicates that paging_map_at should forcefully replace the existing virtual mapping if there is one
+#define PAGING_FLAG_REPLACE 0b1000000
 
 // Sets up paging.
 // Physical memory allocation must be initialized first!
