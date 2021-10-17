@@ -156,6 +156,14 @@ typedef struct
     AcpiFadtAddress extended_gpe1_block;
 } __attribute__((packed)) AcpiFadt;
 
+#define ACPI_MADT_TYPE_LOCAL_APIC 0
+#define ACPI_MADT_TYPE_IO_APIC 1
+#define ACPI_MADT_TYPE_IO_APIC_SOURCE_OVERRIDE 2
+#define ACPI_MADT_TYPE_IO_APIC_NON_MASKABLE 3
+#define ACPI_MADT_TYPE_LOCAL_APIC_NON_MASKABLE 4
+#define ACPI_MADT_TYPE_LOCAL_APIC_ADDRESS_OVERRIDE 5
+#define ACPI_MADT_TYPE_LOCAL_X2APIC 9
+
 // Every AcpiMadt entry starts with this header
 typedef struct
 {
@@ -280,3 +288,11 @@ void acpi_print_xsdt(const AcpiXsdt *xsdt);
 void acpi_print_sdt(const AcpiSdt *sdt);
 
 void acpi_print_rsdtp(const AcpiRsdtp *rsdtp);
+
+AcpiMadtEntry *acpi_madt_iterate2(const AcpiMadt *madt, AcpiMadtEntry *previous);
+
+// Enumerate the MADT table
+AcpiMadtEntry *acpi_madt_iterate(const AcpiMadt *madt, AcpiMadtEntry *previous);
+
+// Enumerate the MADT table filtering by entry_type
+AcpiMadtEntry *acpi_madt_iterate_type(const AcpiMadt *madt, AcpiMadtEntry *previous, unsigned int entry_type);

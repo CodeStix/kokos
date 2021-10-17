@@ -1,5 +1,6 @@
 #include "../include/acpi.h"
 #include "../include/console.h"
+#include "../include/util.h"
 
 AcpiRsdtp *acpi_find_rsdt_pointer()
 {
@@ -151,6 +152,38 @@ void acpi_print_madt(const AcpiMadt *madt)
     }
 
     console_new_line();
+}
+
+AcpiMadtEntry *acpi_madt_iterate(const AcpiMadt *madt, AcpiMadtEntry *previous)
+{
+    if (previous == 0)
+    {
+        // Start of iteration
+        return (AcpiMadtEntry *)((unsigned long)madt + sizeof(AcpiMadt));
+    }
+    else
+    {
+        AcpiMadtEntry *next = (AcpiMadtEntry *)((unsigned long)previous + previous->length);
+        if ((unsigned long)next >= (unsigned long)madt + madt->base.length)
+        {
+            // Reached end
+            return 0;
+        }
+        else
+        {
+            // Return next entry
+            return next;
+        }
+    }
+}
+
+AcpiMadtEntry *acpi_madt_iterate_type(const AcpiMadt *madt, AcpiMadtEntry *previous, unsigned int entry_type)
+{
+    while ((previous = acpi_madt_iterate(madt, previous)) && previous->type != entry_type)
+    {
+    }
+
+    return previous;
 }
 
 AcpiSdt *acpi_rsdt_get_table(const AcpiRsdt *root_table, unsigned int table_signature)

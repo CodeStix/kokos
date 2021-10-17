@@ -234,14 +234,15 @@ void kernel_main()
 
     if (!apic_check_supported())
     {
-        console_print("apic is NOT supported!\n");
+        console_print("fatal: apic is not supported!\n");
         return;
     }
 
     AcpiMadt *madt = (AcpiMadt *)acpi_rsdt_get_table(rsdt, ACPI_MADT_SIGNATURE);
     if (!madt)
     {
-        console_print("madt not found!!!\n");
+        console_print("fatal: madt not found!!!\n");
+        return;
     }
 
     Apic *apic = (Apic *)paging_map(madt->local_apic_address, 0);
@@ -266,10 +267,25 @@ void kernel_main()
     console_new_line();
 
     // hit_breakpoint();
+    acpi_print_madt(madt);
+
+    // Iterate all io apic's
+    AcpiMadtEntry1IOAPIC *current_ioapic = 0;
+    while (current_ioapic = acpi_madt_iterate_type(madt, current_ioapic, ACPI_MADT_TYPE_IO_APIC))
+    {
+        console_print("io apic at 0x");
+        console_print_u64(current_ioapic->io_apic_address, 16);
+        console_print(" with irq ");
+        console_print_u64(current_ioapic->global_system_interrupt_base, 10);
+        console_new_line();
+    }
 
     // pci_scan();
 
     keyboard_init();
+
+    // Step 1, enable spurious_interrupt_vector
+    // apic->spurious_interrupt_vector
 
     console_print("reached end\n");
 }

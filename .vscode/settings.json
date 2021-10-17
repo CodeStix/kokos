@@ -8,6 +8,7 @@
         "paging.h": "c",
         "util.h": "c",
         "memory_physical.h": "c",
-        "keyboard.h": "c"
+        "keyboard.h": "c",
+        "apic.h": "c"
     }
 }
