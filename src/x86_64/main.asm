@@ -1,6 +1,5 @@
 ; Give other files access to the 'start' address
 global start32
-global memory_chunk
 global gdt64.code_segment
 global page_table_level4
 global memory_map
@@ -21,7 +20,7 @@ start32:
     call check_cpuid_supported
     call check_long_mode
 
-    call setup_page_tables
+    call paging_map_first_gb
     call enable_pae
     call enable_long_mode
     call enable_paging
@@ -64,7 +63,7 @@ check_long_mode:            ; (64 bit mode)
     mov dword [0xb8000], 0x4f314f45 ; Print E1 in red to screen https://wiki.osdev.org/Printing_To_Screen
     hlt
 
-setup_page_tables:
+paging_map_first_gb:
     mov eax, page_table_level3      ; Store address of level 3 table (page directory pointer table) 
     or eax, 0b11                ; Set present and read/write flag of entry https://wiki.osdev.org/Paging
     mov [page_table_level4], eax    ; Store address of the only level 3 table into first entry of level 4 table (page map level 4 table)
@@ -124,12 +123,6 @@ page_table_level2:
 
 multiboot2_info:
     dq 0
-
-memory_chunk:
-    dq 0
-    dq 0
-    dq 0
-    ; resb 1024 * 64 * 16 - ($ - memory_chunk)
 
 section .rodata ; The rodata section contains initialized read only data
 

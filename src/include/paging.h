@@ -24,6 +24,9 @@
 // Bits 20:12 index into the 512-entry page table.
 // Bits 11:0 provide the byte offset into the physical page.
 
+// 0111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111 0000 0000 0000 (the table is always aligned to 4096 bytes, or, first 12 bits set to 0)
+#define PAGING_ADDRESS_MASK 0x7FFFFFFFFFFFF000ull
+
 #define PAGE_FLAG_PRESENT 0b000000001
 #define PAGE_FLAG_WRITABLE 0b000000010
 #define PAGE_FLAG_EVERYONE_ACCESS 0b000000100
@@ -36,11 +39,14 @@
 #define PAGE_FLAG_SIZE 0b010000000
 // This flag is only present in the lowest table
 #define PAGE_FLAG_GLOBAL 0b100000000
-#define PAGE_FLAG_NO_EXECUTE 0x8000000000000000
+#define PAGE_FLAG_NO_EXECUTE 0x8000000000000000ull
 
 // Bits 11-9 in each page table entry are user definable (AVL bits, available for software) and can be used for anything, in this case for the following:
 // This flag indicates that the underlaying page table does not contain at least 1 empty entry
 #define PAGE_FLAG_FULL 0b1000000000
+
+#define PAGE_FLAG_1GB 0x2000000000000000ull
+#define PAGE_FLAG_2MB 0x4000000000000000ull
 
 #define PAGING_MAX_VIRTUAL_PAGES 512ul * 512ul * 512ul * 512ul
 
@@ -53,6 +59,9 @@ void *paging_get_physical_address(void *virtual_address);
 
 // Maps a page at the given physical address to a virtual address
 void *paging_map(void *physical_address, unsigned short flags);
+
+// Maps the page at a specific physical address to a specific virtual address
+void *paging_map_at(void *virtual_address, void *physical_address, unsigned long flags);
 
 // Allocates a new page and returns its virtual address
 void *paging_allocate(unsigned short flags);

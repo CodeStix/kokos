@@ -20,6 +20,7 @@
 
 extern void hit_breakpoint();
 extern unsigned long page_table_level4[512];
+extern int hugepages_supported();
 
 void memory_debug()
 {
@@ -127,6 +128,9 @@ void kernel_main()
     // Reserve memory for the allocation table itself
     memory_physical_reserve(allocation_table_start, allocation_table_size);
 
+    // Reserve first megabyte, got problems when allocating here https://wiki.osdev.org/Memory_Map_(x86)
+    memory_physical_reserve((void *)0, 0x000FFFFF);
+
     // Reserve memory for the kernel itself (starting at 0x8000, size ~100kb)
     memory_physical_reserve((void *)0x00100000, 0x100000);
 
@@ -140,24 +144,39 @@ void kernel_main()
         }
     }
 
+    // Initialize paging
     paging_initialize(page_table_level4);
 
-    // for (int i = 0; i < 20; i++)
-    // {
-    //     void *address = memory_physical_allocate();
-    //     console_print("allocation test 0x");
-    //     console_print_u64((unsigned long)address, 16);
-    //     console_new_line();
-    // }
-
-    for (int i = 0; i < 4; i++)
+    // Identity map whole memory
+    if (hugepages_supported())
     {
-        console_print("virtual address: 0x");
-        int *test_address = paging_allocate(PAGE_FLAG_WRITABLE | PAGE_FLAG_PRESENT);
-        console_print_u64((unsigned long)test_address, 16);
-        console_new_line();
-        *test_address = i + 100;
+        console_print("1gb pages supported, using this to identity map memory\n");
+
+        // Identity map whole memory using 1GB huge pages
+        for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x40000000ul); address += 0x40000000ul)
+        {
+            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGE_FLAG_1GB);
+        }
+
+        console_print("done\n");
     }
+    else
+    {
+        console_print("1gb pages not supported, using 2mb pages to identity map memory\n");
+
+        // The first GB of pages were already identity mapped using 2MB pages in main.asm, start at 1GB
+        for (unsigned long address = 0x40000000ul; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
+        {
+            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGE_FLAG_2MB);
+        }
+
+        console_print("done\n");
+    }
+
+    console_print("done\n");
+    console_print("mapped 0x04ffe0000: ");
+    console_print_u64((unsigned long)paging_get_physical_address((unsigned long *)0x04ffe0000), 16);
+    console_new_line();
 
     console_print("[end]\n");
     while (1)

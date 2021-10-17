@@ -36,11 +36,7 @@ void memory_physical_reserve(void *physical_address, unsigned long bytes)
     {
         if (index >= allocation_table_length || index < 0)
         {
-            console_print("warning: memory_physical_reserve out of physical memory range (0x");
-            console_print_u64((unsigned long)physical_address, 16);
-            console_print(" ... 0x");
-            console_print_u64((unsigned long)physical_address + bytes, 16);
-            console_print(")\n");
+            // This memory does not reside in physical memory, so it can't be allocated and is reserved
             break;
         }
 

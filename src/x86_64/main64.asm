@@ -7,6 +7,7 @@ extern console_new_line
 extern console_print_length
 global start64
 global hit_breakpoint
+global hugepages_supported
 
 %include "src/x86_64/interrupts.asm"
 %include "src/x86_64/pci.asm"
@@ -38,6 +39,17 @@ start64:
 
     call kernel_main
     hlt
+
+hugepages_supported:
+    mov rax, 0x80000001
+    cpuid
+    test edx, 1 << 26
+    jz .no_page
+    mov rax, 1 ; 1GB pages supported
+    ret
+.no_page:
+    mov rax, 0
+    ret
 
 
 section .rodata
