@@ -19,9 +19,18 @@
 #define int64 signed long long
 #define uint64 unsigned long long
 
-extern void hit_breakpoint();
 extern unsigned long page_table_level4[512];
-extern int hugepages_supported();
+
+int hugepages_supported()
+{
+    CpuIdResult result = cpu_id(0x80000001);
+    return result.edx & CPU_ID_1GB_PAGES_EDX;
+}
+
+void hit_breakpoint()
+{
+    asm volatile("int3");
+}
 
 void memory_debug()
 {
@@ -267,7 +276,6 @@ void kernel_main()
     console_print_u32(apic->version, 10);
     console_new_line();
 
-    // hit_breakpoint();
     acpi_print_madt(madt);
 
     // Iterate all io apic's
@@ -281,29 +289,8 @@ void kernel_main()
         console_new_line();
     }
 
+    // hit_breakpoint();
     // pci_scan();
-
-    CpuIdResult result = cpu_id(0); //0x80000001
-
-    console_print("eax: ");
-    console_print_u32(result.eax, 2);
-    console_print("\nebx: ");
-    console_print_u32(result.ebx, 2);
-    console_print("\necx: ");
-    console_print_u32(result.ecx, 2);
-    console_print("\nedx: ");
-    console_print_u32(result.edx, 2);
-    console_new_line();
-
-    console_print("eax: 0x");
-    console_print_u32(result.eax, 16);
-    console_print("\nebx: 0x");
-    console_print_u32(result.ebx, 16);
-    console_print("\necx: 0x");
-    console_print_u32(result.ecx, 16);
-    console_print("\nedx: 0x");
-    console_print_u32(result.edx, 16);
-    console_new_line();
 
     keyboard_init();
 

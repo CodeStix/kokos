@@ -16,10 +16,6 @@ global hugepages_supported
 section .text
 bits 64     ; Tell the assembler that this file should create 64 bit instructions
 
-hit_breakpoint:
-    int3
-    ret
-
 start64:
     call console_clear
 
@@ -41,22 +37,9 @@ start64:
     call kernel_main
     hlt
 
-hugepages_supported:
-    mov rax, 0x80000001
-    cpuid
-    test edx, 1 << 26
-    jz .no_page
-    mov rax, 1 ; 1GB pages supported
-    ret
-.no_page:
-    mov rax, 0
-    ret
-
-
 section .bss
 
 memory_chunk:
-
 
 section .rodata
 
