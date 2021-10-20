@@ -19,6 +19,7 @@ build: src/x86_64/** src/common/** src/include/**
 	gcc -c -I src/include -masm=intel -ffreestanding -fno-stack-protector src/common/multiboot2.c -o build/common/multiboot2.o
 	gcc -c -I src/include -masm=intel -ffreestanding -fno-stack-protector src/common/memory_physical.c -o build/common/memory_physical.o
 	gcc -c -I src/include -masm=intel -ffreestanding -fno-stack-protector src/common/port.c -o build/common/port.o
+	gcc -c -I src/include -masm=intel -ffreestanding -fno-stack-protector src/common/cpu.c -o build/common/cpu.o
 	gcc -c -I src/include -masm=intel -ffreestanding -fno-stack-protector src/common/main.c -o build/common/main.o
 	ld -n -o build/x86_64/os.bin -T linker.ld build/x86_64/*.o build/common/*.o  
 

@@ -8,6 +8,7 @@
 #include "../include/paging.h"
 #include "../include/multiboot2.h"
 #include "../include/memory_physical.h"
+#include "../include/cpu.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -281,6 +282,28 @@ void kernel_main()
     }
 
     // pci_scan();
+
+    CpuIdResult result = cpu_id(0); //0x80000001
+
+    console_print("eax: ");
+    console_print_u32(result.eax, 2);
+    console_print("\nebx: ");
+    console_print_u32(result.ebx, 2);
+    console_print("\necx: ");
+    console_print_u32(result.ecx, 2);
+    console_print("\nedx: ");
+    console_print_u32(result.edx, 2);
+    console_new_line();
+
+    console_print("eax: 0x");
+    console_print_u32(result.eax, 16);
+    console_print("\nebx: 0x");
+    console_print_u32(result.ebx, 16);
+    console_print("\necx: 0x");
+    console_print_u32(result.ecx, 16);
+    console_print("\nedx: 0x");
+    console_print_u32(result.edx, 16);
+    console_new_line();
 
     keyboard_init();
 
