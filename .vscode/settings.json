@@ -9,6 +9,8 @@
         "util.h": "c",
         "memory_physical.h": "c",
         "keyboard.h": "c",
-        "apic.h": "c"
+        "apic.h": "c",
+        "multiboot2.h": "c",
+        "port.h": "c"
     }
 }

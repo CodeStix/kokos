@@ -5,6 +5,7 @@ extern console_clear
 extern console_print_u64
 extern console_new_line
 extern console_print_length
+global memory_chunk
 global start64
 global hit_breakpoint
 global hugepages_supported
@@ -50,6 +51,11 @@ hugepages_supported:
 .no_page:
     mov rax, 0
     ret
+
+
+section .bss
+
+memory_chunk:
 
 
 section .rodata

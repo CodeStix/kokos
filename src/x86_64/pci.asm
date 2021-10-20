@@ -1,8 +1,4 @@
 global pci_config_read32
-global port_out32
-global port_in32
-global port_out8
-global port_in8
 
 section .text
 bits 64
@@ -38,27 +34,3 @@ pci_config_read32:
     in eax, dx            ; Read pci configuration space
 
     ret
-
-port_out32:
-    mov rdx, rdi
-    mov rax, rsi
-    out dx, eax
-    ret
-
-port_in32:
-    mov eax, 0
-    mov rdx, rdi
-    in eax, dx 
-    ret           
-
-port_out8:
-    mov rdx, rdi
-    mov rax, rsi
-    out dx, al
-    ret
-
-port_in8:
-    mov eax, 0
-    mov rdx, rdi
-    in al, dx 
-    ret           

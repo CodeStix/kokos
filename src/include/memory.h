@@ -7,7 +7,7 @@ typedef struct MemoryChunk
     int size;
 } MemoryChunk;
 
-MemoryChunk memory_chunk;
+extern MemoryChunk memory_chunk;
 
 // Sets a region of memory starting at `pointer` and ending at `pointer + amount` equal to `value`
 void memory_set(void *pointer, unsigned char value, int amount);

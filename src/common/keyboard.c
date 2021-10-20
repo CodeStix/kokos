@@ -1,13 +1,9 @@
 #include "../include/keyboard.h"
 #include "../include/console.h"
+#include "../include/port.h"
 
 // This file contains the driver for the old Intel 8042 ps/2 controller, which is still emulated by most systems
 // https://wiki.osdev.org/%228042%22_PS/2_Controller
-
-extern void port_out32(unsigned short port, unsigned int value);
-extern unsigned int port_in32(unsigned short port);
-extern void port_out8(unsigned short port, unsigned char value);
-extern unsigned char port_in8(unsigned short port);
 
 #define KEYBOARD_DATA_REGISTER 0x60
 #define KEYBOARD_COMMAND_REGISTER 0x64
@@ -199,13 +195,13 @@ void keyboard_init()
     // console_clear();
     console_print("ps2 controller initialized\n");
 
-    // while (1)
-    // {
-    //     keyboard_wait_can_read();
+    while (1)
+    {
+        keyboard_wait_can_read();
 
-    //     unsigned char input = port_in8(KEYBOARD_DATA_REGISTER);
-    //     console_print("received ");
-    //     console_print_u32(input, 16);
-    //     console_new_line();
-    // }
+        unsigned char input = port_in8(KEYBOARD_DATA_REGISTER);
+        console_print("received ");
+        console_print_u32(input, 16);
+        console_new_line();
+    }
 }

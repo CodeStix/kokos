@@ -230,7 +230,7 @@ void kernel_main()
     // Step 1: check if supported
     // Step 2: write 0x1B to apic base address register msr
 
-    apic_disable_pic();
+    // apic_disable_pic();
 
     if (!apic_check_supported())
     {

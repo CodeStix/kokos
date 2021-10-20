@@ -59,7 +59,7 @@ typedef struct
 
 // TODO create all multiboot2 structures
 
-Multiboot2Info *multiboot2_info;
+extern Multiboot2Info *multiboot2_info;
 
 // Returns 1 if multiboot2 boot information is supported
 int multiboot2_info_available();
