@@ -96,93 +96,12 @@ print_registers:
     jne .loop
     ret
 
-interrupt_handle_divide_zero:
-    call print_registers
-    mov rdi, error_divide_by_zero
-    call console_print  ; Notes on calling c functions from assembly (using System V X86_64 calling convention): https://wiki.osdev.org/Calling_Conventions
-    hlt
-
-interrupt_handle_breakpoint:
-    push_all_registers
-    call print_registers
-    mov rdi, error_breakpoint
-    call console_print  
-    pop_all_registers
-    iretq
-
-interrupt_handle_overflow:
-    push_all_registers
-    mov rdi, error_overflow
-    call console_print  
-    pop rdi
-    pop_all_registers
-    iretq
-
-interrupt_handle_bound_range:
-    mov rdi, error_bound_range
-    call console_print  
-    hlt
-
-interrupt_handle_invalid_opcode:
-    mov rdi, error_invalid_opcode
-    call console_print  
-    hlt
-
-interrupt_handle_double_fault:
-    mov rdi, error_double_fault
-    call console_print  
-    hlt
-
-interrupt_handle_invalid_tss:
-    mov rdi, error_invalid_tss
-    call console_print  
-    hlt
-
-interrupt_handle_segment_not_found:
-    mov rdi, error_invalid_tss
-    call console_print  
-    hlt
-
-interrupt_handle_stack:
-    mov rdi, error_stack
-    call console_print  
-    hlt
-
-interrupt_handle_general_protection:
-    mov rdi, error_general_protection
-    call console_print  
-    hlt
-
-interrupt_handle_page_fault:
-    mov rdi, error_page_fault
-    call console_print  
-
-    mov rdi, cr2                ; Address that caused the page fault is stored in cr2
-    mov rsi, 16
-    call console_print_u64
-
-    mov rdi, 0x16
-    call console_print_char
-
-    hlt
-
 load_idt:
-    call interrupt_handlers_register
-    ; register_interrupt_handler 0, interrupt_handle_divide_zero
-    ; register_interrupt_handler 3, interrupt_handle_breakpoint
-    ; register_interrupt_handler 4, interrupt_handle_overflow
-    ; register_interrupt_handler 5, interrupt_handle_bound_range
-    ; register_interrupt_handler 6, interrupt_handle_invalid_opcode
-    ; register_interrupt_handler 8, interrupt_handle_double_fault
-    ; register_interrupt_handler 10, interrupt_handle_invalid_tss
-    ; register_interrupt_handler 11, interrupt_handle_segment_not_found
-    ; register_interrupt_handler 12, interrupt_handle_stack
-    ; register_interrupt_handler 13, interrupt_handle_general_protection
-    ; register_interrupt_handler 14, interrupt_handle_page_fault
+    call interrupt_register_vectors
     lidt [idt64.pointer]
     ret
 
-interrupt_handlers_register:
+interrupt_register_vectors:
     mov rcx, 0
 .loop:
     mov rax, rcx

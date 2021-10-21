@@ -69,22 +69,52 @@ void halt()
 // This function will be called from interrupts.asm
 void interrupt_handle(int vector)
 {
-    console_print("caught vector #");
-    console_print_u32(vector, 10);
-    console_new_line();
-
     if (vector < 0x20)
     {
         // Is cpu exception interrupt
-        char *message = exception_messages[vector];
-        console_print(message);
-        console_new_line();
-        halt();
+        if (vector == 14)
+        {
+            // Display address for page fault
+            // When a page fault happens, the address that was tried to be accessed, is in cr2
+            unsigned long fault_address;
+            asm volatile("mov %0, cr2"
+                         : "=r"(fault_address)
+                         :
+                         :);
+            // When a page fault happens, the error code (which contains how the page fault happened), is pushed onto the stack by the processor.
+            // Because all the interrupts were pushed onto the stack afterwards (in interrupts.asm), we need to add 128 (8 bytes * 16 registers were pushed) bytes (the stack grows downwards)
+            // to the stack base pointer.
+            unsigned long error_code;
+            asm volatile("mov %0, [rbp + 128]"
+                         : "=r"(error_code)
+                         :
+                         :);
+
+            console_print("page fault! process tried to access 0x");
+            console_print_u64(fault_address, 16);
+            console_print(", error code 0b");
+            console_print_u64(error_code, 2);
+            console_new_line();
+        }
+        else
+        {
+            char *message = exception_messages[vector];
+            console_print(message);
+            console_new_line();
+        }
+
+        // Stop the processor when an exception occured, continue if a breakpoint was hit (interrupt 3)
+        if (vector != 3)
+        {
+            halt();
+        }
     }
     else
     {
         // Is normal interrupt
-        console_print("is normal interrupt\n");
+        console_print("caught normal vector #");
+        console_print_u32(vector, 10);
+        console_new_line();
     }
 }
 
@@ -352,6 +382,10 @@ void kernel_main()
     }
 
     hit_breakpoint();
+
+    *((int *)0x123123123123) = 10;
+    // console_print_i32(*((int *)0x123123123123), 10);
+
     // pci_scan();
 
     // keyboard_init();
