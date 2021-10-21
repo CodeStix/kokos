@@ -21,15 +21,77 @@
 
 extern unsigned long page_table_level4[512];
 
-int hugepages_supported()
-{
-    CpuIdResult result = cpu_id(0x80000001);
-    return result.edx & CPU_ID_1GB_PAGES_EDX;
-}
+char *exception_messages[] = {
+    "divide by zero",
+    "debug",
+    "external non maskable interrupt",
+    "breakpoint",
+    "overflow",
+    "bound range",
+    "invalid opcode",
+    "device not available",
+    "double fault",
+    "coprocessor segment overrun",
+    "invalid tss",
+    "segment not present",
+    "stack",
+    "general protection",
+    "page fault",
+    "reserved",
+    "x87 floating point exception",
+    "alignment check",
+    "machine check",
+    "SIMD floating point",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "reserved",
+    "hypervisor injection exception",
+    "VMM communication exception",
+    "security exception",
+    "reserved",
+};
 
 void hit_breakpoint()
 {
     asm volatile("int3");
+}
+
+void halt()
+{
+    asm volatile("hlt");
+}
+
+// This function will be called from interrupts.asm
+void interrupt_handle(int vector)
+{
+    console_print("caught vector #");
+    console_print_u32(vector, 10);
+    console_new_line();
+
+    if (vector < 0x20)
+    {
+        // Is cpu exception interrupt
+        char *message = exception_messages[vector];
+        console_print(message);
+        console_new_line();
+        halt();
+    }
+    else
+    {
+        // Is normal interrupt
+        console_print("is normal interrupt\n");
+    }
+}
+
+int hugepages_supported()
+{
+    CpuIdResult result = cpu_id(0x80000001);
+    return result.edx & CPU_ID_1GB_PAGES_EDX;
 }
 
 void memory_debug()
@@ -289,10 +351,10 @@ void kernel_main()
         console_new_line();
     }
 
-    // hit_breakpoint();
+    hit_breakpoint();
     // pci_scan();
 
-    keyboard_init();
+    // keyboard_init();
 
     // Step 1, enable spurious_interrupt_vector
     // apic->spurious_interrupt_vector

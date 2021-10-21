@@ -2,6 +2,7 @@ extern console_print
 extern console_print_u64
 extern console_print_char
 extern console_new_line
+extern interrupt_handle
 
 section .text
 bits 64
@@ -166,20 +167,56 @@ interrupt_handle_page_fault:
     hlt
 
 load_idt:
-    register_interrupt_handler 0, interrupt_handle_divide_zero
-    register_interrupt_handler 3, interrupt_handle_breakpoint
-    register_interrupt_handler 4, interrupt_handle_overflow
-    register_interrupt_handler 5, interrupt_handle_bound_range
-    register_interrupt_handler 6, interrupt_handle_invalid_opcode
-    register_interrupt_handler 8, interrupt_handle_double_fault
-    register_interrupt_handler 10, interrupt_handle_invalid_tss
-    register_interrupt_handler 11, interrupt_handle_segment_not_found
-    register_interrupt_handler 12, interrupt_handle_stack
-    register_interrupt_handler 13, interrupt_handle_general_protection
-    register_interrupt_handler 14, interrupt_handle_page_fault
+    call interrupt_handlers_register
+    ; register_interrupt_handler 0, interrupt_handle_divide_zero
+    ; register_interrupt_handler 3, interrupt_handle_breakpoint
+    ; register_interrupt_handler 4, interrupt_handle_overflow
+    ; register_interrupt_handler 5, interrupt_handle_bound_range
+    ; register_interrupt_handler 6, interrupt_handle_invalid_opcode
+    ; register_interrupt_handler 8, interrupt_handle_double_fault
+    ; register_interrupt_handler 10, interrupt_handle_invalid_tss
+    ; register_interrupt_handler 11, interrupt_handle_segment_not_found
+    ; register_interrupt_handler 12, interrupt_handle_stack
+    ; register_interrupt_handler 13, interrupt_handle_general_protection
+    ; register_interrupt_handler 14, interrupt_handle_page_fault
     lidt [idt64.pointer]
     ret
 
+interrupt_handlers_register:
+    mov rcx, 0
+.loop:
+    mov rax, rcx
+    imul rax, 16        ; shl rax, 4
+    add rax, idt64
+    mov rbx, rcx                                ; https://wiki.osdev.org/Interrupt_Descriptor_Table
+    imul rbx, interrupt_handler.size
+    add rbx, interrupt_handler
+    mov word [rax], bx                          ; Interrupt handler address (first 16 bits)
+    mov word [rax + 2], gdt64.code_segment      ; GDT selector
+    mov byte [rax + 4], 0                       ; Interrupt Stack Table (ist) offset (not used) 
+    mov byte [rax + 5], 0b1_00_0_1111           ; Type and attributes, present=1, privilegelevel=00, unused=0, type=1110 (interrupt gate) or 1111 (trap gate)
+    shr rbx, 16                                 ; Interrupt gates are initiated by hardware and trap gates by software
+    mov word [rax + 6], bx                      ; Interrupt handler address (second 16 bits)
+    shr rbx, 16
+    mov dword [rax + 8], ebx                    ; Interrupt handler address (last 32 bits)
+    inc rcx
+    cmp rcx, 256
+jne .loop
+    ret
+
+interrupt_handler:
+    %assign i 0
+    %rep 256                
+    push_all_registers          ; This code is repeated 256 times (for each interrupt vector)
+    mov rdi, i                  
+    cld
+    call interrupt_handle
+    pop_all_registers
+    iretq
+    %assign i i+1
+    %endrep
+.end:
+.size: equ (.end - interrupt_handler) / 256
 
 section .data ; The data section contains initialized data
 

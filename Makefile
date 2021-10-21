@@ -28,5 +28,5 @@ build: src/x86_64/** src/common/** src/include/**
 	cp build/x86_64/os.bin build/x86_64/multiboot2/boot/os.bin
 	grub-mkrescue /usr/lib/grub/i386-pc -o build/x86_64/build.iso build/x86_64/multiboot2
 
-run:
-	qemu-system-x86_64 build/x86_64/build.iso
+run: build
+	qemu-system-x86_64 -usb -m 1G build/x86_64/build.iso
