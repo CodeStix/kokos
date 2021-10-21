@@ -3,6 +3,7 @@ extern console_print_u64
 extern console_print_char
 extern console_new_line
 extern interrupt_handle
+global interrupt_descriptor_table
 
 section .text
 bits 64
@@ -49,7 +50,7 @@ bits 64
 
 load_idt:
     call interrupt_register_vectors
-    lidt [idt64.pointer]
+    lidt [interrupt_descriptor_table.pointer]
     ret
 
 interrupt_register_vectors:
@@ -57,7 +58,7 @@ interrupt_register_vectors:
 .loop:
     mov rax, rcx
     imul rax, 16        ; shl rax, 4
-    add rax, idt64
+    add rax, interrupt_descriptor_table
     mov rbx, rcx                                ; https://wiki.osdev.org/Interrupt_Descriptor_Table
     imul rbx, interrupt_handler.size
     add rbx, interrupt_handler
@@ -76,11 +77,10 @@ jne .loop
 
 interrupt_handler:
     %assign i 0
-    %rep 256 
-    pushfq               
+    %rep 256        
     push rax        ; This code is repeated 256 times (for each interrupt vector)
-    push rbx
-    push rcx
+    push rbx        ; The rbp, rsp, r12, r13, r14 and r15 registers are automatically preserved (they are saved/not used in C code)
+    push rcx        ; https://wiki.osdev.org/Interrupt_Service_Routines
     push rdx
     push rdi
     push rsi
@@ -88,17 +88,9 @@ interrupt_handler:
     push r9
     push r10
     push r11
-    push r12
-    push r13
-    push r14
-    push r15          
     mov rdi, i                  
     cld
     call interrupt_handle
-    pop r15
-    pop r14
-    pop r13
-    pop r12
     pop r11
     pop r10
     pop r9
@@ -109,7 +101,6 @@ interrupt_handler:
     pop rcx
     pop rbx
     pop rax
-    popfq
     iretq
     %assign i i+1
     %endrep
@@ -118,30 +109,30 @@ interrupt_handler:
 
 section .data ; The data section contains initialized data
 
-idt64:
-    resb 16 * 256 - ($ - idt64) ; Reserve the whole idt, each entry is 16 bytes
+interrupt_descriptor_table:
+    resb 16 * 256 - ($ - interrupt_descriptor_table) ; Reserve the whole idt, each entry is 16 bytes
 .pointer:
-    dw $ - idt64 - 1
-    dq idt64
+    dw $ - interrupt_descriptor_table - 1
+    dq interrupt_descriptor_table
 
 section .rodata
 
-info_registers:
-    db "registers", 0
-info_all_registers:
-    db "rax=", 0    ; Each register string is 5 bytes
-    db "rbx=", 0
-    db "rcx=", 0
-    db "rdx=", 0
-    db "rdi=", 0
-    db "rsi=", 0
-    db " r8=", 0
-    db " r9=", 0
-    db "r10=", 0
-    db "r11=", 0
-    db "r12=", 0
-    db "r13=", 0
-    db "r14=", 0
-    db "r15=", 0
-    db "rsp=", 0
-    db "rbp=", 0
+; info_registers:
+;     db "registers", 0
+; info_all_registers:
+;     db "rax=", 0    ; Each register string is 5 bytes
+;     db "rbx=", 0
+;     db "rcx=", 0
+;     db "rdx=", 0
+;     db "rdi=", 0
+;     db "rsi=", 0
+;     db " r8=", 0
+;     db " r9=", 0
+;     db "r10=", 0
+;     db "r11=", 0
+;     db "r12=", 0
+;     db "r13=", 0
+;     db "r14=", 0
+;     db "r15=", 0
+;     db "rsp=", 0
+;     db "rbp=", 0

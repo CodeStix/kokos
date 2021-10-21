@@ -36,11 +36,7 @@ static char *exception_messages[] = {
     "reserved",
 };
 
-static char *register_names[] = {
-    "r15",
-    "r14",
-    "r13",
-    "r12",
+static char *breakpoint_register_names[] = {
     "r11",
     "r10",
     "r9",
@@ -51,17 +47,29 @@ static char *register_names[] = {
     "rcx",
     "rbx",
     "rax",
-    "flags",
+    "rip",
+    "cs",
+    "rflags",
+    "rsp",
 };
 
-static void interrupt_print_registers(unsigned long *base_pointer)
+static void interrupt_handle_breakpoint(unsigned long *base_pointer)
 {
-    for (int i = 0; i < 14; i++)
+    for (int i = 0; i < sizeof(breakpoint_register_names) / sizeof(breakpoint_register_names[0]); i++)
     {
         unsigned long value = base_pointer[i];
-        console_print(register_names[i]);
-        console_print("=0x");
-        console_print_u64(value, 16);
+        console_print(breakpoint_register_names[i]);
+        if (i == 12)
+        {
+            // Use binary for flags register
+            console_print("=0b");
+            console_print_u64(value, 2);
+        }
+        else
+        {
+            console_print("=0x");
+            console_print_u64(value, 16);
+        }
         console_print(" ");
 
         if ((i + 1) % 4 == 0)
@@ -70,14 +78,10 @@ static void interrupt_print_registers(unsigned long *base_pointer)
         }
     }
     console_new_line();
-
-    console_print(register_names[14]);
-    console_print("=0b");
-    console_print_u64(base_pointer[14], 2);
-    console_new_line();
 }
 
 // When this function is called from interrupts.asm, the stack has the following format
+// ss:rsp -> rflags -> cs -> rip -> rax -> rbx -> rcx -> rdx -> rdi -> rsi -> r8 -> r9 -> r10 -> r11 -> (rip) -> (rbp)
 void interrupt_handle(int vector)
 {
     if (vector < 0x20)
@@ -94,8 +98,9 @@ void interrupt_handle(int vector)
             // When a page fault happens, the error code (which contains how the page fault happened), is pushed onto the stack by the processor.
             // Because all the registers were pushed onto the stack by the os (in interrupts.asm), we need to add 128 (8 bytes * 16 registers were pushed) bytes (the stack grows downwards)
             // to the stack base pointer to reference the value the processor pushed onto the stack. (AMD Volume 2 8.2.15)
+            // Note: only interrupt vectors 10, 11, 12, 13, 14, 17 push an error code onto the stack
             unsigned long error_code;
-            asm volatile("mov %0, [rbp + 128]"
+            asm volatile("mov %0, [rbp + 8 * 12]"
                          : "=r"(error_code)
                          :
                          :);
@@ -105,6 +110,16 @@ void interrupt_handle(int vector)
             console_print(", error code 0b");
             console_print_u64(error_code, 2);
             console_new_line();
+        }
+        else if (vector == 3)
+        {
+            // Save the base pointer, because it would get overwritten when calling interrupt_handle_breakpoint
+            unsigned long *base_pointer;
+            asm volatile("mov %0, rbp"
+                         : "=r"(base_pointer)
+                         :
+                         :);
+            interrupt_handle_breakpoint(base_pointer + 2);
         }
         else
         {
@@ -117,16 +132,6 @@ void interrupt_handle(int vector)
         if (vector != 3)
         {
             asm volatile("hlt");
-        }
-        else
-        {
-            // Save the base pointer, because it would get overwritten when calling interrupt_handle_breakpoint
-            unsigned long *base_pointer;
-            asm volatile("mov %0, rbp"
-                         : "=r"(base_pointer)
-                         :
-                         :);
-            interrupt_print_registers(base_pointer + 2);
         }
     }
     else
