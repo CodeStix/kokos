@@ -21,103 +21,6 @@
 
 extern unsigned long page_table_level4[512];
 
-char *exception_messages[] = {
-    "divide by zero",
-    "debug",
-    "external non maskable interrupt",
-    "breakpoint",
-    "overflow",
-    "bound range",
-    "invalid opcode",
-    "device not available",
-    "double fault",
-    "coprocessor segment overrun",
-    "invalid tss",
-    "segment not present",
-    "stack",
-    "general protection",
-    "page fault",
-    "reserved",
-    "x87 floating point exception",
-    "alignment check",
-    "machine check",
-    "SIMD floating point",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "hypervisor injection exception",
-    "VMM communication exception",
-    "security exception",
-    "reserved",
-};
-
-void hit_breakpoint()
-{
-    asm volatile("int3");
-}
-
-void halt()
-{
-    asm volatile("hlt");
-}
-
-// This function will be called from interrupts.asm
-void interrupt_handle(int vector)
-{
-    if (vector < 0x20)
-    {
-        // Is cpu exception interrupt
-        if (vector == 14)
-        {
-            // Display address for page fault
-            // When a page fault happens, the address that was tried to be accessed, is in cr2
-            unsigned long fault_address;
-            asm volatile("mov %0, cr2"
-                         : "=r"(fault_address)
-                         :
-                         :);
-            // When a page fault happens, the error code (which contains how the page fault happened), is pushed onto the stack by the processor.
-            // Because all the interrupts were pushed onto the stack afterwards (in interrupts.asm), we need to add 128 (8 bytes * 16 registers were pushed) bytes (the stack grows downwards)
-            // to the stack base pointer.
-            unsigned long error_code;
-            asm volatile("mov %0, [rbp + 128]"
-                         : "=r"(error_code)
-                         :
-                         :);
-
-            console_print("page fault! process tried to access 0x");
-            console_print_u64(fault_address, 16);
-            console_print(", error code 0b");
-            console_print_u64(error_code, 2);
-            console_new_line();
-        }
-        else
-        {
-            char *message = exception_messages[vector];
-            console_print(message);
-            console_new_line();
-        }
-
-        // Stop the processor when an exception occured, continue if a breakpoint was hit (interrupt 3)
-        if (vector != 3)
-        {
-            halt();
-        }
-    }
-    else
-    {
-        // Is normal interrupt
-        console_print("caught normal vector #");
-        console_print_u32(vector, 10);
-        console_new_line();
-    }
-}
-
 int hugepages_supported()
 {
     CpuIdResult result = cpu_id(0x80000001);
@@ -381,7 +284,7 @@ void kernel_main()
         console_new_line();
     }
 
-    hit_breakpoint();
+    asm volatile("int3");
 
     *((int *)0x123123123123) = 10;
     // console_print_i32(*((int *)0x123123123123), 10);
