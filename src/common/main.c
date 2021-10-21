@@ -284,6 +284,8 @@ void kernel_main()
         console_new_line();
     }
 
+    asm volatile("mov rax, 0x777" ::
+                     : "rax");
     asm volatile("int3");
 
     *((int *)0x123123123123) = 10;

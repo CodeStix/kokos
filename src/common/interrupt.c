@@ -1,7 +1,7 @@
 #include "../include/interrupt.h"
 #include "../include/console.h"
 
-char *exception_messages[] = {
+static char *exception_messages[] = {
     "divide by zero",
     "debug",
     "external non maskable interrupt",
@@ -17,25 +17,61 @@ char *exception_messages[] = {
     "stack",
     "general protection",
     "page fault",
-    "reserved",
+    "reserved15",
     "x87 floating point exception",
     "alignment check",
     "machine check",
     "SIMD floating point",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
-    "reserved",
+    "reserved20",
+    "reserved21",
+    "reserved22",
+    "reserved23",
+    "reserved24",
+    "reserved25",
+    "reserved26",
+    "reserved27",
     "hypervisor injection exception",
     "VMM communication exception",
     "security exception",
     "reserved",
 };
 
+static char *register_names[] = {
+    "r15",
+    "r14",
+    "r13",
+    "r12",
+    "r11",
+    "r10",
+    "r9",
+    "r8",
+    "rsi",
+    "rdi",
+    "rdx",
+    "rcx",
+    "rbx",
+    "rax",
+};
+
+static void interrupt_print_registers(unsigned long *base_pointer)
+{
+    for (int i = 0; i < 14; i++)
+    {
+        unsigned long value = base_pointer[i];
+        console_print(register_names[i]);
+        console_print("=0x");
+        console_print_u64(value, 16);
+        console_print(" ");
+
+        if ((i + 1) % 4 == 0)
+        {
+            console_new_line();
+        }
+    }
+    console_new_line();
+}
+
+// When this function is called from interrupts.asm, the stack has the following format
 void interrupt_handle(int vector)
 {
     if (vector < 0x20)
@@ -75,6 +111,16 @@ void interrupt_handle(int vector)
         if (vector != 3)
         {
             asm volatile("hlt");
+        }
+        else
+        {
+            // Save the base pointer, because it would get overwritten when calling interrupt_handle_breakpoint
+            unsigned long *base_pointer;
+            asm volatile("mov %0, rbp"
+                         : "=r"(base_pointer)
+                         :
+                         :);
+            interrupt_print_registers(base_pointer + 2);
         }
     }
     else

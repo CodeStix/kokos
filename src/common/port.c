@@ -1,6 +1,6 @@
 #include "../include/port.h"
 
-// https://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
+// (https://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html)
 // This file contains some C with inline assembly, meaning, writing x86 instructions directly in your C code instead of having a seperate
 // file containing instructions. Because C does not have any way to generate the out and in instructions (without inline assembly), we must use inline assembly.
 // Each inline assembly statement starts with 'asm', followed by 4 parameters seperated by colons.
