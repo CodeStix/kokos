@@ -7,94 +7,45 @@ extern interrupt_handle
 section .text
 bits 64
 
-%macro push_all_registers 0
-    push rax        
-    push rbx
-    push rcx
-    push rdx
-    push rdi
-    push rsi
-    push r8
-    push r9
-    push r10
-    push r11
-    push r12
-    push r13
-    push r14
-    push r15
-%endmacro
+; print_registers:
+;     push rbp
+;     push rsp
+;     push r15
+;     push r14
+;     push r13
+;     push r12
+;     push r11
+;     push r10
+;     push r9
+;     push r8
+;     push rsi
+;     push rdi
+;     push rdx
+;     push rcx
+;     push rbx
+;     push rax    
 
-%macro pop_all_registers 0
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop r11
-    pop r10
-    pop r9
-    pop r8
-    pop rsi
-    pop rdi
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
-%endmacro
+;     mov rcx, 0
+; .loop:
+;     mov rax, rcx
+;     imul rax, 5
+;     add rax, info_all_registers
+;     mov rdi, rax
+;     push rcx
+;     call console_print
+;     pop rcx
 
-%macro register_interrupt_handler 2             
-    mov rax, %1
-    imul rax, 16        ; shl rax, 4
-    add rax, idt64
-    mov rbx, %2                                 ; https://wiki.osdev.org/Interrupt_Descriptor_Table
-    mov word [rax], bx                          ; Interrupt handler address (first 16 bits)
-    mov word [rax + 2], gdt64.code_segment      ; GDT selector
-    mov byte [rax + 4], 0                       ; Interrupt Stack Table (ist) offset (not used) 
-    mov byte [rax + 5], 0b1_00_0_1111           ; Type and attributes, present=1, privilegelevel=00, unused=0, type=1110 (interrupt gate) or 1111 (trap gate)
-    shr rbx, 16                                 ; Interrupt gates are initiated by hardware and trap gates by software
-    mov word [rax + 6], bx                      ; Interrupt handler address (second 16 bits)
-    shr rbx, 16
-    mov dword [rax + 8], ebx                    ; Interrupt handler address (last 32 bits)
-%endmacro
+;     pop rdi
+;     mov rsi, 16
+;     push rcx
+;     call console_print_u64
+;     call console_new_line
+;     pop rcx
 
-print_registers:
-    push rbp
-    push rsp
-    push r15
-    push r14
-    push r13
-    push r12
-    push r11
-    push r10
-    push r9
-    push r8
-    push rsi
-    push rdi
-    push rdx
-    push rcx
-    push rbx
-    push rax    
-
-    mov rcx, 0
-.loop:
-    mov rax, rcx
-    imul rax, 5
-    add rax, info_all_registers
-    mov rdi, rax
-    push rcx
-    call console_print
-    pop rcx
-
-    pop rdi
-    mov rsi, 16
-    push rcx
-    call console_print_u64
-    call console_new_line
-    pop rcx
-
-    inc rcx
-    cmp rcx, 16
-    jne .loop
-    ret
+;     inc rcx
+;     cmp rcx, 16
+;     jne .loop
+;     ret
 
 load_idt:
     call interrupt_register_vectors
@@ -126,11 +77,37 @@ jne .loop
 interrupt_handler:
     %assign i 0
     %rep 256                
-    push_all_registers          ; This code is repeated 256 times (for each interrupt vector)
+    push rax        ; This code is repeated 256 times (for each interrupt vector)
+    push rbx
+    push rcx
+    push rdx
+    push rdi
+    push rsi
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15          
     mov rdi, i                  
     cld
     call interrupt_handle
-    pop_all_registers
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rsi
+    pop rdi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
     iretq
     %assign i i+1
     %endrep
@@ -147,28 +124,6 @@ idt64:
 
 section .rodata
 
-error_divide_by_zero:
-    db "error: divide by zero!", 0xA, 0
-error_breakpoint:
-    db "warning: hit breakpoint!", 0xA, 0
-error_overflow:
-    db "error: overflow!", 0xA, 0
-error_bound_range:
-    db "error: bound range!", 0xA, 0
-error_invalid_opcode:
-    db "error: invalid opcode!", 0xA, 0
-error_double_fault:
-    db "error: double fault!", 0xA, 0
-error_invalid_tss:
-    db "error: invalid task state segment!", 0xA, 0
-error_segment_not_present:
-    db "error: segment not present!", 0xA, 0
-error_stack:
-    db "error: stack problem!", 0xA, 0
-error_general_protection:
-    db "error: generatal protection exception!", 0xA, 0
-error_page_fault:
-    db "error: page fault! process tried to access address 0x", 0
 info_registers:
     db "registers", 0
 info_all_registers:
