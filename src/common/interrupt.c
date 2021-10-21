@@ -51,6 +51,7 @@ static char *register_names[] = {
     "rcx",
     "rbx",
     "rax",
+    "flags",
 };
 
 static void interrupt_print_registers(unsigned long *base_pointer)
@@ -68,6 +69,11 @@ static void interrupt_print_registers(unsigned long *base_pointer)
             console_new_line();
         }
     }
+    console_new_line();
+
+    console_print(register_names[14]);
+    console_print("=0b");
+    console_print_u64(base_pointer[14], 2);
     console_new_line();
 }
 

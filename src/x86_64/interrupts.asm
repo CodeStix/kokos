@@ -76,7 +76,8 @@ jne .loop
 
 interrupt_handler:
     %assign i 0
-    %rep 256                
+    %rep 256 
+    pushfq               
     push rax        ; This code is repeated 256 times (for each interrupt vector)
     push rbx
     push rcx
@@ -108,6 +109,7 @@ interrupt_handler:
     pop rcx
     pop rbx
     pop rax
+    popfq
     iretq
     %assign i i+1
     %endrep
