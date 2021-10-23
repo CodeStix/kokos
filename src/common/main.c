@@ -8,6 +8,7 @@
 #include "../include/paging.h"
 #include "../include/multiboot2.h"
 #include "../include/memory_physical.h"
+#include "../include/interrupt.h"
 #include "../include/cpu.h"
 
 #define uint8 unsigned char
@@ -47,6 +48,7 @@ void memory_debug()
 
 void kernel_main()
 {
+    console_clear();
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
     console_print("booting...\n");
 
@@ -57,6 +59,8 @@ void kernel_main()
     console_print("address of multiboot2_info = 0x");
     console_print_u64((unsigned long)multiboot2_info, 16);
     console_new_line();
+
+    console_print("initialize physical memory\n");
 
     if (!multiboot2_info_available())
     {
@@ -149,6 +153,8 @@ void kernel_main()
         }
     }
 
+    console_print("initialize paging\n");
+
     // Initialize paging
     paging_initialize(page_table_level4);
 
@@ -199,10 +205,11 @@ void kernel_main()
         *virt = i * 500;
     }
 
-    // console_print("[end]\n");
-    // while (1)
-    // {
-    // }
+    console_print("initialize interrupts\n");
+
+    interrupt_initialize();
+
+    console_print("find acpi\n");
 
     // Find the root system description table pointer
     AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
@@ -227,15 +234,7 @@ void kernel_main()
         return;
     }
 
-    // acpi_print_rsdt(rsdt);
-
     // TODO support XSDT
-
-    // Step 0: disable normal pic
-    // Step 1: check if supported
-    // Step 2: write 0x1B to apic base address register msr
-
-    // apic_disable_pic();
 
     if (!apic_check_supported())
     {
@@ -256,7 +255,6 @@ void kernel_main()
     console_new_line();
     console_print("address: 0x");
     console_print_u64((unsigned long)apic, 16);
-
     console_new_line();
     console_print("apic size ");
     console_print_u32(sizeof(Apic), 10);
@@ -271,7 +269,9 @@ void kernel_main()
     console_print_u32(apic->version, 10);
     console_new_line();
 
-    acpi_print_madt(madt);
+    // acpi_print_madt(madt);
+
+    console_print("find io apics\n");
 
     // Iterate all io apic's
     AcpiMadtEntry1IOAPIC *current_ioapic = 0;
@@ -284,6 +284,10 @@ void kernel_main()
         console_new_line();
     }
 
+    console_print("triggering interrupt\n");
+
+    // int a = 100 / 0;
+
     asm volatile("mov rax, 0x777" ::
                      : "rax");
     asm volatile("int3");
@@ -292,11 +296,7 @@ void kernel_main()
     // console_print_i32(*((int *)0x123123123123), 10);
 
     // pci_scan();
-
     // keyboard_init();
-
-    // Step 1, enable spurious_interrupt_vector
-    // apic->spurious_interrupt_vector
 
     console_print("reached end\n");
 }

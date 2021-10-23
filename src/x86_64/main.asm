@@ -16,6 +16,7 @@ bits 32
 start32:
     mov esp, stack_top      ; Set the address of the stack, so that push and pop instructions will work correctly
     mov [multiboot2_info], ebx
+    cli                     ; Disable hardware interrupts
 
     call check_cpuid_supported
     call check_long_mode

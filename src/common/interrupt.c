@@ -1,5 +1,6 @@
 #include "../include/interrupt.h"
 #include "../include/console.h"
+#include "../include/memory_physical.h"
 
 static char *exception_messages[] = {
     "divide by zero",
@@ -36,109 +37,104 @@ static char *exception_messages[] = {
     "reserved",
 };
 
-static char *breakpoint_register_names[] = {
-    "r11",
-    "r10",
-    "r9",
-    "r8",
-    "rsi",
-    "rdi",
-    "rdx",
-    "rcx",
-    "rbx",
-    "rax",
-    "rip",
-    "cs",
-    "rflags",
-    "rsp",
-};
+static InterruptDescriptor *interrupt_descriptor_table;
+static unsigned short code_segment;
 
-static void interrupt_handle_breakpoint(unsigned long *base_pointer)
+// https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html#x86-Function-Attributes
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_divide_by_zero(InterruptFrame *frame)
 {
-    for (int i = 0; i < sizeof(breakpoint_register_names) / sizeof(breakpoint_register_names[0]); i++)
-    {
-        unsigned long value = base_pointer[i];
-        console_print(breakpoint_register_names[i]);
-        if (i == 12)
-        {
-            // Use binary for flags register
-            console_print("=0b");
-            console_print_u64(value, 2);
-        }
-        else
-        {
-            console_print("=0x");
-            console_print_u64(value, 16);
-        }
-        console_print(" ");
+    console_print("divide by zero!\n");
+    console_new_line();
 
-        if ((i + 1) % 4 == 0)
-        {
-            console_new_line();
-        }
-    }
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_page_fault(InterruptFrame *frame, unsigned long error_code)
+{
+    // When a page fault happens, the address that was tried to be accessed, is in control register 2 (cr2). (AMD Volume 2 8.2.15)
+    unsigned long fault_address;
+    asm volatile("mov %0, cr2"
+                 : "=r"(fault_address)
+                 :
+                 :);
+    // When a page fault happens, the error code (which contains how the page fault happened), is pushed onto the stack by the processor.
+    // Note: only interrupt vectors 10, 11, 12, 13, 14, 17 push an error code onto the stack
+    console_print("page fault! process tried to access 0x");
+    console_print_u64(fault_address, 16);
+    console_print(", error code 0b");
+    console_print_u64(error_code, 2);
+    console_new_line();
+
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_breakpoint(InterruptFrame *frame)
+{
+    console_print("hit breakpoint!\n");
     console_new_line();
 }
 
-// When this function is called from interrupts.asm, the stack has the following format
-// ss:rsp -> rflags -> cs -> rip -> rax -> rbx -> rcx -> rdx -> rdi -> rsi -> r8 -> r9 -> r10 -> r11 -> (rip) -> (rbp)
-void interrupt_handle(int vector)
+void interrupt_initialize()
 {
-    if (vector < 0x20)
+    // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
+    interrupt_descriptor_table = (InterruptDescriptor *)memory_physical_allocate();
+    code_segment = 8; // TODO
+
+    if (!interrupt_descriptor_table)
     {
-        // Is cpu exception interrupt
-        if (vector == 14)
-        {
-            // When a page fault happens, the address that was tried to be accessed, is in control register 2 (cr2). (AMD Volume 2 8.2.15)
-            unsigned long fault_address;
-            asm volatile("mov %0, cr2"
-                         : "=r"(fault_address)
-                         :
-                         :);
-            // When a page fault happens, the error code (which contains how the page fault happened), is pushed onto the stack by the processor.
-            // Because all the registers were pushed onto the stack by the os (in interrupts.asm), we need to add 128 (8 bytes * 16 registers were pushed) bytes (the stack grows downwards)
-            // to the stack base pointer to reference the value the processor pushed onto the stack. (AMD Volume 2 8.2.15)
-            // Note: only interrupt vectors 10, 11, 12, 13, 14, 17 push an error code onto the stack
-            unsigned long error_code;
-            asm volatile("mov %0, [rbp + 8 * 12]"
-                         : "=r"(error_code)
-                         :
-                         :);
-
-            console_print("page fault! process tried to access 0x");
-            console_print_u64(fault_address, 16);
-            console_print(", error code 0b");
-            console_print_u64(error_code, 2);
-            console_new_line();
-        }
-        else if (vector == 3)
-        {
-            // Save the base pointer, because it would get overwritten when calling interrupt_handle_breakpoint
-            unsigned long *base_pointer;
-            asm volatile("mov %0, rbp"
-                         : "=r"(base_pointer)
-                         :
-                         :);
-            interrupt_handle_breakpoint(base_pointer + 2);
-        }
-        else
-        {
-            char *message = exception_messages[vector];
-            console_print(message);
-            console_new_line();
-        }
-
-        // Stop the processor when an exception occured, continue if a breakpoint was hit (interrupt 3)
-        if (vector != 3)
-        {
-            asm volatile("hlt");
-        }
+        console_print("fatal: could not initialize interrupt descriptor table");
+        asm volatile("hlt");
     }
-    else
+
+    // Fill with zeroes
+    for (int i = 0; i < 4096; i += sizeof(unsigned long))
     {
-        // Is normal interrupt
-        console_print("caught normal vector #");
-        console_print_u32(vector, 10);
+        ((unsigned long *)interrupt_descriptor_table)[i] = 0ull;
+    }
+
+    InterruptDescriptorPointer pointer = {
+        .address = interrupt_descriptor_table,
+        .limit = 256 * 16 - 1,
+    };
+
+    // Load interrupt descriptor table
+    asm volatile("lidt [%0]"
+                 :
+                 : "m"(pointer)
+                 :);
+
+    interrupt_register(3, interrupt_handle_breakpoint, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(14, interrupt_handle_page_fault, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(0, interrupt_handle_divide_by_zero, INTERRUPT_GATE_TYPE_TRAP);
+}
+
+void interrupt_disable(unsigned char vector)
+{
+    interrupt_descriptor_table[vector].type_attributes &= ~(1 << 7);
+}
+
+void interrupt_enable(unsigned char vector)
+{
+    interrupt_descriptor_table[vector].type_attributes |= (1 << 7);
+}
+
+void interrupt_register(unsigned char vector, void *function_pointer, InterruptGateType interrupt_type)
+{
+    if (interrupt_descriptor_table[vector].type_attributes & (1 << 7))
+    {
+        console_print("warning: overwriting interrupt vector #");
+        console_print_i32(vector, 10);
         console_new_line();
     }
+
+    InterruptDescriptor *descriptor = &interrupt_descriptor_table[vector];
+    descriptor->offset1 = (unsigned long)function_pointer & 0xFFFF;
+    descriptor->selector = code_segment;
+    descriptor->interrupt_stack_table = 0;                           // Unused
+    descriptor->type_attributes = (interrupt_type & 0xF) | (1 << 7); // 1 << 7 enables interrupt
+    descriptor->offset2 = ((unsigned long)function_pointer >> 16) & 0xFFFF;
+    descriptor->offset3 = ((unsigned long)function_pointer >> 32) & 0xFFFFFFFF;
 }
