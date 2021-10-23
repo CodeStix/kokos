@@ -57,7 +57,7 @@ void interrupt_handle_test(InterruptFrame *frame)
     // console_print_u64()
     // console_clear();
     // console_print_u64(frame->instruction_pointer, 16);
-    console_set_cursor(0, 0);
+    // console_set_cursor(0, 0);
     console_print_u64(counter++, 10);
     console_new_line();
 
@@ -317,8 +317,7 @@ void kernel_main()
     // Create test interrupt
     interrupt_register(0x22, interrupt_handle_test, INTERRUPT_GATE_TYPE_INTERRUPT);
     apic->timer_initial_count = 1000;
-    apic->timer_divide_config = 0b0011;
-    apic->timer_current_count = 1000;
+    apic->timer_divide_config = 0b1010; //0b1011
     apic->timer_vector = 0x22 | (1 << 17);
 
     console_print("enable apic\n");

@@ -1,112 +1,112 @@
-#define ALIGN16 __attribute__((aligned(16)))
+#define ATTRIBUTE_ALIGN16 __attribute__((aligned(16)))
 
 // This structure defines all the APIC (advanced programmable interrupt controller) registers
 typedef struct
 {
-    unsigned int unused ALIGN16;
-    unsigned int unused2 ALIGN16;
+    unsigned int unused ATTRIBUTE_ALIGN16;
+    unsigned int unused2 ATTRIBUTE_ALIGN16;
 
-    unsigned int id ALIGN16;      // at 0x20
-    unsigned int version ALIGN16; // at 0x30
+    unsigned int id ATTRIBUTE_ALIGN16;      // at 0x20
+    unsigned int version ATTRIBUTE_ALIGN16; // at 0x30
 
-    unsigned int unused3 ALIGN16;
-    unsigned int unused4 ALIGN16;
-    unsigned int unused5 ALIGN16;
-    unsigned int unused6 ALIGN16;
+    unsigned int unused3 ATTRIBUTE_ALIGN16;
+    unsigned int unused4 ATTRIBUTE_ALIGN16;
+    unsigned int unused5 ATTRIBUTE_ALIGN16;
+    unsigned int unused6 ATTRIBUTE_ALIGN16;
 
-    unsigned int task_priority ALIGN16;             // at 0x80
-    unsigned int arbitration_priority ALIGN16;      // at 0x90
-    unsigned int processor_priority ALIGN16;        // at 0xA0
-    unsigned int end_of_interrupt ALIGN16;          // at 0xB0
-    unsigned int remote_read ALIGN16;               // at 0xC0
-    unsigned int logical_destination ALIGN16;       // at 0xD0
-    unsigned int destination_format ALIGN16;        // at 0xE0
-    unsigned int spurious_interrupt_vector ALIGN16; // at 0xF0
+    unsigned int task_priority ATTRIBUTE_ALIGN16;             // at 0x80
+    unsigned int arbitration_priority ATTRIBUTE_ALIGN16;      // at 0x90
+    unsigned int processor_priority ATTRIBUTE_ALIGN16;        // at 0xA0
+    unsigned int end_of_interrupt ATTRIBUTE_ALIGN16;          // at 0xB0
+    unsigned int remote_read ATTRIBUTE_ALIGN16;               // at 0xC0
+    unsigned int logical_destination ATTRIBUTE_ALIGN16;       // at 0xD0
+    unsigned int destination_format ATTRIBUTE_ALIGN16;        // at 0xE0
+    unsigned int spurious_interrupt_vector ATTRIBUTE_ALIGN16; // at 0xF0
 
-    unsigned int in_service0 ALIGN16; // at 0x100
-    unsigned int in_service1 ALIGN16;
-    unsigned int in_service2 ALIGN16;
-    unsigned int in_service3 ALIGN16;
-    unsigned int in_service4 ALIGN16;
-    unsigned int in_service5 ALIGN16;
-    unsigned int in_service6 ALIGN16;
-    unsigned int in_service7 ALIGN16;
+    unsigned int in_service0 ATTRIBUTE_ALIGN16; // at 0x100
+    unsigned int in_service1 ATTRIBUTE_ALIGN16;
+    unsigned int in_service2 ATTRIBUTE_ALIGN16;
+    unsigned int in_service3 ATTRIBUTE_ALIGN16;
+    unsigned int in_service4 ATTRIBUTE_ALIGN16;
+    unsigned int in_service5 ATTRIBUTE_ALIGN16;
+    unsigned int in_service6 ATTRIBUTE_ALIGN16;
+    unsigned int in_service7 ATTRIBUTE_ALIGN16;
 
-    unsigned int trigger_mode0 ALIGN16; // at 0x180
-    unsigned int trigger_mode1 ALIGN16;
-    unsigned int trigger_mode2 ALIGN16;
-    unsigned int trigger_mode3 ALIGN16;
-    unsigned int trigger_mode4 ALIGN16;
-    unsigned int trigger_mode5 ALIGN16;
-    unsigned int trigger_mode6 ALIGN16;
-    unsigned int trigger_mode7 ALIGN16;
+    unsigned int trigger_mode0 ATTRIBUTE_ALIGN16; // at 0x180
+    unsigned int trigger_mode1 ATTRIBUTE_ALIGN16;
+    unsigned int trigger_mode2 ATTRIBUTE_ALIGN16;
+    unsigned int trigger_mode3 ATTRIBUTE_ALIGN16;
+    unsigned int trigger_mode4 ATTRIBUTE_ALIGN16;
+    unsigned int trigger_mode5 ATTRIBUTE_ALIGN16;
+    unsigned int trigger_mode6 ATTRIBUTE_ALIGN16;
+    unsigned int trigger_mode7 ATTRIBUTE_ALIGN16;
 
-    unsigned int interrupt_request0 ALIGN16; // at 0x200
-    unsigned int interrupt_request1 ALIGN16;
-    unsigned int interrupt_request2 ALIGN16;
-    unsigned int interrupt_request3 ALIGN16;
-    unsigned int interrupt_request4 ALIGN16;
-    unsigned int interrupt_request5 ALIGN16;
-    unsigned int interrupt_request6 ALIGN16;
-    unsigned int interrupt_request7 ALIGN16;
+    unsigned int interrupt_request0 ATTRIBUTE_ALIGN16; // at 0x200
+    unsigned int interrupt_request1 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_request2 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_request3 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_request4 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_request5 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_request6 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_request7 ATTRIBUTE_ALIGN16;
 
-    unsigned int error_status ALIGN16; // at 0x280
+    unsigned int error_status ATTRIBUTE_ALIGN16; // at 0x280
 
-    unsigned int unused7 ALIGN16;
-    unsigned int unused8 ALIGN16;
-    unsigned int unused9 ALIGN16;
-    unsigned int unused10 ALIGN16;
-    unsigned int unused11 ALIGN16;
-    unsigned int unused12 ALIGN16;
-    unsigned int unused13 ALIGN16;
+    unsigned int unused7 ATTRIBUTE_ALIGN16;
+    unsigned int unused8 ATTRIBUTE_ALIGN16;
+    unsigned int unused9 ATTRIBUTE_ALIGN16;
+    unsigned int unused10 ATTRIBUTE_ALIGN16;
+    unsigned int unused11 ATTRIBUTE_ALIGN16;
+    unsigned int unused12 ATTRIBUTE_ALIGN16;
+    unsigned int unused13 ATTRIBUTE_ALIGN16;
 
-    unsigned int interrupt_command0 ALIGN16;         // at 0x300
-    unsigned int interrupt_command1 ALIGN16;         // at 0x310
-    unsigned int timer_vector ALIGN16;               // at 0x320
-    unsigned int thermal_vector ALIGN16;             // at 0x330
-    unsigned int performance_counter_vector ALIGN16; // at 0x340
-    unsigned int interrupt0_vector ALIGN16;          // at 0x350
-    unsigned int interrupt1_vector ALIGN16;          // at 0x360
-    unsigned int error_vector ALIGN16;               // at 0x370
-    unsigned int timer_initial_count ALIGN16;        // at 0x380
-    unsigned int timer_current_count ALIGN16;        // at 0x390
+    unsigned int interrupt_command0 ATTRIBUTE_ALIGN16;         // at 0x300
+    unsigned int interrupt_command1 ATTRIBUTE_ALIGN16;         // at 0x310
+    unsigned int timer_vector ATTRIBUTE_ALIGN16;               // at 0x320
+    unsigned int thermal_vector ATTRIBUTE_ALIGN16;             // at 0x330
+    unsigned int performance_counter_vector ATTRIBUTE_ALIGN16; // at 0x340
+    unsigned int interrupt0_vector ATTRIBUTE_ALIGN16;          // at 0x350
+    unsigned int interrupt1_vector ATTRIBUTE_ALIGN16;          // at 0x360
+    unsigned int error_vector ATTRIBUTE_ALIGN16;               // at 0x370
+    unsigned int timer_initial_count ATTRIBUTE_ALIGN16;        // at 0x380
+    unsigned int timer_current_count ATTRIBUTE_ALIGN16;        // at 0x390
 
-    unsigned int unused14 ALIGN16;
-    unsigned int unused15 ALIGN16;
-    unsigned int unused16 ALIGN16;
-    unsigned int unused17 ALIGN16;
+    unsigned int unused14 ATTRIBUTE_ALIGN16;
+    unsigned int unused15 ATTRIBUTE_ALIGN16;
+    unsigned int unused16 ATTRIBUTE_ALIGN16;
+    unsigned int unused17 ATTRIBUTE_ALIGN16;
 
-    unsigned int timer_divide_config ALIGN16; // at 0x3e0
+    unsigned int timer_divide_config ATTRIBUTE_ALIGN16; // at 0x3e0
 
-    unsigned int unused18 ALIGN16;
+    unsigned int unused18 ATTRIBUTE_ALIGN16;
 
-    unsigned int extended_apic_features ALIGN16;    // at 0x400
-    unsigned int extended_apic_control ALIGN16;     // at 0x410
-    unsigned int specific_end_of_interrupt ALIGN16; // at 0x420
+    unsigned int extended_apic_features ATTRIBUTE_ALIGN16;    // at 0x400
+    unsigned int extended_apic_control ATTRIBUTE_ALIGN16;     // at 0x410
+    unsigned int specific_end_of_interrupt ATTRIBUTE_ALIGN16; // at 0x420
 
-    unsigned int unused19 ALIGN16;
-    unsigned int unused20 ALIGN16;
-    unsigned int unused21 ALIGN16;
-    unsigned int unused22 ALIGN16;
-    unsigned int unused23 ALIGN16;
+    unsigned int unused19 ATTRIBUTE_ALIGN16;
+    unsigned int unused20 ATTRIBUTE_ALIGN16;
+    unsigned int unused21 ATTRIBUTE_ALIGN16;
+    unsigned int unused22 ATTRIBUTE_ALIGN16;
+    unsigned int unused23 ATTRIBUTE_ALIGN16;
 
-    unsigned int interrupt_enable0 ALIGN16; // at 0x480
-    unsigned int interrupt_enable1 ALIGN16;
-    unsigned int interrupt_enable2 ALIGN16;
-    unsigned int interrupt_enable3 ALIGN16;
-    unsigned int interrupt_enable4 ALIGN16;
-    unsigned int interrupt_enable5 ALIGN16;
-    unsigned int interrupt_enable6 ALIGN16;
-    unsigned int interrupt_enable7 ALIGN16;
+    unsigned int interrupt_enable0 ATTRIBUTE_ALIGN16; // at 0x480
+    unsigned int interrupt_enable1 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_enable2 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_enable3 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_enable4 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_enable5 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_enable6 ATTRIBUTE_ALIGN16;
+    unsigned int interrupt_enable7 ATTRIBUTE_ALIGN16;
 
-    unsigned int extended_interrupt_vector0 ALIGN16; // at 0x500
-    unsigned int extended_interrupt_vector1 ALIGN16;
-    unsigned int extended_interrupt_vector2 ALIGN16;
-    unsigned int extended_interrupt_vector3 ALIGN16;
+    unsigned int extended_interrupt_vector0 ATTRIBUTE_ALIGN16; // at 0x500
+    unsigned int extended_interrupt_vector1 ATTRIBUTE_ALIGN16;
+    unsigned int extended_interrupt_vector2 ATTRIBUTE_ALIGN16;
+    unsigned int extended_interrupt_vector3 ATTRIBUTE_ALIGN16;
 } __attribute__((packed)) Apic;
 
 // Disables the normal pic
-extern void apic_disable_pic();
+void apic_disable_pic();
 
-// Returns 1 if a local apic is supported
-extern int apic_check_supported();
+// Returns non-zero if a local apic is supported
+int apic_check_supported();

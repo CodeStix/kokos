@@ -16,30 +16,15 @@ section .text
 bits 64     ; Tell the assembler that this file should create 64 bit instructions
 
 start64:
-    mov ax, 0       ; Clear segment registers
+    mov ax, 0           ; Clear segment registers
     mov ss, ax
     mov ds, ax
     mov es, ax
     mov fs, ax
-    mov gs, ax
-
-;     pushfq
-;     pop rax
-;     test rax, 0x0200
-;     jz .no_interrupt
-;     mov rdi, info_interrupt_enabled
-;     call console_print
-;     jmp .end
-; .no_interrupt:
-;     mov rdi, info_interrupt_disabled
-;     call console_print
-; .end:
-;     hlt
-
-    call kernel_main
-
+    mov gs, ax      
+    call kernel_main    ; Enter C code (main.c)
 .loop:
-    hlt             ; Halt does not shut down the processor, it can still receive interrupts. When an interrupt was handled, it continues after halt
+    hlt                 ; Halt does not shut down the processor, it can still receive interrupts. When an interrupt was handled, it continues after halt
     jmp .loop
 
 
