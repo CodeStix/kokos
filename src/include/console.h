@@ -27,7 +27,8 @@ typedef struct
 void console_set_color(CONSOLE_COLOR foreground, CONSOLE_COLOR background);
 void console_new_line();
 void console_print_char(char c);
-void console_set_cursor(unsigned int newX, unsigned int newY);
+void console_set_cursor(unsigned int new_x, unsigned int new_y);
+void console_get_cursor(unsigned int *destination_x, unsigned int *destination_y);
 void console_clear();
 void console_print(const char *str);
 void console_print_length(const char *str, unsigned int length);

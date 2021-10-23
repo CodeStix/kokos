@@ -241,7 +241,7 @@ void interrupt_initialize()
     }
 
     // Fill with zeroes
-    for (int i = 0; i < 4096; i += sizeof(unsigned long))
+    for (int i = 0; i < 4096 / sizeof(unsigned long); i++)
     {
         ((unsigned long *)interrupt_descriptor_table)[i] = 0ull;
     }

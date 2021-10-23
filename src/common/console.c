@@ -3,8 +3,8 @@
 
 volatile ConsoleVideoChar *video_memory = (ConsoleVideoChar *)0xb8000;
 
-unsigned char current_console_color = 0x0f;
-unsigned int x = 0, y = 0, w = 80, h = 25;
+static unsigned char current_console_color = 0x0f;
+static unsigned int x = 0, y = 0, w = 80, h = 25;
 
 void console_set_color(CONSOLE_COLOR foreground, CONSOLE_COLOR background)
 {
@@ -49,10 +49,16 @@ void console_print_char(char c)
     }
 }
 
-void console_set_cursor(unsigned int newX, unsigned int newY)
+void console_set_cursor(unsigned int new_x, unsigned int new_y)
 {
-    x = newX;
-    y = newY;
+    x = new_x;
+    y = new_y;
+}
+
+void console_get_cursor(unsigned int *destination_x, unsigned int *destination_y)
+{
+    *destination_x = x;
+    *destination_y = y;
 }
 
 void console_clear()

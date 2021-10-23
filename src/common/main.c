@@ -57,9 +57,11 @@ void interrupt_handle_test(InterruptFrame *frame)
     // console_print_u64()
     // console_clear();
     // console_print_u64(frame->instruction_pointer, 16);
-    // console_set_cursor(0, 0);
+    unsigned int x, y;
+    console_get_cursor(&x, &y);
+    console_set_cursor(0, 24);
     console_print_u64(counter++, 10);
-    console_new_line();
+    console_set_cursor(x, y);
 
     apic->end_of_interrupt = 0;
 }
@@ -68,7 +70,7 @@ void kernel_main()
 {
     console_clear();
     console_set_color(CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK);
-    console_print("booting...\n");
+    console_print("entered c\n");
 
     console_print("address of main = 0x");
     console_print_u64((unsigned long)kernel_main, 16);
@@ -336,6 +338,7 @@ void kernel_main()
     // console_print_i32(*((int *)0x123123123123), 10); // 100ac9
 
     console_print("reached end\n");
+    // console_clear();
 
     // while (1)
     // {
