@@ -80,18 +80,18 @@ void kernel_main()
     console_print_u64((unsigned long)multiboot2_info, 16);
     console_new_line();
 
-    console_print("initialize physical memory\n");
+    console_print("[physical memory] initialize physical memory\n");
 
     if (!multiboot2_info_available())
     {
-        console_print("fatal: multiboot2 boot information is not available\n");
+        console_print("[physical memory] fatal: multiboot2 boot information is not available\n");
         return;
     }
 
     Multiboot2InfoTagMemoryMap *memory_information = (Multiboot2InfoTagMemoryMap *)multiboot2_info_get(MULTIBOOT2_TYPE_MEMORY_MAP);
     if (!memory_information)
     {
-        console_print("fatal: no memory information available\n");
+        console_print("[physical memory] fatal: no memory information available\n");
         return;
     }
 
@@ -105,7 +105,7 @@ void kernel_main()
             max_address = entry->address + entry->length;
         }
 
-        console_print("memory at 0x");
+        console_print("[physical memory] memory at 0x");
         console_print_u64(entry->address, 16);
         console_print(" with length 0x");
         console_print_u64(entry->length, 16);
@@ -117,7 +117,7 @@ void kernel_main()
         console_new_line();
     }
 
-    console_print("total usable ram = ");
+    console_print("[physical memory] total usable ram = ");
     console_print_u64(max_address, 10);
     console_print(" from 0x0 ... 0x");
     console_print_u64(max_address, 16);
@@ -127,7 +127,7 @@ void kernel_main()
     // Each bit (8 per byte) in the allocation will determine if a memory region of 4096 bytes is taken or not
     unsigned long allocation_table_size = max_address / 4096 / 8;
 
-    console_print("allocation_table_size = ");
+    console_print("[physical memory] allocation_table_size = ");
     console_print_u64(allocation_table_size, 10);
     console_new_line();
 
@@ -144,11 +144,11 @@ void kernel_main()
 
     if (allocation_table_start == (void *)0xFFFFFFFF)
     {
-        console_print("fatal: could not find spot for allocation table\n");
+        console_print("[physical memory] fatal: could not find spot for allocation table\n");
         return;
     }
 
-    console_print("allocation table at 0x");
+    console_print("[physical memory] allocation table at 0x");
     console_print_u64((unsigned long)allocation_table_start, 16);
     console_new_line();
 
@@ -173,7 +173,7 @@ void kernel_main()
         }
     }
 
-    console_print("initialize paging\n");
+    console_print("[paging] initialize paging\n");
 
     // Initialize paging
     paging_initialize(page_table_level4);
@@ -181,7 +181,7 @@ void kernel_main()
     // Identity map whole memory
     if (hugepages_supported())
     {
-        console_print("1gb pages supported, using this to identity map memory\n");
+        console_print("[paging] 1gb pages supported, using this to identity map memory\n");
 
         // Identity map whole memory using 1GB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x40000000ul); address += 0x40000000ul)
@@ -189,11 +189,11 @@ void kernel_main()
             paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_1GB | PAGING_FLAG_REPLACE);
         }
 
-        console_print("done\n");
+        console_print("[paging] done\n");
     }
     else
     {
-        console_print("1gb pages not supported, using 2mb pages to identity map memory\n");
+        console_print("[paging] 1gb pages not supported, using 2mb pages to identity map memory\n");
 
         // Identity map whole memory using 2MB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
@@ -201,12 +201,12 @@ void kernel_main()
             paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_2MB | PAGING_FLAG_REPLACE);
         }
 
-        console_print("done\n");
+        console_print("[paging] done\n");
     }
 
     for (int i = 0; i < 3; i++)
     {
-        console_print("identity test: 0x");
+        console_print("[paging] identity test: 0x");
         int *virt = (int *)0x000fe0000 + i;
         console_print_u64((unsigned long)virt, 16);
         console_print(" -> 0x");
@@ -216,7 +216,7 @@ void kernel_main()
 
     for (int i = 0; i < 3; i++)
     {
-        console_print("alloc test: 0x");
+        console_print("[paging] allocate test: 0x");
         int *virt = paging_allocate(0);
         console_print_u64((unsigned long)virt, 16);
         console_print(" -> 0x");
@@ -225,22 +225,22 @@ void kernel_main()
         *virt = i * 500;
     }
 
-    console_print("disable pic\n");
+    console_print("[interrupt] disable pic\n");
 
     // Disable and remap pic
     apic_disable_pic();
 
-    console_print("initialize interrupts\n");
+    console_print("[interrupt] initialize\n");
 
     interrupt_initialize();
 
-    console_print("find acpi\n");
+    console_print("[acpi] find rsdt\n");
 
     // Find the root system description table pointer
     AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
     if (!rsdtp)
     {
-        console_print("acpi rsdp not found!\n");
+        console_print("[acpi] rsdp not found!\n");
         return;
     }
 
@@ -248,14 +248,14 @@ void kernel_main()
 
     if (acpi_validate_rsdt_pointer(rsdtp))
     {
-        console_print("acpi rsdp checksum does not match!\n");
+        console_print("[acpi] rsdp checksum does not match!\n");
         return;
     }
 
     AcpiRsdt *rsdt = (AcpiRsdt *)rsdtp->address;
     if (acpi_validate_rsdt(&rsdt->base))
     {
-        console_print("acpi rsdt checksum does not match!\n");
+        console_print("[acpi] rsdt checksum does not match!\n");
         return;
     }
 
@@ -263,49 +263,63 @@ void kernel_main()
 
     if (!apic_check_supported())
     {
-        console_print("fatal: apic is not supported!\n");
+        console_print("[acpi] fatal: apic is not supported!\n");
         return;
     }
 
     AcpiMadt *madt = (AcpiMadt *)acpi_rsdt_get_table(rsdt, ACPI_MADT_SIGNATURE);
     if (!madt)
     {
-        console_print("fatal: madt not found!!!\n");
+        console_print("[acpi] fatal: MADT not found!\n");
         return;
     }
 
     apic = (Apic *)paging_map(madt->local_apic_address, 0);
-    console_print("address test: 0x");
+    console_print("[apic] physical address: 0x");
     console_print_u64((unsigned long)paging_get_physical_address(apic), 16);
     console_new_line();
-    console_print("address: 0x");
+    console_print("[apic] virtual address: 0x");
     console_print_u64((unsigned long)apic, 16);
     console_new_line();
-    console_print("apic size ");
+    console_print("[apic] size ");
     console_print_u32(sizeof(Apic), 10);
     console_new_line();
-    console_print("location of spurious 0x");
+    console_print("[apic] spurious register (should be 0xF0) 0x");
     console_print_u64((unsigned char *)(&apic->spurious_interrupt_vector) - (unsigned char *)apic, 16);
     console_new_line();
-    console_print("apic id ");
-    console_print_u32(apic->id, 10);
+    console_print("[apic] id ");
+    console_print_i32(apic->id, 10);
     console_new_line();
-    console_print("apic version ");
-    console_print_u32(apic->version, 10);
+    console_print("[apic] version ");
+    console_print_i32(apic->version, 10);
     console_new_line();
 
     // acpi_print_madt(madt);
 
-    console_print("find io apics\n");
+    console_print("[ioapic] looking for io apics in MADT table\n");
 
     // Iterate all io apic's
     AcpiMadtEntry1IOAPIC *current_ioapic = 0;
     while (current_ioapic = acpi_madt_iterate_type(madt, current_ioapic, ACPI_MADT_TYPE_IO_APIC))
     {
-        console_print("io apic at 0x");
+        console_print("[ioapic] at 0x");
         console_print_u64(current_ioapic->io_apic_address, 16);
-        console_print(" with irq ");
+        console_print(" with starting irq ");
         console_print_u64(current_ioapic->global_system_interrupt_base, 10);
+        console_new_line();
+
+        IOApic *ioapic = (IOApic *)paging_map(current_ioapic->io_apic_address, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+
+        console_print("[ioapic] version: ");
+        console_print_u64(apic_io_get_version(ioapic), 10);
+        console_new_line();
+
+        console_print("[ioapic] entry count: ");
+        console_print_u64(apic_io_get_max_entries(ioapic), 10);
+        console_new_line();
+
+        console_print("[ioapic] id: ");
+        console_print_u64(apic_io_get_id(ioapic), 10);
         console_new_line();
     }
 
@@ -314,7 +328,7 @@ void kernel_main()
     // pci_scan();
     // keyboard_init();
 
-    console_print("create timer interrupt\n");
+    console_print("[test] create timer interrupt\n");
 
     // Create test interrupt
     interrupt_register(0x22, interrupt_handle_test, INTERRUPT_GATE_TYPE_INTERRUPT);
@@ -322,11 +336,11 @@ void kernel_main()
     apic->timer_divide_config = 0b1010; //0b1011
     apic->timer_vector = 0x22 | (1 << 17);
 
-    console_print("enable apic\n");
+    console_print("[test] enable apic\n");
     // Enable apic (0x100) and set spurious interrupt vector to 0xFF
     apic->spurious_interrupt_vector = 0x1FF;
 
-    console_print("triggering interrupt\n");
+    console_print("[test] triggering interrupt\n");
 
     // int a = 100 / 0;
 
@@ -337,7 +351,7 @@ void kernel_main()
     // *((int *)0x123123123123) = 10;
     // console_print_i32(*((int *)0x123123123123), 10); // 100ac9
 
-    console_print("reached end\n");
+    console_print("[test] reached end\n");
     // console_clear();
 
     // while (1)

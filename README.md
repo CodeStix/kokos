@@ -28,3 +28,4 @@ You can build the cross compiler using the `build_cross_compiler.sh` script. Thi
 ## Things I learned
 
 -   The `hlt` instruction only stops execution until an interrupt is fired. It continues where it left off after the interrupt. It places the processor in a paused state.
+-   A Global System Interrupt or RSI is the same as an IRQ.

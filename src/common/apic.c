@@ -79,24 +79,31 @@ unsigned char apic_io_get_version(IOApic *apic)
 
 unsigned char apic_io_get_max_entries(IOApic *apic)
 {
+    // The amount of entries this IOAPIC supports is contained in the version register
     apic->register_select = APIC_IO_REGISTER_VERSION;
     return (apic->register_data >> 16) & 0b11111111;
 }
 
 unsigned long apic_io_get_entry(IOApic *apic, unsigned char index)
 {
+    // Each entry takes up 2 IOAPIC registers
     unsigned char reg = APIC_IO_REGISTER_ENTRY(index);
+    // Read register 1
     apic->register_select = reg;
     unsigned long entry = apic->register_data;
+    // Read register 2
     apic->register_select = reg + 1;
+    // Combine their result
     return entry | ((unsigned long)apic->register_data << 32);
 }
 
 void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry)
 {
     unsigned char reg = APIC_IO_REGISTER_ENTRY(index);
+    // Set first register
     apic->register_select = reg;
     apic->register_data = entry & 0xFFFFFFFF;
+    // Set second register
     apic->register_select = reg + 1;
     apic->register_data = entry >> 32;
 }
