@@ -20,7 +20,7 @@
 #define int64 signed long long
 #define uint64 unsigned long long
 
-extern unsigned long page_table_level4[512];
+extern volatile unsigned long page_table_level4[512];
 
 int hugepages_supported()
 {
@@ -46,17 +46,20 @@ void memory_debug()
     }
 }
 
-static Apic *apic;
+static volatile Apic *apic;
 
-static unsigned long counter = 0;
+static volatile unsigned long counter = 0;
 
 ATTRIBUTE_INTERRUPT
 void interrupt_handle_test(InterruptFrame *frame)
 {
-    // console_print("got interrupt\n");
+    // console_print("got interrupt ");
+    // console_print_u64()
     // console_clear();
-    // console_set_cursor(0, 0);
-    // console_print_u64(counter++, 10);
+    // console_print_u64(frame->instruction_pointer, 16);
+    console_set_cursor(0, 0);
+    console_print_u64(counter++, 10);
+    console_new_line();
 
     apic->end_of_interrupt = 0;
 }
@@ -220,6 +223,11 @@ void kernel_main()
         *virt = i * 500;
     }
 
+    console_print("disable pic\n");
+
+    // Disable and remap pic
+    apic_disable_pic();
+
     console_print("initialize interrupts\n");
 
     interrupt_initialize();
@@ -299,9 +307,25 @@ void kernel_main()
         console_new_line();
     }
 
-    console_clear();
+    // console_clear();
 
-    // console_print("triggering interrupt\n");
+    // pci_scan();
+    // keyboard_init();
+
+    console_print("create timer interrupt\n");
+
+    // Create test interrupt
+    interrupt_register(0x22, interrupt_handle_test, INTERRUPT_GATE_TYPE_INTERRUPT);
+    apic->timer_initial_count = 1000;
+    apic->timer_divide_config = 0b0011;
+    apic->timer_current_count = 1000;
+    apic->timer_vector = 0x22 | (1 << 17);
+
+    console_print("enable apic\n");
+    // Enable apic (0x100) and set spurious interrupt vector to 0xFF
+    apic->spurious_interrupt_vector = 0x1FF;
+
+    console_print("triggering interrupt\n");
 
     // int a = 100 / 0;
 
@@ -310,21 +334,11 @@ void kernel_main()
     // asm volatile("int3");
 
     // *((int *)0x123123123123) = 10;
-    // console_print_i32(*((int *)0x123123123123), 10);
-
-    // pci_scan();
-    // keyboard_init();
-
-    // Disable and remap pic
-    apic_disable_pic();
-    // Create test interrupt
-    interrupt_register(0x22, interrupt_handle_test, INTERRUPT_GATE_TYPE_INTERRUPT);
-    apic->timer_initial_count = 1000;
-    apic->timer_divide_config = 0b0011;
-    apic->timer_current_count = 1000;
-    apic->timer_vector = 0x22 | (1 << 17);
-    // Enable apic (0x100) and set spurious interrupt vector to 0xFF
-    apic->spurious_interrupt_vector = 0x1FF;
+    // console_print_i32(*((int *)0x123123123123), 10); // 100ac9
 
     console_print("reached end\n");
+
+    // while (1)
+    // {
+    // }
 }

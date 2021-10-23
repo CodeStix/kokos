@@ -37,7 +37,11 @@ start64:
 ;     hlt
 
     call kernel_main
-    hlt
+
+.loop:
+    hlt             ; Halt does not shut down the processor, it can still receive interrupts. When an interrupt was handled, it continues after halt
+    jmp .loop
+
 
 section .bss
 
