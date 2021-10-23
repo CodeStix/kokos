@@ -23,7 +23,7 @@ build: src/x86_64/** src/common/** src/include/**
 # Compile using -mgeneral-regs-only so we can use gcc's interrupt attribute (see interrupt.c), this is needed because gcc only preserves general purpose registers and not
 # SEE, MMX and x87 registers and states
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector -mgeneral-regs-only src/common/interrupt.c -o build/common/interrupt.o
-	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/main.c -o build/common/main.o
+	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector -mgeneral-regs-only src/common/main.c -o build/common/main.o
 	ld -n -o build/x86_64/os.bin -T linker.ld build/x86_64/*.o build/common/*.o  
 
 	mkdir build/x86_64/multiboot2 build/x86_64/multiboot2/boot build/x86_64/multiboot2/boot/grub

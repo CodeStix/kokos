@@ -23,3 +23,4 @@ You can build the cross compiler using the `build_cross_compiler.sh` script. Thi
 -   https://github.com/qemu/qemu/blob/master/docs/specs/standard-vga.txt
 -   https://stackoverflow.com/questions/22280281/on-x86-when-the-os-disables-interrupts-do-they-vanish-or-do-they-queue-and-w
 -   https://stackoverflow.com/questions/10679001/cli-before-start-in-bootloader
+-   https://stackoverflow.com/questions/45206171/how-sci-system-control-interrupt-vector-is-defined

@@ -44,7 +44,77 @@ static unsigned short code_segment;
 ATTRIBUTE_INTERRUPT
 static void interrupt_handle_divide_by_zero(InterruptFrame *frame)
 {
-    console_print("divide by zero!\n");
+    console_print("interrupt: divide by zero!\n");
+    console_new_line();
+
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_non_maskable_interrupt(InterruptFrame *frame)
+{
+    console_print("interrupt: non maskable!\n");
+    console_new_line();
+
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_breakpoint(InterruptFrame *frame)
+{
+    console_print("interrupt: breakpoint!\n");
+    console_new_line();
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_overflow(InterruptFrame *frame)
+{
+    console_print("interrupt: overflow!\n");
+    console_new_line();
+
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_invalid_opcode(InterruptFrame *frame)
+{
+    console_print("interrupt: invalid opcode!\n");
+    console_new_line();
+
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_invalid_double_fault(InterruptFrame *frame)
+{
+    console_print("interrupt: double fault!\n");
+    console_new_line();
+
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_segment_not_present(InterruptFrame *frame)
+{
+    console_print("interrupt: segment not present!\n");
+    console_new_line();
+
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_stack(InterruptFrame *frame)
+{
+    console_print("interrupt: stack!\n");
+    console_new_line();
+
+    asm volatile("hlt");
+}
+
+ATTRIBUTE_INTERRUPT
+static void interrupt_handle_general_protection(InterruptFrame *frame)
+{
+    console_print("interrupt: general protection!\n");
     console_new_line();
 
     asm volatile("hlt");
@@ -61,7 +131,7 @@ static void interrupt_handle_page_fault(InterruptFrame *frame, unsigned long err
                  :);
     // When a page fault happens, the error code (which contains how the page fault happened), is pushed onto the stack by the processor.
     // Note: only interrupt vectors 10, 11, 12, 13, 14, 17 push an error code onto the stack
-    console_print("page fault! process tried to access 0x");
+    console_print("interrupt: page fault! process tried to access 0x");
     console_print_u64(fault_address, 16);
     console_print(", error code 0b");
     console_print_u64(error_code, 2);
@@ -71,14 +141,17 @@ static void interrupt_handle_page_fault(InterruptFrame *frame, unsigned long err
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_breakpoint(InterruptFrame *frame)
+static void interrupt_handle_spurious(InterruptFrame *frame)
 {
-    console_print("hit breakpoint!\n");
+    console_print("interrupt: spurious\n");
     console_new_line();
 }
 
 void interrupt_initialize()
 {
+    // Disable interrupts
+    asm volatile("cli");
+
     // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
     interrupt_descriptor_table = (InterruptDescriptor *)memory_physical_allocate();
     code_segment = 8; // TODO
@@ -106,9 +179,25 @@ void interrupt_initialize()
                  : "m"(pointer)
                  :);
 
-    interrupt_register(3, interrupt_handle_breakpoint, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(14, interrupt_handle_page_fault, INTERRUPT_GATE_TYPE_TRAP);
     interrupt_register(0, interrupt_handle_divide_by_zero, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(2, interrupt_handle_non_maskable_interrupt, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(3, interrupt_handle_breakpoint, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(4, interrupt_handle_overflow, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(6, interrupt_handle_invalid_opcode, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(8, interrupt_handle_invalid_double_fault, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(11, interrupt_handle_segment_not_present, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(12, interrupt_handle_stack, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(13, interrupt_handle_general_protection, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(14, interrupt_handle_page_fault, INTERRUPT_GATE_TYPE_TRAP);
+
+    // The last 17 interrupts handle spurious interrupts (16 from the PIC and 1 from the APIC)
+    for (int i = 255 - 17; i < 256; i++)
+    {
+        interrupt_register(i, interrupt_handle_spurious, INTERRUPT_GATE_TYPE_TRAP);
+    }
+
+    // Enable interrupts
+    asm volatile("sti");
 }
 
 void interrupt_disable(unsigned char vector)
