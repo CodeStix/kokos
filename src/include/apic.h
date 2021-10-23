@@ -105,6 +105,24 @@ typedef struct
     unsigned int extended_interrupt_vector3 ATTRIBUTE_ALIGN16;
 } __attribute__((packed)) Apic;
 
+#define APIC_IO_REGISTER_ID 0
+#define APIC_IO_REGISTER_VERSION 1
+#define APIC_IO_REGISTER_ARB 2
+#define APIC_IO_REGISTER_ENTRY(n) 0x10 + n * 2
+
+// https://wiki.osdev.org/IOAPIC
+typedef struct
+{
+    unsigned int register_select ATTRIBUTE_ALIGN16; // at 0x0
+    unsigned int register_data ATTRIBUTE_ALIGN16;   // at 0x10 (16)
+} __attribute__((packed)) IOApic;
+
+unsigned char apic_io_get_id(IOApic *apic);
+unsigned char apic_io_get_version(IOApic *apic);
+unsigned char apic_io_get_max_entries(IOApic *apic);
+unsigned long apic_io_get_entry(IOApic *apic, unsigned char index);
+void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry);
+
 // Disables the normal pic
 void apic_disable_pic();
 

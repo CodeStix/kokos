@@ -15,9 +15,9 @@ static inline void wait()
 
 // TODO check if APIC is enabled in MSR
 
-// Because we will use the newer APIC (advanced programmable interrupt controller) instead of the old PICs
-// we need to disable the old PIC. Because PIC's can generate random interrupts (by electric noise ect), we must also offset these interrupts to an unused
-// region of interrupt vectors, so it does not trigger random system interrupts (worse: exception interrupts)
+// Because we will use the newer APIC (advanced programmable interrupt controller) instead of the old PIC's
+// we need to disable the old PIC's. Because PIC's can generate random interrupts (by electric noise ect), we must also offset these interrupts to an unused
+// region of interrupt vectors, so it does not trigger random system interrupts (like exception interrupts at worst)
 
 void apic_disable_pic()
 {
@@ -53,7 +53,7 @@ void apic_disable_pic()
     port_out8(PIC_SLAVE_DATA_PORT, 0x01);
     wait();
 
-    // Disable PICs (by masking all interrupts using)
+    // Disable PICs (by masking all interrupts)
     port_out8(PIC_MASTER_DATA_PORT, 0b11111111);
     port_out8(PIC_SLAVE_DATA_PORT, 0b11111111);
 }
@@ -61,6 +61,42 @@ void apic_disable_pic()
 int apic_check_supported()
 {
     CpuIdResult result = cpu_id(0x1);
-    // Test for bit 9 in the rdx register, which means that an apic is supported (Amd64 Volume 3 page 574)
+    // Test for bit 9 in the rdx register, which means that an apic is supported (AMD64 Volume 3 page 574)
     return result.edx & 0b100000000;
+}
+
+unsigned char apic_io_get_id(IOApic *apic)
+{
+    apic->register_select = APIC_IO_REGISTER_ID;
+    return (apic->register_data >> 24) & 0b1111;
+}
+
+unsigned char apic_io_get_version(IOApic *apic)
+{
+    apic->register_select = APIC_IO_REGISTER_VERSION;
+    return apic->register_data & 0b11111111;
+}
+
+unsigned char apic_io_get_max_entries(IOApic *apic)
+{
+    apic->register_select = APIC_IO_REGISTER_VERSION;
+    return (apic->register_data >> 16) & 0b11111111;
+}
+
+unsigned long apic_io_get_entry(IOApic *apic, unsigned char index)
+{
+    unsigned char reg = APIC_IO_REGISTER_ENTRY(index);
+    apic->register_select = reg;
+    unsigned long entry = apic->register_data;
+    apic->register_select = reg + 1;
+    return entry | ((unsigned long)apic->register_data << 32);
+}
+
+void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry)
+{
+    unsigned char reg = APIC_IO_REGISTER_ENTRY(index);
+    apic->register_select = reg;
+    apic->register_data = entry & 0xFFFFFFFF;
+    apic->register_select = reg + 1;
+    apic->register_data = entry >> 32;
 }
