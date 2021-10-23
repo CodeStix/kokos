@@ -27,7 +27,6 @@ start64:
     hlt                 ; Halt does not shut down the processor, it can still receive interrupts. When an interrupt was handled, it continues after halt
     jmp .loop
 
-
 section .bss
 
 memory_chunk:

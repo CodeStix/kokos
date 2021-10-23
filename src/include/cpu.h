@@ -9,4 +9,11 @@ typedef struct
     unsigned int eax, ebx, ecx, edx;
 } CpuIdResult;
 
+// Performs an cpuid instruction and returns the result
 CpuIdResult cpu_id(unsigned int function);
+
+// Returns the cpu's time stamp counter
+unsigned long cpu_timestamp();
+
+// Waits for a minimum amount of 1 microseconds
+unsigned long cpu_wait();

@@ -10,6 +10,7 @@
 #include "../include/memory_physical.h"
 #include "../include/interrupt.h"
 #include "../include/cpu.h"
+#include "../include/port.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -62,6 +63,23 @@ void interrupt_handle_test(InterruptFrame *frame)
     console_set_cursor(0, 24);
     console_print_u64(counter++, 10);
     console_set_cursor(x, y);
+
+    apic->end_of_interrupt = 0;
+}
+
+ATTRIBUTE_INTERRUPT
+void interrupt_handle_keyboard(InterruptFrame *frame)
+{
+    console_print("[keyboard] got interrupt 0x");
+    unsigned char input = port_in8(0x60);
+    console_print_i32(input, 16);
+    // while (port_in8(0x64) & 0b00000001)
+    // {
+    //     unsigned char input = port_in8(0x60);
+    //     console_print(" 0x");
+    //     console_print_i32(input, 16);
+    // }
+    console_new_line();
 
     apic->end_of_interrupt = 0;
 }
@@ -267,6 +285,20 @@ void kernel_main()
         return;
     }
 
+    AcpiFadt *fadt = (AcpiFadt *)acpi_rsdt_get_table(rsdt, ACPI_FADT_SIGNATURE);
+    if (!fadt)
+    {
+        console_print("[acpi] fatal: FADT not found!\n");
+        return;
+    }
+
+    // Always false for some reason?
+    // if (!(fadt->extended_boot_architecture_flags & 0b10))
+    // {
+    //     console_print("[acpi] fatal: ps/2 controller not supported!\n");
+    //     return;
+    // }
+
     AcpiMadt *madt = (AcpiMadt *)acpi_rsdt_get_table(rsdt, ACPI_MADT_SIGNATURE);
     if (!madt)
     {
@@ -275,6 +307,9 @@ void kernel_main()
     }
 
     apic = (Apic *)paging_map(madt->local_apic_address, 0);
+    unsigned char apic_id = (apic->id >> 24) & 0b1111;
+    unsigned char apic_version = apic->version & 0xFF;
+    unsigned char apic_max_entries = (apic->version >> 16) & 0xFF;
     console_print("[apic] physical address: 0x");
     console_print_u64((unsigned long)paging_get_physical_address(apic), 16);
     console_new_line();
@@ -288,10 +323,13 @@ void kernel_main()
     console_print_u64((unsigned char *)(&apic->spurious_interrupt_vector) - (unsigned char *)apic, 16);
     console_new_line();
     console_print("[apic] id ");
-    console_print_i32(apic->id, 10);
+    console_print_i32(apic_id, 10);
     console_new_line();
     console_print("[apic] version ");
-    console_print_i32(apic->version, 10);
+    console_print_i32(apic_version, 10);
+    console_new_line();
+    console_print("[apic] max entries ");
+    console_print_i32(apic_max_entries, 10);
     console_new_line();
 
     // acpi_print_madt(madt);
@@ -302,7 +340,9 @@ void kernel_main()
     AcpiMadtEntry1IOAPIC *current_ioapic = 0;
     while (current_ioapic = acpi_madt_iterate_type(madt, current_ioapic, ACPI_MADT_TYPE_IO_APIC))
     {
-        console_print("[ioapic] at 0x");
+        console_print("[ioapic] id ");
+        console_print_u64(current_ioapic->io_apic_id, 10);
+        console_print(" at 0x ");
         console_print_u64(current_ioapic->io_apic_address, 16);
         console_print(" with starting irq ");
         console_print_u64(current_ioapic->global_system_interrupt_base, 10);
@@ -321,26 +361,32 @@ void kernel_main()
         console_print("[ioapic] id: ");
         console_print_u64(apic_io_get_id(ioapic), 10);
         console_new_line();
+
+        // unsigned long entry = apic_io_get_entry(ioapic, 1);
+        unsigned long entry = 0x23 | ((unsigned long)apic_id << 56);
+
+        // Use IRQ1 (keyboard)
+        apic_io_set_entry(ioapic, 1, entry);
+        apic_io_set_entry(ioapic, 12, entry);
     }
 
-    // console_clear();
+    console_print("[test] create test interrupts\n");
 
-    // pci_scan();
-    // keyboard_init();
-
-    console_print("[test] create timer interrupt\n");
-
-    // Create test interrupt
     interrupt_register(0x22, interrupt_handle_test, INTERRUPT_GATE_TYPE_INTERRUPT);
     apic->timer_initial_count = 1000;
     apic->timer_divide_config = 0b1010; //0b1011
     apic->timer_vector = 0x22 | (1 << 17);
 
+    interrupt_register(0x23, interrupt_handle_keyboard, INTERRUPT_GATE_TYPE_INTERRUPT);
+
     console_print("[test] enable apic\n");
+
     // Enable apic (0x100) and set spurious interrupt vector to 0xFF
     apic->spurious_interrupt_vector = 0x1FF;
 
     console_print("[test] triggering interrupt\n");
+
+    keyboard_init();
 
     // int a = 100 / 0;
 
