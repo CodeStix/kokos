@@ -69,6 +69,7 @@ static inline void keyboard_write_data(unsigned char data)
 }
 
 static int releasing = 0;
+static int shift = 0;
 
 ATTRIBUTE_INTERRUPT
 void interrupt_handle_keyboard(InterruptFrame *frame)
@@ -79,43 +80,79 @@ void interrupt_handle_keyboard(InterruptFrame *frame)
     // console_print_i32(input, 16);
     // console_new_line();
 
+    unsigned int x, y;
+    console_get_cursor(&x, &y);
+    console_set_cursor(70, 0);
+    console_print("key=0x");
+    console_print_i32(input, 16);
+    console_print(" ");
+    console_set_cursor(x, y);
+
     if (input == 0xF0)
     {
-        // Next key release
+        // Next key will release
         releasing = 1;
+    }
+    else if (releasing)
+    {
+        if (input == 0x12 || input == 0x59)
+        {
+            // Shift
+            shift = 0;
+        }
+        releasing = 0;
     }
     else
     {
-        if (scancodes[input] && !releasing)
+        if (input == 0x12 || input == 0x59)
         {
-            if (input == 90)
+            // Shift
+            shift = 1;
+        }
+        else
+        {
+            const char **scancodes = shift ? scancodes_shift : scancodes_normal;
+            if (scancodes[input])
             {
-                // Enter
-                console_new_line();
-            }
-            else if (input == 102)
-            {
-                // Backspace
-                unsigned int x, y;
-                console_get_cursor(&x, &y);
-                if (x > 0)
+                if (input == 90)
                 {
-                    console_set_cursor(x - 1, y);
-                    console_print_char(' ');
-                    console_set_cursor(x - 1, y);
+                    // Enter
+                    if (shift)
+                    {
+                        console_print_char(' ');
+                        console_clear();
+                        console_set_cursor(0, 0);
+                    }
+                    else
+                    {
+                        console_print_char(' ');
+                        console_new_line();
+                    }
                 }
-                else if (y > 0)
+                else if (input == 102)
                 {
-                    console_set_cursor(79, y - 1);
+                    // Backspace
+                    unsigned int x, y;
+                    console_get_cursor(&x, &y);
+                    if (x > 0)
+                    {
+                        console_print_char(' ');
+                        console_set_cursor(x - 1, y);
+                        console_print_char(' ');
+                        console_set_cursor(x - 1, y);
+                    }
+                    else if (y > 0)
+                    {
+                        console_print_char(' ');
+                        console_set_cursor(79, y - 1);
+                    }
                 }
-            }
-            else
-            {
-                console_print(scancodes[input]);
+                else
+                {
+                    console_print(scancodes[input]);
+                }
             }
         }
-
-        releasing = 0;
     }
 
     // console_new_line();

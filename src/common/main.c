@@ -54,13 +54,9 @@ static volatile unsigned long counter2 = 0;
 ATTRIBUTE_INTERRUPT
 void interrupt_handle_test(InterruptFrame *frame)
 {
-    // console_print("got interrupt ");
-    // console_print_u64()
-    // console_clear();
-    // console_print_u64(frame->instruction_pointer, 16);
     unsigned int x, y;
     console_get_cursor(&x, &y);
-    console_set_cursor(40, 24);
+    console_set_cursor(60, 24);
     console_print_u64(counter++, 10);
     console_set_cursor(x, y);
 
@@ -70,14 +66,14 @@ void interrupt_handle_test(InterruptFrame *frame)
 ATTRIBUTE_INTERRUPT
 void interrupt_handle_timer(InterruptFrame *frame)
 {
-    // console_print("got interrupt ");
-    // console_print_u64()
-    // console_clear();
-    // console_print_u64(frame->instruction_pointer, 16);
     unsigned int x, y;
     console_get_cursor(&x, &y);
-    console_set_cursor(60, 24);
+    console_set_cursor(70, 24);
     console_print_u64(counter2++, 10);
+    console_set_cursor(x, y);
+
+    // Create blinking cursor
+    console_print_char((counter2 & 0b111) < 4 ? '_' : ' ');
     console_set_cursor(x, y);
 
     apic_get()->end_of_interrupt = 0;
