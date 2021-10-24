@@ -47,8 +47,6 @@ void memory_debug()
     }
 }
 
-static volatile Apic *apic;
-
 static volatile unsigned long counter = 0;
 
 ATTRIBUTE_INTERRUPT
@@ -64,24 +62,7 @@ void interrupt_handle_test(InterruptFrame *frame)
     console_print_u64(counter++, 10);
     console_set_cursor(x, y);
 
-    apic->end_of_interrupt = 0;
-}
-
-ATTRIBUTE_INTERRUPT
-void interrupt_handle_keyboard(InterruptFrame *frame)
-{
-    console_print("[keyboard] got interrupt 0x");
-    unsigned char input = port_in8(0x60);
-    console_print_i32(input, 16);
-    // while (port_in8(0x64) & 0b00000001)
-    // {
-    //     unsigned char input = port_in8(0x60);
-    //     console_print(" 0x");
-    //     console_print_i32(input, 16);
-    // }
-    console_new_line();
-
-    apic->end_of_interrupt = 0;
+    apic_get()->end_of_interrupt = 0;
 }
 
 void kernel_main()
@@ -306,7 +287,10 @@ void kernel_main()
         return;
     }
 
-    apic = (Apic *)paging_map(madt->local_apic_address, 0);
+    Apic *apic = (Apic *)paging_map(madt->local_apic_address, 0);
+
+    apic_initialize(apic);
+
     unsigned char apic_id = (apic->id >> 24) & 0b1111;
     unsigned char apic_version = apic->version & 0xFF;
     unsigned char apic_max_entries = (apic->version >> 16) & 0xFF;
@@ -338,6 +322,7 @@ void kernel_main()
 
     // Iterate all io apic's
     AcpiMadtEntry1IOAPIC *current_ioapic = 0;
+    IOApic *ioapic;
     while (current_ioapic = acpi_madt_iterate_type(madt, current_ioapic, ACPI_MADT_TYPE_IO_APIC))
     {
         console_print("[ioapic] id ");
@@ -348,7 +333,7 @@ void kernel_main()
         console_print_u64(current_ioapic->global_system_interrupt_base, 10);
         console_new_line();
 
-        IOApic *ioapic = (IOApic *)paging_map(current_ioapic->io_apic_address, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+        ioapic = (IOApic *)paging_map(current_ioapic->io_apic_address, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
         console_print("[ioapic] version: ");
         console_print_u64(apic_io_get_version(ioapic), 10);
@@ -363,11 +348,12 @@ void kernel_main()
         console_new_line();
 
         // unsigned long entry = apic_io_get_entry(ioapic, 1);
-        unsigned long entry = 0x23 | ((unsigned long)apic_id << 56);
+        // unsigned long entry = 0x23 | ((unsigned long)apic_id << 56);
 
         // Use IRQ1 (keyboard)
-        apic_io_set_entry(ioapic, 1, entry);
-        apic_io_set_entry(ioapic, 12, entry);
+
+        // apic_io_set_entry(ioapic, 1, entry);
+        // apic_io_set_entry(ioapic, 12, entry);
     }
 
     console_print("[test] create test interrupts\n");
@@ -377,8 +363,6 @@ void kernel_main()
     apic->timer_divide_config = 0b1010; //0b1011
     apic->timer_vector = 0x22 | (1 << 17);
 
-    interrupt_register(0x23, interrupt_handle_keyboard, INTERRUPT_GATE_TYPE_INTERRUPT);
-
     console_print("[test] enable apic\n");
 
     // Enable apic (0x100) and set spurious interrupt vector to 0xFF
@@ -387,6 +371,13 @@ void kernel_main()
     console_print("[test] triggering interrupt\n");
 
     keyboard_init();
+
+    IOApicEntry entry = {
+        .vector = 0x23,
+        .destination = apic_id,
+    };
+
+    apic_io_register(ioapic, 1, entry);
 
     // int a = 100 / 0;
 

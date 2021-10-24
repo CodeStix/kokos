@@ -7,10 +7,22 @@
 #define PIC_SLAVE_COMMAND_PORT 0xA0
 #define PIC_SLAVE_DATA_PORT 0xA1
 
-static inline void wait()
+// static inline void wait()
+// {
+//     // Port 80 is unused by the computer and is used to simulate a delay, because it could take some time before the PIC answers
+//     port_out8(0x80, 0);
+// }
+
+Apic *local_apic;
+
+void apic_initialize(Apic *virtual_address)
 {
-    // Port 80 is unused by the computer and is used to simulate a delay, because it could take some time before the PIC answers
-    port_out8(0x80, 0);
+    local_apic = virtual_address;
+}
+
+Apic *apic_get()
+{
+    return local_apic;
 }
 
 // TODO check if APIC is enabled in MSR
@@ -23,35 +35,35 @@ void apic_disable_pic()
 {
     // Start master PIC initialization sequence, it now expects 3 bytes at port 0x21 to configure this PIC
     port_out8(PIC_MASTER_COMMAND_PORT, 0x11);
-    wait();
+    cpu_wait();
 
     // Byte 1: set master interrupt vectors to start at 247 (247 -> 254)
     port_out8(PIC_MASTER_DATA_PORT, 247);
-    wait();
+    cpu_wait();
 
     // Byte 2: tell master PIC that there is a slave PIC at IRQ2 pin
     port_out8(PIC_MASTER_DATA_PORT, 0b00000100);
-    wait();
+    cpu_wait();
 
     // Byte 3: PIC mode 1 (??)
     port_out8(PIC_MASTER_DATA_PORT, 0x01);
-    wait();
+    cpu_wait();
 
     // Start slave PIC initialization sequence, it now expects 3 bytes at port 0xA1 to configure this PIC
     port_out8(PIC_SLAVE_COMMAND_PORT, 0x11);
-    wait();
+    cpu_wait();
 
     // Byte 1: set slave interrupt vectors to start at 239 (239 -> 246)
     port_out8(PIC_SLAVE_DATA_PORT, 239);
-    wait();
+    cpu_wait();
 
     // Byte 2: tell slave PIC that it is a slave
     port_out8(PIC_SLAVE_DATA_PORT, 0b00000010);
-    wait();
+    cpu_wait();
 
     // Byte 3: PIC mode 1 (??)
     port_out8(PIC_SLAVE_DATA_PORT, 0x01);
-    wait();
+    cpu_wait();
 
     // Disable PICs (by masking all interrupts)
     port_out8(PIC_MASTER_DATA_PORT, 0b11111111);
@@ -106,4 +118,9 @@ void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry)
     // Set second register
     apic->register_select = reg + 1;
     apic->register_data = entry >> 32;
+}
+
+void apic_io_register(IOApic *apic, unsigned char irq, IOApicEntry entry)
+{
+    apic_io_set_entry(apic, irq, *(unsigned long *)&entry);
 }

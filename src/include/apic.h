@@ -117,14 +117,69 @@ typedef struct
     unsigned int register_data ATTRIBUTE_ALIGN16;   // at 0x10 (16)
 } __attribute__((packed)) IOApic;
 
+typedef enum
+{
+    FIXED = 0b000,
+    LOW_PRIORITY = 0b001,
+    SMI = 0b010,
+    NMI = 0b100,
+    INIT = 0b101,
+    EXTENDED_INIT = 0b111,
+} IOApicEntryDeliveryMode;
+
+typedef enum
+{
+    PHYSICAL = 0b0,
+    LOGICAL = 0b1
+} IOApicEntryDestinationMode;
+
+typedef enum
+{
+    IDLE = 0b0,
+    BUSY = 0b1
+} IOApicEntryDeliveryStatus;
+
+typedef enum
+{
+    ACTIVE_HIGH = 0b0,
+    ACTIVE_LOW = 0b1,
+} IOApicEntryPinPolarity;
+
+typedef enum
+{
+    EDGE = 0b0,
+    LEVEL = 0b1,
+} IOApicEntryTriggerMode;
+
+typedef struct
+{
+    unsigned char vector : 8;
+    IOApicEntryDeliveryMode delivery_mode : 3;
+    IOApicEntryDestinationMode destination_mode : 1;
+    IOApicEntryDeliveryStatus delivery_status : 1;
+    IOApicEntryPinPolarity pin_polarity : 1;
+    unsigned char remote_irr : 1;
+    IOApicEntryTriggerMode trigger_mode : 1;
+    unsigned char mask : 1;
+    unsigned long unused : 39;
+    unsigned char destination : 8;
+} __attribute__((packed)) IOApicEntry;
+
 unsigned char apic_io_get_id(IOApic *apic);
 unsigned char apic_io_get_version(IOApic *apic);
 unsigned char apic_io_get_max_entries(IOApic *apic);
 unsigned long apic_io_get_entry(IOApic *apic, unsigned char index);
 void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry);
+void apic_io_register(IOApic *apic, unsigned char irq, IOApicEntry entry);
 
-// Disables the normal pic
+// Sets the virtual address of the local APIC
+void apic_initialize(Apic *local_apic);
+
+// Returns the virtual address to the local APIC for the current processor (which is the same for all processors)
+Apic *apic_get();
+
+// Disables the normal PIC
 void apic_disable_pic();
 
-// Returns non-zero if a local apic is supported
+// Returns non-zero if a local APIC is supported
 int apic_check_supported();

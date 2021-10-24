@@ -12,7 +12,7 @@ build: src/x86_64/** src/common/** src/include/**
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/pci.c -o build/common/pci.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/memory.c -o build/common/memory.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/util.c -o build/common/util.o
-	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/keyboard.c -o build/common/keyboard.o
+	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector -mgeneral-regs-only src/common/keyboard.c -o build/common/keyboard.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/apic.c -o build/common/apic.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/paging.c -o build/common/paging.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/multiboot2.c -o build/common/multiboot2.o
