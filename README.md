@@ -26,7 +26,8 @@ You can build the cross compiler using the `build_cross_compiler.sh` script. Thi
 -   https://stackoverflow.com/questions/45206171/how-sci-system-control-interrupt-vector-is-defined
 -   https://stackoverflow.com/questions/57704146/how-to-figure-out-the-interrupt-source-on-i-o-apic
 
-## Things I learned
+## Things I learned/noticed
 
 -   The `hlt` instruction only stops execution until an interrupt is fired. It continues where it left off after the interrupt. It places the processor in a paused state.
 -   A Global System Interrupt or GSI is the same as an IRQ.
+-   Local processor APIC's ids can be 8 bit instead of 4 bit in some cases (tested on hardware), all the manuals state that the upper 4 bits of the APIC id register are reserved, maybe I only found old manuals. You can assume that the APIC id register and the IO APIC physical destination register are 8 bits instead of 4 bits. (Tested on 4 different systems with different age)

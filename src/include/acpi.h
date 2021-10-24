@@ -186,7 +186,7 @@ typedef struct
 typedef struct
 {
     AcpiMadtEntry base;
-    unsigned char apic_processor_id;
+    unsigned char processor_id;
     unsigned char apic_id;
     unsigned int flags;
 } __attribute__((packed)) AcpiMadtEntry0LocalAPIC;

@@ -70,7 +70,7 @@ void acpi_print_madt(const AcpiMadt *madt)
         {
             AcpiMadtEntry0LocalAPIC *madt_entry_0 = (AcpiMadtEntry0LocalAPIC *)madt_entry;
             console_print(" - found local processor with id ");
-            console_print_u32(madt_entry_0->apic_processor_id, 10);
+            console_print_u32(madt_entry_0->processor_id, 10);
             console_print(" and apic id ");
             console_print_u32(madt_entry_0->apic_id, 10);
             console_new_line();

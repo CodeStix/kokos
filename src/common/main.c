@@ -48,6 +48,7 @@ void memory_debug()
 }
 
 static volatile unsigned long counter = 0;
+static volatile unsigned long counter2 = 0;
 
 ATTRIBUTE_INTERRUPT
 void interrupt_handle_test(InterruptFrame *frame)
@@ -58,8 +59,24 @@ void interrupt_handle_test(InterruptFrame *frame)
     // console_print_u64(frame->instruction_pointer, 16);
     unsigned int x, y;
     console_get_cursor(&x, &y);
-    console_set_cursor(0, 24);
+    console_set_cursor(40, 24);
     console_print_u64(counter++, 10);
+    console_set_cursor(x, y);
+
+    apic_get()->end_of_interrupt = 0;
+}
+
+ATTRIBUTE_INTERRUPT
+void interrupt_handle_timer(InterruptFrame *frame)
+{
+    // console_print("got interrupt ");
+    // console_print_u64()
+    // console_clear();
+    // console_print_u64(frame->instruction_pointer, 16);
+    unsigned int x, y;
+    console_get_cursor(&x, &y);
+    console_set_cursor(60, 24);
+    console_print_u64(counter2++, 10);
     console_set_cursor(x, y);
 
     apic_get()->end_of_interrupt = 0;
@@ -289,7 +306,7 @@ void kernel_main()
 
     Apic *apic = (Apic *)paging_map(madt->local_apic_address, 0);
 
-    unsigned char apic_id = (apic->id >> 24) & 0b1111;
+    unsigned char apic_id = (unsigned int)apic->id >> 24;
     unsigned char apic_version = apic->version & 0xFF;
     unsigned char apic_max_entries = (apic->version >> 16) & 0xFF;
     console_print("[apic] physical address: 0x");
@@ -366,12 +383,19 @@ void kernel_main()
     apic->timer_divide_config = 0b1010; //0b1011
     apic->timer_vector = 0x22 | (1 << 17);
 
+    interrupt_register(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);
+    IOApicEntry timer_entry = {
+        .vector = 0x24,
+        .destination = apic->id >> 24,
+    };
+    apic_io_register(ioapic, 2, timer_entry);
+
     console_print("[test] enable apic\n");
 
     // Enable apic (0x100) and set spurious interrupt vector to 0xFF
     apic->spurious_interrupt_vector = 0x1FF;
 
-    console_print("[test] triggering interrupt\n");
+    // console_print("[test] triggering interrupt\n");
 
     keyboard_init();
 
@@ -384,7 +408,7 @@ void kernel_main()
     // *((int *)0x123123123123) = 10;
     // console_print_i32(*((int *)0x123123123123), 10); // 100ac9
 
-    console_print("[test] reached end\n");
+    // console_print("[test] reached end\n");
     // console_clear();
 
     // while (1)

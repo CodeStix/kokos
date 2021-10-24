@@ -138,7 +138,7 @@ void keyboard_init()
 
     IOApicEntry entry = {
         .vector = 0x23,
-        .destination = (apic_get()->id >> 24) & 0b1111,
+        .destination = (apic_get()->id >> 24) & 0b11111111,
     };
 
     apic_io_register(apic_io_get(), 1, entry);

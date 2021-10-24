@@ -87,7 +87,7 @@ int apic_check_supported()
 unsigned char apic_io_get_id(IOApic *apic)
 {
     apic->register_select = APIC_IO_REGISTER_ID;
-    return (apic->register_data >> 24) & 0b1111;
+    return (apic->register_data >> 24) & 0b11111111;
 }
 
 unsigned char apic_io_get_version(IOApic *apic)
