@@ -11,6 +11,7 @@
 #include "../include/interrupt.h"
 #include "../include/cpu.h"
 #include "../include/port.h"
+#include "../include/serial.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -397,7 +398,7 @@ void kernel_main()
 
     // console_print("[test] triggering interrupt\n");
 
-    keyboard_init();
+    keyboard_initialize();
     serial_initialize();
 
     // int a = 100 / 0;

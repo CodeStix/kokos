@@ -4,6 +4,8 @@
 #include "../include/cpu.h"
 #include "../include/interrupt.h"
 #include "../include/apic.h"
+#include "../include/serial.h"
+#include "../include/util.h"
 
 // This file contains the driver for the old Intel 8042 ps/2 controller, which is still emulated by most systems
 // https://wiki.osdev.org/%228042%22_PS/2_Controller
@@ -66,24 +68,77 @@ static inline void keyboard_write_data(unsigned char data)
     port_out8(KEYBOARD_DATA_REGISTER, data);
 }
 
+static int releasing = 0;
+
 ATTRIBUTE_INTERRUPT
 void interrupt_handle_keyboard(InterruptFrame *frame)
 {
-    console_print("[keyboard] got interrupt 0x");
     unsigned char input = port_in8(0x60);
-    console_print_i32(input, 16);
+
+    // console_print("[keyboard] got interrupt 0x");
+    // console_print_i32(input, 16);
+    // console_new_line();
+
+    if (input == 0xF0)
+    {
+        // Next key release
+        releasing = 1;
+    }
+    else
+    {
+        if (scancodes[input] && !releasing)
+        {
+            if (input == 90)
+            {
+                // Enter
+                console_new_line();
+            }
+            else if (input == 102)
+            {
+                // Backspace
+                unsigned int x, y;
+                console_get_cursor(&x, &y);
+                if (x > 0)
+                {
+                    console_set_cursor(x - 1, y);
+                    console_print_char(' ');
+                    console_set_cursor(x - 1, y);
+                }
+                else if (y > 0)
+                {
+                    console_set_cursor(79, y - 1);
+                }
+            }
+            else
+            {
+                console_print(scancodes[input]);
+            }
+        }
+
+        releasing = 0;
+    }
+
+    // console_new_line();
+
+    // char buffer[5];
+    // convert_i32_string(buffer, input, 10);
+    // for (char *c = buffer; *c; c++)
+    // {
+    //     serial_write(*c);
+    // }
+    // serial_write('\n');
+
     // while (port_in8(0x64) & 0b00000001)
     // {
     //     unsigned char input = port_in8(0x60);
     //     console_print(" 0x");
     //     console_print_i32(input, 16);
     // }
-    console_new_line();
 
     apic_get()->end_of_interrupt = 0;
 }
 
-void keyboard_init()
+void keyboard_initialize()
 {
     console_print("testing keyboard\n");
 
