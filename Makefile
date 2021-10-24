@@ -19,6 +19,7 @@ build: src/x86_64/** src/common/** src/include/**
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/memory_physical.c -o build/common/memory_physical.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/port.c -o build/common/port.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/cpu.c -o build/common/cpu.o
+	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/serial.c -o build/common/serial.o
 # Compile using -mgeneral-regs-only so we can use gcc's interrupt attribute (see interrupt.c), this is needed because gcc only preserves general purpose registers and not
 # SEE, MMX and x87 registers and states
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector -mgeneral-regs-only src/common/interrupt.c -o build/common/interrupt.o
@@ -31,4 +32,4 @@ build: src/x86_64/** src/common/** src/include/**
 	grub-mkrescue /usr/lib/grub/i386-pc -o build/x86_64/build.iso build/x86_64/multiboot2
 
 run: build
-	qemu-system-x86_64 -usb -m 1G build/x86_64/build.iso
+	qemu-system-x86_64 -chardev stdio,id=char0,logfile=serial.log,signal=off -serial chardev:char0 -usb -m 1G build/x86_64/build.iso

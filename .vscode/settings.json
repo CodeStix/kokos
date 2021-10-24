@@ -12,6 +12,7 @@
         "apic.h": "c",
         "multiboot2.h": "c",
         "port.h": "c",
-        "cpu.h": "c"
+        "cpu.h": "c",
+        "serial.h": "c"
     }
 }

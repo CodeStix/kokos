@@ -398,6 +398,7 @@ void kernel_main()
     // console_print("[test] triggering interrupt\n");
 
     keyboard_init();
+    serial_initialize();
 
     // int a = 100 / 0;
 
