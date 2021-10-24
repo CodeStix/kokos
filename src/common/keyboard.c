@@ -98,11 +98,53 @@ void keyboard_init()
 
     console_print("keyboard test OK!\n");
 
-    console_print("testing keyboard end\n");
+    // Write new config byte to the ps/2 controller, enabling interrupts
+    keyboard_write_command(0x60);
+    keyboard_write_data(0b00000111);
 
-    // asm volatile("cli");
+    // Enable ps/2 ports
+    keyboard_write_command(0xAE);
+    keyboard_write_command(0xA8);
+
+    // Reset ps/2 device
+    keyboard_write_data(0xFF);
+    result = keyboard_read_data();
+    console_print("response 0: 0x");
+    console_print_i32(result, 16);
+    console_new_line();
+    result = keyboard_read_data();
+    console_print("response 1: 0x");
+    console_print_i32(result, 16);
+    console_new_line();
+
+    // console_print("setting led\n");
+
+    // keyboard_write_data(0xED);
+    // result = keyboard_read_data();
+    // console_print("response 0: 0x");
+    // console_print_i32(result, 16);
+    // console_new_line();
+    // keyboard_write_data(0b101);
+    // result = keyboard_read_data();
+    // console_print("response 1: 0x");
+    // console_print_i32(result, 16);
+    // console_new_line();
+
+    console_print("registering interrupt\n");
+
+    asm volatile("cli");
     interrupt_register(0x23, interrupt_handle_keyboard, INTERRUPT_GATE_TYPE_INTERRUPT);
-    // asm volatile("sti");
+    asm volatile("sti");
+
+    IOApicEntry entry = {
+        .vector = 0x23,
+        .destination = (apic_get()->id >> 24) & 0b1111,
+    };
+
+    apic_io_register(apic_io_get(), 1, entry);
+    apic_io_register(apic_io_get(), 12, entry);
+
+    console_print("keyboard configuration done\n");
 
     // while (1)
     // {

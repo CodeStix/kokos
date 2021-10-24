@@ -173,10 +173,13 @@ void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry);
 void apic_io_register(IOApic *apic, unsigned char irq, IOApicEntry entry);
 
 // Sets the virtual address of the local APIC
-void apic_initialize(Apic *local_apic);
+void apic_initialize(Apic *apic, IOApic *io_apic);
 
 // Returns the virtual address to the local APIC for the current processor (which is the same for all processors)
 Apic *apic_get();
+
+// Gets the first IO APIC
+IOApic *apic_io_get();
 
 // Disables the normal PIC
 void apic_disable_pic();

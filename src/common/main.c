@@ -289,8 +289,6 @@ void kernel_main()
 
     Apic *apic = (Apic *)paging_map(madt->local_apic_address, 0);
 
-    apic_initialize(apic);
-
     unsigned char apic_id = (apic->id >> 24) & 0b1111;
     unsigned char apic_version = apic->version & 0xFF;
     unsigned char apic_max_entries = (apic->version >> 16) & 0xFF;
@@ -316,13 +314,11 @@ void kernel_main()
     console_print_i32(apic_max_entries, 10);
     console_new_line();
 
-    // acpi_print_madt(madt);
-
-    console_print("[ioapic] looking for io apics in MADT table\n");
+    console_print("[ioapic] looking for io apic in MADT table\n");
 
     // Iterate all io apic's
     AcpiMadtEntry1IOAPIC *current_ioapic = 0;
-    IOApic *ioapic;
+    IOApic *ioapic = 0;
     while (current_ioapic = acpi_madt_iterate_type(madt, current_ioapic, ACPI_MADT_TYPE_IO_APIC))
     {
         console_print("[ioapic] id ");
@@ -333,19 +329,22 @@ void kernel_main()
         console_print_u64(current_ioapic->global_system_interrupt_base, 10);
         console_new_line();
 
-        ioapic = (IOApic *)paging_map(current_ioapic->io_apic_address, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+        if (ioapic == 0)
+        {
+            ioapic = (IOApic *)paging_map(current_ioapic->io_apic_address, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
-        console_print("[ioapic] version: ");
-        console_print_u64(apic_io_get_version(ioapic), 10);
-        console_new_line();
+            console_print("[ioapic] version: ");
+            console_print_u64(apic_io_get_version(ioapic), 10);
+            console_new_line();
 
-        console_print("[ioapic] entry count: ");
-        console_print_u64(apic_io_get_max_entries(ioapic), 10);
-        console_new_line();
+            console_print("[ioapic] entry count: ");
+            console_print_u64(apic_io_get_max_entries(ioapic), 10);
+            console_new_line();
 
-        console_print("[ioapic] id: ");
-        console_print_u64(apic_io_get_id(ioapic), 10);
-        console_new_line();
+            console_print("[ioapic] id: ");
+            console_print_u64(apic_io_get_id(ioapic), 10);
+            console_new_line();
+        }
 
         // unsigned long entry = apic_io_get_entry(ioapic, 1);
         // unsigned long entry = 0x23 | ((unsigned long)apic_id << 56);
@@ -355,6 +354,10 @@ void kernel_main()
         // apic_io_set_entry(ioapic, 1, entry);
         // apic_io_set_entry(ioapic, 12, entry);
     }
+
+    acpi_print_madt(madt);
+
+    apic_initialize(apic, ioapic);
 
     console_print("[test] create test interrupts\n");
 
@@ -371,13 +374,6 @@ void kernel_main()
     console_print("[test] triggering interrupt\n");
 
     keyboard_init();
-
-    IOApicEntry entry = {
-        .vector = 0x23,
-        .destination = apic_id,
-    };
-
-    apic_io_register(ioapic, 1, entry);
 
     // int a = 100 / 0;
 

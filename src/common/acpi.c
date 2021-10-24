@@ -150,8 +150,6 @@ void acpi_print_madt(const AcpiMadt *madt)
 
         i += madt_entry->length;
     }
-
-    console_new_line();
 }
 
 AcpiMadtEntry *acpi_madt_iterate(const AcpiMadt *madt, AcpiMadtEntry *previous)

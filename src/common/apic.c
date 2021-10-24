@@ -14,15 +14,22 @@
 // }
 
 Apic *local_apic;
+IOApic *default_io_apic;
 
-void apic_initialize(Apic *virtual_address)
+void apic_initialize(Apic *apic, IOApic *io_apic)
 {
-    local_apic = virtual_address;
+    local_apic = apic;
+    default_io_apic = io_apic;
 }
 
 Apic *apic_get()
 {
     return local_apic;
+}
+
+IOApic *apic_io_get()
+{
+    return default_io_apic;
 }
 
 // TODO check if APIC is enabled in MSR
@@ -124,3 +131,11 @@ void apic_io_register(IOApic *apic, unsigned char irq, IOApicEntry entry)
 {
     apic_io_set_entry(apic, irq, *(unsigned long *)&entry);
 }
+
+#define MAX_IO_APIC 8
+
+typedef struct
+{
+    unsigned int starting_irq; // Or GSI (Global System Interrupt)
+    IOApic *address;
+} IOApicInfo;
