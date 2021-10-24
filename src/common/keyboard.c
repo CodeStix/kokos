@@ -70,6 +70,7 @@ static inline void keyboard_write_data(unsigned char data)
 
 static int releasing = 0;
 static int shift = 0;
+static int caps_lock = 0;
 
 ATTRIBUTE_INTERRUPT
 void interrupt_handle_keyboard(InterruptFrame *frame)
@@ -109,9 +110,29 @@ void interrupt_handle_keyboard(InterruptFrame *frame)
             // Shift
             shift = 1;
         }
+        else if (input == 0x14)
+        {
+            // Caps lock
+            caps_lock = !caps_lock;
+
+            // Update keyboard led
+            keyboard_write_data(0xED);
+            // Wait for ACK
+            keyboard_read_data();
+            // Send new led statusses (CapsLock NumberLock ScrollLock)
+            keyboard_write_data(caps_lock ? 0b100 : 0b000);
+            // Wait for ACK
+            keyboard_read_data();
+
+            unsigned int x, y;
+            console_get_cursor(&x, &y);
+            console_set_cursor(70, 1);
+            console_print(caps_lock ? "CAPSLOCK" : "        ");
+            console_set_cursor(x, y);
+        }
         else
         {
-            const char **scancodes = shift ? scancodes_shift : scancodes_normal;
+            const char **scancodes = shift || caps_lock ? scancodes_shift : scancodes_normal;
             if (scancodes[input])
             {
                 if (input == 90)
