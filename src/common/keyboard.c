@@ -108,17 +108,23 @@ void keyboard_init()
 
     // Reset ps/2 device
     keyboard_write_data(0xFF);
-    result = keyboard_read_data();
-    console_print("response 0: 0x");
-    console_print_i32(result, 16);
-    console_new_line();
-    result = keyboard_read_data();
-    console_print("response 1: 0x");
-    console_print_i32(result, 16);
-    console_new_line();
+    // Should return ACK(0xFA)
+    keyboard_read_data();
+    // Should return 0xAA, meaning self test successful
+    keyboard_read_data();
+
+    // Tell keyboard to use scan code set 3 (easiest to implement)
+    keyboard_write_data(0xF0);
+    // Wait for ACK
+    keyboard_read_data();
+    // Send 3
+    keyboard_write_data(3);
+    // Wait for ACK
+    keyboard_read_data();
+
+    // https://web.archive.org/web/20170108131104/http://www.computer-engineering.org/ps2keyboard/scancodes3.html
 
     // console_print("setting led\n");
-
     // keyboard_write_data(0xED);
     // result = keyboard_read_data();
     // console_print("response 0: 0x");
