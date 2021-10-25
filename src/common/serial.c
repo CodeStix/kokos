@@ -56,3 +56,16 @@ void serial_initialize()
 
     console_print("[serial] initialized\n");
 }
+
+// void serial_print_u32(unsigned int num, unsigned int base)
+// {
+//     char dest[33];
+//     convert_u32_string(dest, num, base);
+//     serial_print(dest);
+// }
+
+// void serial_print(const char *str)
+// {
+//     for (char *c = str; *c; c++)
+//         serial_write(*c);
+// }
