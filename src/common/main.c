@@ -27,7 +27,7 @@
 #define KERNEL_SIZE 0x100000
 
 extern volatile unsigned long page_table_level4[512];
-extern void(cpu_startup)();
+extern void(cpu_startup16)();
 extern unsigned short cpu_startup_increment;
 extern unsigned int cpu_startup_mode;
 
@@ -424,10 +424,10 @@ void kernel_main()
     serial_initialize();
 
     console_print("[smp] cpu entry code at 0x");
-    console_print_u64(cpu_startup, 16);
+    console_print_u64(cpu_startup16, 16);
     console_new_line();
 
-    unsigned int cpu_startup_vector = (unsigned long)cpu_startup >> 12;
+    unsigned int cpu_startup_vector = (unsigned long)cpu_startup16 >> 12;
     console_print("[smp] cpu entry code vector ");
     console_print_i32(cpu_startup_vector, 10);
     console_new_line();

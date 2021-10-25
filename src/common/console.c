@@ -6,6 +6,8 @@ volatile ConsoleVideoChar *video_memory = (ConsoleVideoChar *)0xb8000;
 static unsigned char current_console_color = 0x0f;
 static unsigned int x = 0, y = 0, w = 80, h = 25;
 
+static ConsoleVideoChar history[40000];
+
 void console_set_color(CONSOLE_COLOR foreground, CONSOLE_COLOR background)
 {
     current_console_color = foreground | (background << 4);
