@@ -422,6 +422,20 @@ void kernel_main()
     keyboard_initialize();
     serial_initialize();
 
+    console_print("[smp] cpu entry code at 0x");
+    console_print_u64(cpu_startup, 16);
+    console_new_line();
+
+    unsigned int cpu_startup_vector = (unsigned long)cpu_startup >> 12;
+    console_print("[smp] cpu entry code vector ");
+    console_print_i32(cpu_startup_vector, 10);
+    console_new_line();
+    if (cpu_startup_vector > 255)
+    {
+        console_print("[smp] fatal: cpu entry code is not under the 1mb barrier, cannot start multiple processors\n");
+        return;
+    }
+
     AcpiMadtEntry0LocalAPIC *current_processor = 0;
     while (current_processor = acpi_madt_iterate_type(madt, current_processor, ACPI_MADT_TYPE_LOCAL_APIC))
     {
@@ -434,26 +448,13 @@ void kernel_main()
 
         console_print("[smp] starting processor ");
         console_print_i32(current_processor->processor_id, 10);
+        console_print(" and wait");
         console_new_line();
 
         if (!(current_processor->flags & 0b1))
         {
-            console_print("[smp] not starting processor because the processor enabled flag (in madt table) is 0\n");
+            console_print("[smp] not starting processor because the processor enabled flag (in MADT table) is 0\n");
             continue;
-        }
-
-        console_print("[smp] cpu entry code at 0x");
-        console_print_u64(cpu_startup, 16);
-        console_new_line();
-
-        unsigned int cpu_startup_vector = (unsigned long)cpu_startup >> 12;
-        console_print("[smp] cpu entry code vector ");
-        console_print_i32(cpu_startup_vector, 10);
-        console_new_line();
-        if (cpu_startup_vector > 255)
-        {
-            console_print("[smp] error: cpu entry code is not under the 1mb barrier, cannot start multiple processors\n");
-            break;
         }
 
         cpu_startup_increment = 0;
@@ -474,8 +475,6 @@ void kernel_main()
         // Send it one more time to be sure (recommended by Intel), the cpu will ignore it if the first one succeeded
         apic->interrupt_command1 = current_processor->apic_id << 24;
         apic->interrupt_command0 = (0b1 << 14) | (0b110 << 8) | cpu_startup_vector;
-
-        console_print("[smp] waiting for processor\n");
 
         while (!cpu_startup_increment)
         {
