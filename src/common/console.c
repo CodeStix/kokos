@@ -4,34 +4,56 @@
 volatile ConsoleVideoChar *video_memory = (ConsoleVideoChar *)0xb8000;
 
 static unsigned char current_console_color = 0x0f;
-static unsigned int x = 0, y = 0, w = 80, h = 25;
+static unsigned int x = 0, y = 0;
+static int scroll = 0;
 
-static ConsoleVideoChar history[40000];
+static ConsoleVideoChar history[CONSOLE_BUFFER_WIDTH * CONSOLE_BUFFER_HEIGHT];
 
-void console_set_color(CONSOLE_COLOR foreground, CONSOLE_COLOR background)
+static void console_update_screen()
 {
-    current_console_color = foreground | (background << 4);
+    for (int iy = 0; iy < CONSOLE_VISIBLE_HEIGHT; iy++)
+    {
+        for (int ix = 0; ix < CONSOLE_BUFFER_WIDTH; ix++)
+        {
+            video_memory[ix + iy * CONSOLE_BUFFER_WIDTH] = history[ix + (iy + scroll) * CONSOLE_BUFFER_WIDTH];
+        }
+    }
+}
+
+void console_set_color(ConsoleColor foreground, ConsoleColor background)
+{
+    current_console_color = (foreground & 0xF) | ((background & 0xF) << 4);
 }
 
 void console_new_line()
 {
-    if (++y >= h)
+    if (++y >= CONSOLE_BUFFER_HEIGHT)
     {
-        for (int iy = 0; iy < h - 1; iy++)
+        // Shift entire buffer so the new line can fit on the screen
+        for (int iy = 0; iy < CONSOLE_BUFFER_HEIGHT - 1; iy++)
         {
-            for (int ix = 0; ix < w; ix++)
+            for (int ix = 0; ix < CONSOLE_BUFFER_WIDTH; ix++)
             {
-                video_memory[ix + iy * w] = video_memory[ix + (iy + 1) * w];
+                history[ix + iy * CONSOLE_BUFFER_WIDTH] = history[ix + (iy + 1) * CONSOLE_BUFFER_WIDTH];
             }
         }
-        y = h - 1;
-        for (int ix = 0; ix < w; ix++)
+
+        // Insert new empty line
+        y = CONSOLE_BUFFER_HEIGHT - 1;
+        for (int ix = 0; ix < CONSOLE_BUFFER_WIDTH; ix++)
         {
-            video_memory[ix + y * w].charater = 0x0;
-            video_memory[ix + y * w].color = 0x0;
+            history[ix + y * CONSOLE_BUFFER_WIDTH].charater = 0x0;
+            history[ix + y * CONSOLE_BUFFER_WIDTH].color = 0x0;
         }
     }
     x = 0;
+
+    if (y >= scroll + CONSOLE_VISIBLE_HEIGHT && scroll < CONSOLE_BUFFER_HEIGHT - 1)
+    {
+        // Scroll down
+        scroll++;
+        console_update_screen();
+    }
 }
 
 void console_print_char(char c)
@@ -42,9 +64,15 @@ void console_print_char(char c)
     }
     else
     {
-        video_memory[x + y * w].charater = c;
-        video_memory[x + y * w].color = current_console_color;
-        if (++x >= w)
+        history[x + y * CONSOLE_BUFFER_WIDTH].charater = c;
+        history[x + y * CONSOLE_BUFFER_WIDTH].color = current_console_color;
+        if (y >= scroll && y < scroll + CONSOLE_BUFFER_HEIGHT)
+        {
+            video_memory[x + (y - scroll) * CONSOLE_BUFFER_WIDTH].charater = c;
+            video_memory[x + (y - scroll) * CONSOLE_BUFFER_WIDTH].color = current_console_color;
+        }
+
+        if (++x >= CONSOLE_BUFFER_WIDTH)
         {
             console_new_line();
         }
@@ -54,27 +82,29 @@ void console_print_char(char c)
 void console_set_cursor(unsigned int new_x, unsigned int new_y)
 {
     x = new_x;
-    y = new_y;
+    y = new_y + scroll;
 }
 
 void console_get_cursor(unsigned int *destination_x, unsigned int *destination_y)
 {
     *destination_x = x;
-    *destination_y = y;
+    *destination_y = y - scroll;
 }
 
 void console_clear()
 {
-    for (int ix = 0; ix < w; ix++)
+    for (int ix = 0; ix < CONSOLE_BUFFER_WIDTH; ix++)
     {
-        for (int iy = 0; iy < h; iy++)
+        for (int iy = 0; iy < CONSOLE_BUFFER_HEIGHT; iy++)
         {
-            video_memory[ix + iy * w].charater = 0x0;
-            video_memory[ix + iy * w].color = 0x0;
+            history[ix + iy * CONSOLE_BUFFER_WIDTH].charater = 0x0;
+            history[ix + iy * CONSOLE_BUFFER_WIDTH].color = 0x0;
         }
     }
     x = 0;
     y = 0;
+    scroll = 0;
+    console_update_screen();
 }
 
 void console_print(const char *str)
@@ -120,4 +150,18 @@ void console_print_u64(unsigned long num, int base)
     char dest[sizeof(unsigned long) * 8 + 1];
     convert_u64_string(dest, num, base);
     console_print(dest);
+}
+
+void console_scroll(int amount)
+{
+    scroll += amount;
+    if (scroll < 0)
+    {
+        scroll = 0;
+    }
+    else if (scroll >= CONSOLE_BUFFER_HEIGHT)
+    {
+        scroll = CONSOLE_BUFFER_HEIGHT - 1;
+    }
+    console_update_screen();
 }

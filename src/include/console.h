@@ -1,22 +1,28 @@
 #pragma once
 
-#define CONSOLE_COLOR unsigned char
-#define CONSOLE_COLOR_BLACK (CONSOLE_COLOR)0x0
-#define CONSOLE_COLOR_BLUE (CONSOLE_COLOR)0x1
-#define CONSOLE_COLOR_GREEN (CONSOLE_COLOR)0x2
-#define CONSOLE_COLOR_CYAN (CONSOLE_COLOR)0x3
-#define CONSOLE_COLOR_RED (CONSOLE_COLOR)0x4
-#define CONSOLE_COLOR_PURPLE (CONSOLE_COLOR)0x5
-#define CONSOLE_COLOR_BROWN (CONSOLE_COLOR)0x6
-#define CONSOLE_COLOR_GRAY (CONSOLE_COLOR)0x7
-#define CONSOLE_COLOR_DARK_GRAY (CONSOLE_COLOR)0x8
-#define CONSOLE_COLOR_LIGHT_BLUE (CONSOLE_COLOR)0x9
-#define CONSOLE_COLOR_LIGHT_GREEN (CONSOLE_COLOR)0xA
-#define CONSOLE_COLOR_LIGHT_CYAN (CONSOLE_COLOR)0xB
-#define CONSOLE_COLOR_LIGHT_RED (CONSOLE_COLOR)0xC
-#define CONSOLE_COLOR_LIGHT_PURPLE (CONSOLE_COLOR)0xD
-#define CONSOLE_COLOR_YELLOW (CONSOLE_COLOR)0xE
-#define CONSOLE_COLOR_WHITE (CONSOLE_COLOR)0xF
+typedef enum
+{
+    CONSOLE_COLOR_BLACK = 0x0,
+    CONSOLE_COLOR_BLUE = 0x1,
+    CONSOLE_COLOR_GREEN = 0x2,
+    CONSOLE_COLOR_CYAN = 0x3,
+    CONSOLE_COLOR_RED = 0x4,
+    CONSOLE_COLOR_PURPLE = 0x5,
+    CONSOLE_COLOR_BROWN = 0x6,
+    CONSOLE_COLOR_GRAY = 0x7,
+    CONSOLE_COLOR_DARK_GRAY = 0x8,
+    CONSOLE_COLOR_LIGHT_BLUE = 0x9,
+    CONSOLE_COLOR_LIGHT_GREEN = 0xA,
+    CONSOLE_COLOR_LIGHT_CYAN = 0xB,
+    CONSOLE_COLOR_LIGHT_RED = 0xC,
+    CONSOLE_COLOR_LIGHT_PURPLE = 0xD,
+    CONSOLE_COLOR_YELLOW = 0xE,
+    CONSOLE_COLOR_WHITE = 0xF,
+} ConsoleColor;
+
+#define CONSOLE_VISIBLE_HEIGHT 25
+#define CONSOLE_BUFFER_WIDTH 80
+#define CONSOLE_BUFFER_HEIGHT 25 * 100
 
 typedef struct
 {
@@ -24,7 +30,7 @@ typedef struct
     unsigned char color;
 } ConsoleVideoChar;
 
-void console_set_color(CONSOLE_COLOR foreground, CONSOLE_COLOR background);
+void console_set_color(ConsoleColor foreground, ConsoleColor background);
 void console_new_line();
 void console_print_char(char c);
 void console_set_cursor(unsigned int new_x, unsigned int new_y);
@@ -36,3 +42,4 @@ void console_print_i32(int num, int base);
 void console_print_u32(unsigned int num, int base);
 void console_print_i64(long num, int base);
 void console_print_u64(unsigned long num, int base);
+void console_scroll(int amount);

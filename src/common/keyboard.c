@@ -110,6 +110,17 @@ void interrupt_handle_keyboard(InterruptFrame *frame)
             // Shift
             shift = 1;
         }
+        else if (input == 0x63)
+        {
+            // Arrow keys
+            //      0x63
+            // 0x61 0x60 0x6A
+            console_scroll(-1);
+        }
+        else if (input == 0x60)
+        {
+            console_scroll(1);
+        }
         else if (input == 0x14)
         {
             // Caps lock
