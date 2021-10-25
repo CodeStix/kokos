@@ -117,12 +117,17 @@ void kernel_main()
 
     // Find total amount of memory
     unsigned long max_address = 0;
+    unsigned long usable_memory = 0;
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
         Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
-        if (entry->type == 1 && entry->address + entry->length > max_address)
+        if (entry->type == 1)
         {
-            max_address = entry->address + entry->length;
+            usable_memory += entry->length;
+            if (entry->address + entry->length > max_address)
+            {
+                max_address = entry->address + entry->length;
+            }
         }
 
         console_print("[physical memory] memory at 0x");
@@ -138,7 +143,7 @@ void kernel_main()
     }
 
     console_print("[physical memory] total usable ram = ");
-    console_print_u64(max_address, 10);
+    console_print_u64(usable_memory, 10);
     console_print(" from 0x0 ... 0x");
     console_print_u64(max_address, 16);
     console_new_line();
@@ -297,6 +302,7 @@ void kernel_main()
         console_print("[acpi] rsdt checksum does not match!\n");
         return;
     }
+    acpi_print_rsdt(rsdt);
 
     // TODO support XSDT
 
@@ -385,17 +391,9 @@ void kernel_main()
             console_print_u64(apic_io_get_id(ioapic), 10);
             console_new_line();
         }
-
-        // unsigned long entry = apic_io_get_entry(ioapic, 1);
-        // unsigned long entry = 0x23 | ((unsigned long)apic_id << 56);
-
-        // Use IRQ1 (keyboard)
-
-        // apic_io_set_entry(ioapic, 1, entry);
-        // apic_io_set_entry(ioapic, 12, entry);
     }
 
-    acpi_print_madt(madt);
+    // acpi_print_madt(madt);
 
     apic_initialize(apic, ioapic);
 
@@ -440,13 +438,6 @@ void kernel_main()
     AcpiMadtEntry0LocalAPIC *current_processor = 0;
     while (current_processor = acpi_madt_iterate_type(madt, current_processor, ACPI_MADT_TYPE_LOCAL_APIC))
     {
-        if (current_processor->apic_id == apic_id)
-        {
-            // Skip boot processor
-            console_print("[smp] skip boot processor\n");
-            continue;
-        }
-
         console_print("[smp] starting processor ");
         console_print_i32(current_processor->processor_id, 10);
         console_print(" and wait");
@@ -454,7 +445,14 @@ void kernel_main()
 
         if (!(current_processor->flags & 0b1))
         {
-            console_print("[smp] not starting processor because the processor enabled flag (in MADT table) is 0\n");
+            console_print("[smp] skipping because the processor enabled flag is 0\n");
+            continue;
+        }
+
+        if (current_processor->apic_id == apic_id)
+        {
+            // Skip boot processor
+            console_print("[smp] skipping because boot processor\n");
             continue;
         }
 
