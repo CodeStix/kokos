@@ -2,7 +2,15 @@ ENTRY(start32)
 
 SECTIONS 
 {
-    /* set current writing address to 0x8000 */
+    /* set current writing addresst o0x8000 (around 8kb) */
+    . = 0x8000;
+
+    .lowtext : 
+    {
+        *(.lowtext)
+    }
+
+    /* set current writing address to 0x00100000 (around 1mb) */
     . = 0x00100000;
 
     /* create the boot section, which contains our multiboot2 header */

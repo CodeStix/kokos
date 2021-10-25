@@ -21,10 +21,20 @@ inline unsigned long cpu_timestamp()
     return lower | (upper << 32);
 }
 
-inline unsigned long cpu_wait()
+inline unsigned long cpu_wait_microsecond()
 {
     unsigned long start = cpu_timestamp(), current = start;
     while (current - start < 10000ull) // ~1us
+    {
+        current = cpu_timestamp();
+        asm volatile("pause");
+    }
+}
+
+inline unsigned long cpu_wait_millisecond()
+{
+    unsigned long start = cpu_timestamp(), current = start;
+    while (current - start < 10000000ull) // ~1ms
     {
         current = cpu_timestamp();
         asm volatile("pause");

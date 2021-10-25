@@ -20,7 +20,7 @@
 static inline unsigned char keyboard_read_status()
 {
     // Wait for a very short delay
-    cpu_wait();
+    cpu_wait_microsecond();
 
     return port_in8(KEYBOARD_STATUS_REGISTER);
 }
@@ -28,7 +28,7 @@ static inline unsigned char keyboard_read_status()
 static inline unsigned char keyboard_read_data()
 {
     // Wait for a very short delay
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Keep looping until the output buffer is full
     while (!(port_in8(KEYBOARD_STATUS_REGISTER) & KEYBOARD_OUTPUT_BUFFER_FULL))
@@ -43,7 +43,7 @@ static inline unsigned char keyboard_read_data()
 static inline void keyboard_write_command(unsigned char command)
 {
     // Wait for a very short delay
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Keep looping until input buffer is empty
     while (port_in8(KEYBOARD_STATUS_REGISTER) & KEYBOARD_INPUT_BUFFER_FULL)
@@ -57,7 +57,7 @@ static inline void keyboard_write_command(unsigned char command)
 static inline void keyboard_write_data(unsigned char data)
 {
     // Wait for a very short delay
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Keep looping until input buffer is empty
     while (port_in8(KEYBOARD_STATUS_REGISTER) & KEYBOARD_INPUT_BUFFER_FULL)

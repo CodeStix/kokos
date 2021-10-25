@@ -259,7 +259,7 @@ void interrupt_initialize()
 
     interrupt_register(0, interrupt_handle_divide_by_zero, INTERRUPT_GATE_TYPE_TRAP);
     interrupt_register(1, interrupt_handle_debug, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(2, interrupt_handle_non_maskable_interrupt, INTERRUPT_GATE_TYPE_TRAP);
+    interrupt_register(2, interrupt_handle_non_maskable_interrupt, INTERRUPT_GATE_TYPE_INTERRUPT); // This is recommended by Intel (Intel Volume 1 6.7.1)
     interrupt_register(3, interrupt_handle_breakpoint, INTERRUPT_GATE_TYPE_TRAP);
     interrupt_register(4, interrupt_handle_overflow, INTERRUPT_GATE_TYPE_TRAP);
     interrupt_register(5, interrupt_handle_bound_range, INTERRUPT_GATE_TYPE_TRAP);

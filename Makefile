@@ -6,6 +6,7 @@ build: src/x86_64/** src/common/** src/include/**
 	mkdir build build/x86_64 build/common
 	nasm -f elf64 src/x86_64/main.asm -o build/x86_64/main.o
 	nasm -f elf64 src/x86_64/main64.asm -o build/x86_64/main64.o
+	nasm -f elf64 src/x86_64/cpu.asm -o build/x86_64/cpu.o
 	nasm -f elf64 src/x86_64/multiboot2.asm -o build/x86_64/multiboot2.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/console.c -o build/common/console.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/acpi.c -o build/common/acpi.o
@@ -32,4 +33,4 @@ build: src/x86_64/** src/common/** src/include/**
 	grub-mkrescue /usr/lib/grub/i386-pc -o build/x86_64/build.iso build/x86_64/multiboot2
 
 run: build
-	qemu-system-x86_64 -chardev stdio,id=char0,logfile=serial.log,signal=off -serial chardev:char0 -usb -m 1G build/x86_64/build.iso
+	qemu-system-x86_64 -smp 4 -chardev stdio,id=char0,logfile=serial.log,signal=off -serial chardev:char0 -usb -m 1G build/x86_64/build.iso

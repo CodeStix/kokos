@@ -22,7 +22,13 @@
 #define int64 signed long long
 #define uint64 unsigned long long
 
+// This should be the same in linker.ld, the kernel will be loaded at this location
+#define KERNEL_BASE_ADDRESS (void *)0x100000
+#define KERNEL_SIZE 0x100000
+
 extern volatile unsigned long page_table_level4[512];
+extern void(cpu_startup)();
+extern unsigned short cpu_startup_increment;
 
 int hugepages_supported()
 {
@@ -148,9 +154,28 @@ void kernel_main()
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
         Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
-        if (entry->type == 1 && entry->length >= allocation_table_size)
+        // Always place the allocation table higher than 1mb, the low memory area can contain data
+        if (entry->type == 1 && entry->length >= allocation_table_size && entry->address >= 0x00100000)
         {
-            allocation_table_start = (void *)entry->address;
+            // Move allocation table after the kernel if it overlaps with the kernel
+            if (entry->address + allocation_table_size >= KERNEL_BASE_ADDRESS && entry->address < KERNEL_BASE_ADDRESS + KERNEL_SIZE)
+            {
+                if (KERNEL_BASE_ADDRESS + KERNEL_SIZE >= entry->address + entry->length)
+                {
+                    // The allocation table does not fit after the kernel, find next spot
+                    continue;
+                }
+                else
+                {
+                    // Place the allocation directly after the kernel
+                    allocation_table_start = KERNEL_BASE_ADDRESS + KERNEL_SIZE;
+                }
+            }
+            else
+            {
+                // Found a spot
+                allocation_table_start = (void *)entry->address;
+            }
             break;
         }
     }
@@ -173,8 +198,8 @@ void kernel_main()
     // Reserve first megabyte, got problems when allocating here https://wiki.osdev.org/Memory_Map_(x86)
     memory_physical_reserve((void *)0, 0x000FFFFF);
 
-    // Reserve memory for the kernel itself (starting at 0x8000, size ~100kb)
-    memory_physical_reserve((void *)0x00100000, 0x100000);
+    // Reserve memory for the kernel itself
+    memory_physical_reserve(KERNEL_BASE_ADDRESS, KERNEL_SIZE);
 
     // Reserve memory for all non-usable (type != 1) memory regions
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
@@ -319,13 +344,13 @@ void kernel_main()
     console_print_u64((unsigned char *)(&apic->spurious_interrupt_vector) - (unsigned char *)apic, 16);
     console_new_line();
     console_print("[apic] id ");
-    console_print_i32(apic_id, 10);
+    console_print_u32(apic_id, 2);
     console_new_line();
     console_print("[apic] version ");
-    console_print_i32(apic_version, 10);
+    console_print_u32(apic_version, 10);
     console_new_line();
     console_print("[apic] max entries ");
-    console_print_i32(apic_max_entries, 10);
+    console_print_u32(apic_max_entries, 10);
     console_new_line();
 
     console_print("[ioapic] looking for io apic in MADT table\n");
@@ -396,6 +421,71 @@ void kernel_main()
 
     keyboard_initialize();
     serial_initialize();
+
+    AcpiMadtEntry0LocalAPIC *current_processor = 0;
+    while (current_processor = acpi_madt_iterate_type(madt, current_processor, ACPI_MADT_TYPE_LOCAL_APIC))
+    {
+        if (current_processor->apic_id == apic_id)
+        {
+            // Skip boot processor
+            console_print("[smp] skip boot processor\n");
+            continue;
+        }
+
+        console_print("[smp] starting processor ");
+        console_print_i32(current_processor->processor_id, 10);
+        console_new_line();
+
+        if (!(current_processor->flags & 0b1))
+        {
+            console_print("[smp] not starting processor because the processor enabled flag (in madt table) is 0\n");
+            continue;
+        }
+
+        console_print("[smp] cpu entry code at 0x");
+        console_print_u64(cpu_startup, 16);
+        console_new_line();
+
+        unsigned int cpu_startup_vector = (unsigned long)cpu_startup >> 12;
+        console_print("[smp] cpu entry code vector ");
+        console_print_i32(cpu_startup_vector, 10);
+        console_new_line();
+        if (cpu_startup_vector > 255)
+        {
+            console_print("[smp] error: cpu entry code is not under the 1mb barrier, cannot start multiple processors\n");
+            break;
+        }
+
+        cpu_startup_increment = 0;
+
+        // Send interrupt of type INIT to the other cpu's APIC, using the boot processors APIC, the processor will then wait for the SIPI
+        // apic->interrupt_command1 must be written first because the interrupt will be sent when apic->interrupt_command0 has been written to
+        apic->interrupt_command1 = current_processor->apic_id << 24;
+        apic->interrupt_command0 = (0b1 << 14) | (0b101 << 8);
+
+        cpu_wait_millisecond();
+
+        // Send interrupt of type SIPI (startup interprocessor interrupt) to the other cpu's APIC
+        apic->interrupt_command1 = current_processor->apic_id << 24;
+        apic->interrupt_command0 = (0b1 << 14) | (0b110 << 8) | cpu_startup_vector;
+
+        cpu_wait_millisecond();
+
+        // Send it one more time to be sure (recommended by Intel), the cpu will ignore it if the first one succeeded
+        apic->interrupt_command1 = current_processor->apic_id << 24;
+        apic->interrupt_command0 = (0b1 << 14) | (0b110 << 8) | cpu_startup_vector;
+
+        console_print("[smp] waiting for processor\n");
+
+        while (!cpu_startup_increment)
+        {
+            asm volatile("pause");
+        }
+
+        console_print("[smp] startup ok\n");
+    }
+
+    console_print("[smp] started all processors in a halted state\n");
 
     // int a = 100 / 0;
 

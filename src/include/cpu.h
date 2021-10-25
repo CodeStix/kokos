@@ -16,4 +16,7 @@ CpuIdResult cpu_id(unsigned int function);
 unsigned long cpu_timestamp();
 
 // Waits for a minimum amount of 1 microseconds
-unsigned long cpu_wait();
+unsigned long cpu_wait_microsecond();
+
+// Waits for a minimum amount of 1 milliseconds
+unsigned long cpu_wait_millisecond();

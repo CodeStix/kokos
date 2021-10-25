@@ -42,35 +42,35 @@ void apic_disable_pic()
 {
     // Start master PIC initialization sequence, it now expects 3 bytes at port 0x21 to configure this PIC
     port_out8(PIC_MASTER_COMMAND_PORT, 0x11);
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Byte 1: set master interrupt vectors to start at 247 (247 -> 254)
     port_out8(PIC_MASTER_DATA_PORT, 247);
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Byte 2: tell master PIC that there is a slave PIC at IRQ2 pin
     port_out8(PIC_MASTER_DATA_PORT, 0b00000100);
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Byte 3: PIC mode 1 (??)
     port_out8(PIC_MASTER_DATA_PORT, 0x01);
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Start slave PIC initialization sequence, it now expects 3 bytes at port 0xA1 to configure this PIC
     port_out8(PIC_SLAVE_COMMAND_PORT, 0x11);
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Byte 1: set slave interrupt vectors to start at 239 (239 -> 246)
     port_out8(PIC_SLAVE_DATA_PORT, 239);
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Byte 2: tell slave PIC that it is a slave
     port_out8(PIC_SLAVE_DATA_PORT, 0b00000010);
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Byte 3: PIC mode 1 (??)
     port_out8(PIC_SLAVE_DATA_PORT, 0x01);
-    cpu_wait();
+    cpu_wait_microsecond();
 
     // Disable PICs (by masking all interrupts)
     port_out8(PIC_MASTER_DATA_PORT, 0b11111111);

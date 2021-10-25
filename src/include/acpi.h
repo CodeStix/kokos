@@ -249,7 +249,7 @@ typedef struct
 {
     AcpiMadtEntry base;
     unsigned short unused;
-    unsigned int apic_processor_id;
+    unsigned int processor_id;
     unsigned int flags;
     unsigned int apic_id;
 } __attribute__((packed)) AcpiMadtEntry9LocalX2APIC;
