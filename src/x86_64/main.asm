@@ -127,12 +127,25 @@ multiboot2_info:
 
 section .rodata ; The rodata section contains initialized read only data
 
+; https://wiki.osdev.org/Global_Descriptor_Table
 ; Create a global descriptor table, which we will not use, but is required 
-; to enter protected mode (old way of virtual memory using segmentation) https://wiki.osdev.org/Global_Descriptor_Table
+; to enter protected mode (old way of virtual memory using segmentation)
+; The base and limit of the gdt are not used in 64 bit mode, but the flags and acces bytes do. They contain information for the entire address space.
+; The flags are (by bit position)
+; 40: accessed flag. The cpu will set this flag when the segment got accessed
+; 41: read/write flag. For code segment, it determines read access, write access is always disabled for code segments. For data segment, it determines write access, read access is always enabled for data segments.
+; 42: direction flag. For code segments it determines == or >= for the privilege level.
+; 43: executable flag. 1 if this is a code segment, 0 if it is a data segment.
+; 44: descriptor type flag. When 1, this entry defines a code or data segment. When 0, it defines a system segment.
+; 45-46: privilege level flag. 0 = highest privilege, 3 = lowest privilege.
+; 47: present bit. Must be set to 1 for every used entry.
+; 53: long mode flag. Must be 1 for 64 bit code.
+; 54: size flag. 0 = 16 bit code, 1 = 32 bit code. Cannot be used together with the long mode flag.
+; 55: granularity flag.
 gdt64:          
-    dq 0                                                ; Empty entry
+    dq 0                                                ; The 'null' entry, this is required
 .code_segment: equ $ - gdt64
-    dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53)    ; Code segment entry
+    dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53)    ; 64 bit kernel code entry, this code segment will be used when executing 64 bit kernel (privilege level 0) code.
 .pointer:
     dw $ - gdt64 - 1
     dq gdt64

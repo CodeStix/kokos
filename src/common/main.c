@@ -29,6 +29,7 @@
 extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup)();
 extern unsigned short cpu_startup_increment;
+extern unsigned int cpu_startup_mode;
 
 int hugepages_supported()
 {
@@ -457,6 +458,7 @@ void kernel_main()
             continue;
         }
 
+        cpu_startup_mode = 0;
         cpu_startup_increment = 0;
 
         // Send interrupt of type INIT to the other cpu's APIC, using the boot processors APIC, the processor will then wait for the SIPI
@@ -482,6 +484,9 @@ void kernel_main()
         }
 
         console_print("[smp] startup ok\n");
+        console_print("[smp] startup cr0 ");
+        console_print_u32(cpu_startup_mode, 2);
+        console_new_line();
     }
 
     console_print("[smp] started all processors in a halted state\n");

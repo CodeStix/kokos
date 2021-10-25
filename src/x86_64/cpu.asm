@@ -1,5 +1,6 @@
 global cpu_startup
 global cpu_startup_increment
+global cpu_startup_mode
 
 section .lowtext
 
@@ -7,11 +8,21 @@ align 4096
 bits 16
 
 cpu_startup:
-    ; mov dword [0xb8000], 0x4f304f45 ; Print E0 in red to screen https://wiki.osdev.org/Printing_To_Screen
-    inc word [cpu_startup_increment]
+    cli
+
+    inc word [cpu_startup_increment]  ; Notify boot processor that this processor has been enabled, it waits for this variable to be non-zero
+
+    mov eax, cr0 ; Enter 32 bit protected mode
+    or al, 1
+    mov cr0, eax
+
+
 .loop:
     hlt
     jmp .loop
+
+cpu_startup_mode:
+    dd 0
 
 cpu_startup_increment:
     dw 0
