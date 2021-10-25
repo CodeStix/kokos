@@ -105,6 +105,13 @@ void interrupt_handle_keyboard(InterruptFrame *frame)
         }
         else
         {
+            unsigned int x, y;
+            console_get_cursor(&x, &y);
+            console_set_cursor(70, 0);
+            console_print("key=0x");
+            console_print_u32(input, 16);
+            console_set_cursor(x, y);
+
             if (input == 0x12 || input == 0x59)
             {
                 // Shift
