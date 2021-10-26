@@ -1,6 +1,5 @@
 global cpu_startup16
 global cpu_startup_increment
-global cpu_startup_mode
 extern page_table_level4
 extern console_print
 
@@ -70,9 +69,6 @@ cpu_startup64:
 .loop:
     hlt
     jmp .loop
-
-cpu_startup_mode:
-    dd 0
 
 cpu_startup_increment:
     dw 0

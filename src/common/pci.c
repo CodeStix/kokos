@@ -35,7 +35,7 @@ void pci_scan()
                     unsigned char subclass = pci_config_read8(bus, slot, function, 0xa);
                     unsigned char header_type = pci_config_read8(bus, slot, function, 0xe);
 
-                    console_print("pci device at\n bus=");
+                    console_print("[pci] device at bus=");
                     console_print_u32(bus, 10);
                     console_print(" slot=");
                     console_print_u32(slot, 10);
