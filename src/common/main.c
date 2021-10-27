@@ -296,7 +296,7 @@ void kernel_main()
     }
 
     AcpiRsdt *rsdt = (AcpiRsdt *)rsdtp->address;
-    if (acpi_validate_rsdt(&rsdt->base))
+    if (acpi_validate_sdt(&rsdt->base))
     {
         console_print("[acpi] rsdt checksum does not match!\n");
         return;
@@ -305,18 +305,45 @@ void kernel_main()
 
     // TODO support XSDT
 
-    if (!apic_check_supported())
-    {
-        console_print("[acpi] fatal: apic is not supported!\n");
-        return;
-    }
-
     AcpiFadt *fadt = (AcpiFadt *)acpi_rsdt_get_table(rsdt, ACPI_FADT_SIGNATURE);
     if (!fadt)
     {
         console_print("[acpi] fatal: FADT not found!\n");
         return;
     }
+    if (acpi_validate_sdt(&fadt->base))
+    {
+        console_print("[acpi] fatal: FADT not valid\n");
+        return;
+    }
+
+    AcpiDsdt *dsdt = (AcpiDsdt *)fadt->dsdt;
+    if (!dsdt)
+    {
+        console_print("[acpi] fatal: DSDT not found!\n");
+        return;
+    }
+    if (acpi_validate_sdt(&dsdt->base))
+    {
+        console_print("[acpi] fatal: DSDT not valid\n");
+        return;
+    }
+
+    unsigned int dsdt_aml_length = dsdt->base.length - sizeof(AcpiSdt);
+    console_print("aml code size = ");
+    console_print_u32(dsdt_aml_length, 10);
+    console_new_line();
+    // console_print("aml code = {\n");
+    // for (unsigned int i = 0; i < dsdt->base.length; i++)
+    // {
+    //     // serial_print("0x");
+    //     // serial_write(dsdt->aml_code[i]);
+    //     serial_write(*((unsigned char *)dsdt + i));
+    //     // serial_print_u32(dsdt->aml_code[i], 16);
+    //     // serial_print(", ");
+    // }
+    // console_print("\n}\n");
+    // console_new_line();
 
     // Always false for some reason?
     // if (!(fadt->extended_boot_architecture_flags & 0b10))
@@ -329,6 +356,17 @@ void kernel_main()
     if (!madt)
     {
         console_print("[acpi] fatal: MADT not found!\n");
+        return;
+    }
+    if (acpi_validate_sdt(&madt->base))
+    {
+        console_print("[acpi] fatal: MADT not valid\n");
+        return;
+    }
+
+    if (!apic_check_supported())
+    {
+        console_print("[acpi] fatal: apic is not supported!\n");
         return;
     }
 

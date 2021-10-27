@@ -34,12 +34,12 @@ int acpi_validate_xsdt_pointer(const AcpiXsdtp *rsdp)
     return sum & 0xff;
 }
 
-int acpi_validate_rsdt(const AcpiSdt *rsdt)
+int acpi_validate_sdt(const AcpiSdt *sdt)
 {
     unsigned char sum = 0;
-    for (int i = 0; i < rsdt->length; i++)
+    for (int i = 0; i < sdt->length; i++)
     {
-        sum += *(((unsigned char *)rsdt) + i);
+        sum += *(((unsigned char *)sdt) + i);
     }
     return sum;
 }
@@ -210,7 +210,7 @@ AcpiSdt *acpi_xsdt_get_table(const AcpiXsdt *root_table, unsigned int table_sign
 
 void acpi_print_sdt(const AcpiSdt *sdt)
 {
-    if (acpi_validate_rsdt(sdt))
+    if (acpi_validate_sdt(sdt))
     {
         console_print("!!INVALID!! ");
     }

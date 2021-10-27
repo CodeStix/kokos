@@ -16,3 +16,5 @@ void serial_initialize();
 int serial_available();
 char serial_read();
 void serial_write(char c);
+void serial_print_u32(unsigned int num, unsigned int base);
+void serial_print(const char *str);

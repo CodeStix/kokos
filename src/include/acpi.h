@@ -46,7 +46,7 @@ typedef struct
     unsigned int length;
     // The version of this table
     unsigned char revision;
-    // The checksum of this table, this table is valid if the sum of the entire table's lower byte is zero (see acpi_validate_rsdt)
+    // The checksum of this table, this table is valid if the sum of the entire table's lower byte is zero (see acpi_validate_sdt)
     unsigned char checksum;
     // The vendor that created this table
     char oem_id[6];
@@ -155,6 +155,12 @@ typedef struct
     // Only available on ACPI 2.0+
     AcpiFadtAddress extended_gpe1_block;
 } __attribute__((packed)) AcpiFadt;
+
+typedef struct
+{
+    AcpiSdt base;
+    unsigned char aml_code[];
+} AcpiDsdt;
 
 #define ACPI_MADT_TYPE_LOCAL_APIC 0
 #define ACPI_MADT_TYPE_IO_APIC 1
@@ -265,7 +271,7 @@ int acpi_validate_rsdt_pointer(const AcpiRsdtp *rsdp);
 int acpi_validate_xsdt_pointer(const AcpiXsdtp *rsdp);
 
 // Returns 0 if the AcpiRsdt or AcpiXsdt structure is valid
-int acpi_validate_rsdt(const AcpiSdt *rsdt);
+int acpi_validate_sdt(const AcpiSdt *rsdt);
 
 // Returns the length of the AcpiRsdt.table_addresses array
 int acpi_rsdt_entry_count(const AcpiRsdt *rsdt);
