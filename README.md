@@ -25,6 +25,7 @@ You can build the cross compiler using the `build_cross_compiler.sh` script. Thi
 -   https://stackoverflow.com/questions/10679001/cli-before-start-in-bootloader
 -   https://stackoverflow.com/questions/45206171/how-sci-system-control-interrupt-vector-is-defined
 -   https://stackoverflow.com/questions/57704146/how-to-figure-out-the-interrupt-source-on-i-o-apic
+-   https://forum.osdev.org/viewtopic.php?p=282061
 -   Dump 16 bit code from secion .lowtext: `objdump -M intel,i8086 -d build/x86_64/os.bin -j .lowtext | less`
 -   Dump 32 bit code: `objdump -M intel,i386 -d build/x86_64/os.bin | less`
 -   Dump 64 bit code: `objdump -M intel,x86_64 -d build/x86_64/os.bin | less`
