@@ -82,3 +82,6 @@ void paging_free(void *virtual_address);
 
 // Returs the number of used virtual pages
 unsigned long paging_used_pages();
+
+// Returns non-zero number if huge pages (1GB pages) are supported
+int paging_get_hugepages_supported();

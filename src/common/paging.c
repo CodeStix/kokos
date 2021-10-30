@@ -1,5 +1,6 @@
 #include "../include/paging.h"
 #include "../include/console.h"
+#include "../include/cpu.h"
 #include "../include/util.h"
 #include "../include/memory_physical.h"
 
@@ -14,12 +15,19 @@ static unsigned long current_level2_index = 0;
 static unsigned long *current_level1_table = 0;
 static unsigned long current_level1_index = 0;
 
+static int hugepages_supported = 0;
+
 static inline void paging_clear_table(unsigned long *table)
 {
     for (int i = 0; i < 512; i++)
     {
         table[i] = 0;
     }
+}
+
+int paging_get_hugepages_supported()
+{
+    return hugepages_supported != 0;
 }
 
 void paging_initialize(unsigned long *level4_table)
@@ -37,6 +45,10 @@ void paging_initialize(unsigned long *level4_table)
     current_level3_index = 512;
     current_level2_index = 512;
     current_level1_index = 512;
+
+    // Check if hugepages is supported using cpuid
+    CpuIdResult result = cpu_id(0x80000001);
+    hugepages_supported = result.edx & CPU_ID_1GB_PAGES_EDX;
 }
 
 // This function can return a partially full table
@@ -260,32 +272,66 @@ void *paging_map_at(void *virtual_address, void *physical_address, unsigned long
 
 void paging_free_consecutive(void *virtual_address, unsigned long pages)
 {
+    if (pages == 0)
+    {
+        console_print("[paging] warning: paging_free_consecutive tried to free 0 pages");
+        return;
+    }
+
+    if (pages >= 512)
+    {
+        if (hugepages_supported && pages >= 512 * 512)
+        {
+        }
+        else
+        {
+        }
+    }
+    else
+    {
+    }
 }
 
 // Allocates 'pages' pages of 4096 bytes. Free these pages using paging_free_consecutive
 void *paging_map_consecutive(void *physical_address, unsigned long pages, unsigned short flags)
 {
+    if (pages == 0)
+    {
+        console_print("[paging] warning: paging_map_consecutive tried to map 0 pages");
+        return (void *)0;
+    }
+
     if (pages >= 512)
     {
-        if (pages >= 512 * 512 /* TODO check if hugepages supported */)
+        if (hugepages_supported && pages >= 512 * 512)
         {
             // Allocate 'hugepages' consecutive 1GB pages
-            //  TODO alignment
-            unsigned long hugepages = pages >> 9 >> 9;
+            unsigned long hugepages = ((pages - 1) >> 9 >> 9) + 1;
 
+            // Check if this allocation can fit in the current level3 table
             if (++current_level3_index + hugepages > 512)
             {
                 // Does not fit anymore in this table, request next empty table
                 current_level1_index = 0;
                 current_level2_index = 0;
                 current_level3_index = 0;
-                current_level3_table = paging_next_empty_level2_table();
+                current_level3_table = paging_next_empty_level3_table();
             }
 
             // Fill page table with consecutive entries
-            for (unsigned long i = 0; i < hugepages; i++)
+            if (physical_address)
             {
-                current_level3_table[current_level3_index + i] = ((unsigned long)physical_address + i * 4096ull) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                for (unsigned long i = 0; i < hugepages; i++)
+                {
+                    current_level3_table[current_level3_index + i] = ((unsigned long)physical_address + i * 512ul * 512ul * 4096ull) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
+            }
+            else
+            {
+                for (unsigned long i = 0; i < hugepages; i++)
+                {
+                    current_level3_table[current_level3_index + i] = (unsigned long)memory_physical_allocate_consecutive(512 * 512) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
             }
 
             used_virtual_pages += hugepages * 512 * 512;
@@ -296,9 +342,9 @@ void *paging_map_consecutive(void *physical_address, unsigned long pages, unsign
         else
         {
             // Allocate 'hugepages' consecutive 2MB pages
-            //  TODO alignment
-            unsigned long hugepages = pages >> 9;
+            unsigned long hugepages = ((pages - 1) >> 9) + 1;
 
+            // Check if this allocation can fit in the current level2 table
             if (++current_level2_index + hugepages > 512)
             {
                 // Does not fit anymore in this table, request next empty table
@@ -308,9 +354,19 @@ void *paging_map_consecutive(void *physical_address, unsigned long pages, unsign
             }
 
             // Fill page table with consecutive entries
-            for (unsigned long i = 0; i < hugepages; i++)
+            if (physical_address)
             {
-                current_level2_table[current_level2_index + i] = ((unsigned long)physical_address + i * 4096ull) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                for (unsigned long i = 0; i < hugepages; i++)
+                {
+                    current_level2_table[current_level2_index + i] = ((unsigned long)physical_address + i * 512ul * 4096ull) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
+            }
+            else
+            {
+                for (unsigned long i = 0; i < hugepages; i++)
+                {
+                    current_level2_table[current_level2_index + i] = (unsigned long)memory_physical_allocate_consecutive(512) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
             }
 
             used_virtual_pages += hugepages * 512;
@@ -331,9 +387,19 @@ void *paging_map_consecutive(void *physical_address, unsigned long pages, unsign
         }
 
         // Fill page table with consecutive entries
-        for (unsigned long i = 0; i < pages; i++)
+        if (physical_address)
         {
-            current_level1_table[current_level1_index + i] = ((unsigned long)physical_address + i * 4096ull) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+            for (unsigned long i = 0; i < pages; i++)
+            {
+                current_level1_table[current_level1_index + i] = ((unsigned long)physical_address + i * 4096ull) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+            }
+        }
+        else
+        {
+            for (unsigned long i = 0; i < pages; i++)
+            {
+                current_level1_table[current_level1_index + i] = (unsigned long)memory_physical_allocate() | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+            }
         }
 
         used_virtual_pages += pages;
@@ -353,29 +419,11 @@ void *paging_map(void *physical_address, unsigned short flags)
         current_level1_table = paging_next_empty_level1_table();
     }
 
-    while (1)
-    {
-        unsigned long entry = current_level1_table[current_level1_index];
-        if (entry != 0)
-        {
-            // Check next entry, this entry is already used
-            if (++current_level1_index >= 512)
-            {
-                // current_level2_table[current_level2_index] |= PAGING_ENTRY_FLAG_FULL;
-                current_level1_index = 0;
-                current_level1_table = paging_next_empty_level1_table();
-            }
-        }
-        else
-        {
-            // Insert new entry
-            current_level1_table[current_level1_index] = ((unsigned long)physical_address) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-            used_virtual_pages++;
+    current_level1_table[current_level1_index] = ((unsigned long)physical_address) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+    used_virtual_pages++;
 
-            // Return virtual address
-            return (unsigned long *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
-        }
-    }
+    // Return virtual address
+    return (unsigned long *)((current_level1_index << 12) | (current_level2_index << 21) | (current_level3_index << 30) | (current_level4_index << 39));
 }
 
 void *paging_allocate(unsigned short flags)
