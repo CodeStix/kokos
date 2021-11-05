@@ -40,3 +40,19 @@ inline unsigned long cpu_wait_millisecond()
         asm volatile("pause");
     }
 }
+
+inline unsigned long cpu_read_msr(unsigned int register_index)
+{
+    unsigned int lower, upper;
+    asm volatile("rdmsr"
+                 : "=a"(lower), "=d"(upper)
+                 : "c"(register_index)
+                 :);
+    return ((unsigned long)upper << 32) | (unsigned long)lower;
+}
+
+inline unsigned long cpu_write_msr(unsigned int register_index, unsigned long value)
+{
+    asm volatile("wrmsr" ::"a"((unsigned int)value), "d"((unsigned int)(value >> 32)), "c"(register_index)
+                 :);
+}

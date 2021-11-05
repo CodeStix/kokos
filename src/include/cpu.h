@@ -20,3 +20,9 @@ unsigned long cpu_wait_microsecond();
 
 // Waits for a minimum amount of 1 milliseconds
 unsigned long cpu_wait_millisecond();
+
+// Reads from a model specific register
+unsigned long cpu_read_msr(unsigned int register_index);
+
+// Writes to a model specific register
+unsigned long cpu_write_msr(unsigned int register_index, unsigned long value);
