@@ -4,6 +4,10 @@
 #define CPU_ID_1GB_PAGES_EDX 1 << 26
 #define CPU_ID_LONG_MODE_EDX 1 << 29
 
+#define CPU_MSR_LOCAL_APIC 0x0000001B
+#define CPU_MSR_FS_BASE 0xC0000100
+#define CPU_MSR_GS_BASE 0xC0000101
+
 typedef struct
 {
     unsigned int eax, ebx, ecx, edx;

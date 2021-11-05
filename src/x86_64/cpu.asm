@@ -2,6 +2,7 @@ global cpu_startup16
 global cpu_startup_increment
 extern page_table_level4
 extern console_print
+extern cpu_entrypoint
 
 section .lowtext
 
@@ -63,8 +64,7 @@ cpu_startup32:
 bits 64
 
 cpu_startup64:
-    mov rdi, info_done
-    call console_print
+    call cpu_entrypoint
     mov word [cpu_startup_increment], 1  ; Notify boot processor that this processor has been enabled, it waits for this variable to be non-zero
 .loop:
     hlt
