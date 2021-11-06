@@ -231,7 +231,7 @@ void interrupt_initialize()
 
     // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
     InterruptDescriptor *interrupt_descriptor_table = (InterruptDescriptor *)memory_physical_allocate();
-    struct Cpu *cpu = cpu_get_current();
+    Cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table = interrupt_descriptor_table;
 
     console_print("[interrupt] create interrupt_descriptor_table at 0x");

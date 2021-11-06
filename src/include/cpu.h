@@ -10,18 +10,18 @@
 #define CPU_MSR_FS_BASE 0xC0000100
 #define CPU_MSR_GS_BASE 0xC0000101
 
-typedef struct
+typedef struct CpuIdResult
 {
     unsigned int eax, ebx, ecx, edx;
 } CpuIdResult;
 
-struct Cpu
+typedef struct Cpu
 {
     struct Cpu *address;
     unsigned int id;
     Apic *local_apic;
     InterruptDescriptor *interrupt_descriptor_table;
-};
+} Cpu;
 
 // Performs an cpuid instruction and returns the result
 CpuIdResult cpu_id(unsigned int function);
@@ -43,8 +43,8 @@ unsigned long cpu_write_msr(unsigned int register_index, unsigned long value);
 
 // Returns os-relevant information about the current cpu.
 // cpu_initialize must be called first!
-struct Cpu *cpu_get_current();
+Cpu *cpu_get_current();
 
 // Initializes the current cpu info.
 // memory_physical_initialize must be called first!
-struct Cpu *cpu_initialize();
+Cpu *cpu_initialize();

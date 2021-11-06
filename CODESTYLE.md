@@ -25,7 +25,7 @@ One of the mail goals of this operating system is readability. That is why the f
 - Use typedef for every struct.
 
     ```c
-    typedef struct {
+    typedef struct Person {
         char* name;
         int32 age;
     } Person;
@@ -36,7 +36,7 @@ One of the mail goals of this operating system is readability. That is why the f
     ```c
     // in memory.c
 
-    typedef struct {
+    typedef struct MemoryAllocatedChunk {
         void* location;
         unsigned int size;
         unsigned short flags;
@@ -66,17 +66,17 @@ One of the mail goals of this operating system is readability. That is why the f
 
     ```c
 
-    typedef struct {
+    typedef struct Table {
         int type; // this field can determine if it is a PointerTable or a PICTable
         int length;
     } Table;
 
-    typedef struct {
+    typedef struct PointerTable {
         Table base; // always call it base
         void* pointer;
     } PointerTable;
 
-    typedef struct {
+    typedef struct PICTable {
         Table base; // always call it base
         unsigned short pic_number;
     } PICTable;
