@@ -116,5 +116,6 @@ void cpu_execute(EntrypointFunction entrypoint)
     Cpu *current = cpu_get_current();
     Process *process = memory_physical_allocate();
     process->id = current_process_id++;
+    // current->address = id;
     entrypoint();
 }

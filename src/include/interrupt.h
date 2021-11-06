@@ -18,7 +18,7 @@ typedef struct
     unsigned long instruction_pointer;
     unsigned long code_segment;
     unsigned long rflags;
-    unsigned long register_stack_pointer;
+    unsigned long stack_pointer;
     unsigned long stack_segment;
 } InterruptFrame;
 

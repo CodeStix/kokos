@@ -5,6 +5,7 @@
 #include "interrupt.h"
 
 extern void(interrupt_schedule)();
+extern unsigned short cpu_startup_increment;
 
 void cpu_entrypoint()
 {
@@ -37,9 +38,22 @@ void cpu_entrypoint()
 
     // Enable local APIC by setting bit 8 in the spurious_interrupt_vector register
     cpu_info->local_apic->spurious_interrupt_vector = 0x1FF;
-    cpu_info->local_apic->timer_initial_count = 1000000;
+    cpu_info->local_apic->timer_initial_count = 10000000;
     cpu_info->local_apic->timer_divide_config = 0b1010;
     cpu_info->local_apic->timer_vector = 0x22 | (1 << 17);
 
-    console_print("[cpu] done");
+    console_print("[cpu] done\n");
+
+    // unsigned long rip;
+    // asm volatile("push rip; pop %0"
+    //              : "=r"(rip)::);
+    // console_print("[cpu] rip = 0x");
+    // console_print_u64(rip, 16);
+    // console_new_line();
+
+    cpu_startup_increment = 1;
+    while (1)
+    {
+        asm volatile("hlt");
+    }
 }

@@ -28,7 +28,7 @@
 
 extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup16)();
-extern unsigned short cpu_startup_increment;
+unsigned short cpu_startup_increment;
 extern void(interrupt_schedule)();
 IOApic *ioapic;
 
@@ -42,11 +42,14 @@ void interrupt_schedule_handler(InterruptFrame *stack)
 {
     Cpu *current_cpu = cpu_get_current();
 
-    // console_print("[schedule] interrupt fired on cpu 0x");
-    // console_print_u64(current_cpu->id, 16);
-    // console_print(", return to 0x");
-    // console_print_u64((unsigned long)stack->instruction_pointer, 16);
-    // console_new_line();
+    console_print("[schedule] interrupt fired on cpu 0x");
+    console_print_u64(current_cpu->id, 16);
+    console_print(" when at ");
+    console_print_u64(stack->code_segment, 16);
+    console_print(":0x");
+    console_print_u64((unsigned long)stack->instruction_pointer, 16);
+    console_new_line();
+
     current_cpu->local_apic->end_of_interrupt = 0;
 }
 
@@ -87,15 +90,15 @@ void interrupt_handle_test(InterruptFrame *frame)
 ATTRIBUTE_INTERRUPT
 void interrupt_handle_timer(InterruptFrame *frame)
 {
-    unsigned int x, y;
-    console_get_cursor(&x, &y);
-    console_set_cursor(70, 24);
-    console_print_u64(counter2++, 10);
-    console_set_cursor(x, y);
+    // unsigned int x, y;
+    // console_get_cursor(&x, &y);
+    // console_set_cursor(70, 24);
+    // console_print_u64(counter2++, 10);
+    // console_set_cursor(x, y);
 
-    // Create blinking cursor
-    console_print_char((counter2 & 0b111) < 4 ? '_' : ' ');
-    console_set_cursor(x, y);
+    // // Create blinking cursor
+    // console_print_char((counter2 & 0b111) < 4 ? '_' : ' ');
+    // console_set_cursor(x, y);
 
     Cpu *cpu = cpu_get_current();
     cpu->local_apic->end_of_interrupt = 0;
@@ -528,8 +531,8 @@ void kernel_main()
     console_new_line();
 
     interrupt_register(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
-    apic->timer_initial_count = 1000000;
-    apic->timer_divide_config = 0b1010; // 0b1011
+    apic->timer_initial_count = 10000000;
+    apic->timer_divide_config = 0b1010;
     apic->timer_vector = 0x22 | (1 << 17);
 
     interrupt_register(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);

@@ -16,8 +16,10 @@ interrupt_schedule:
     push r10
     push r11    
 
-    mov rdi, rsp
-    sub rdi, 8 * 10
+    lea rdi, [rsp + 80]
+    ; Same as
+    ; mov rdi, rsp
+    ; add rdi, 8 * 10
     cld 
     call interrupt_schedule_handler
 

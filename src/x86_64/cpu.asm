@@ -1,5 +1,6 @@
 global cpu_startup16
 global cpu_startup_increment
+global cpu_startup64_loop
 extern page_table_level4
 extern console_print
 extern cpu_entrypoint
@@ -58,17 +59,9 @@ cpu_startup32:
     mov ds, ax
     mov fs, ax
     mov es, ax
-    call 0x8:cpu_startup64
-
+    call 0x8:cpu_entrypoint
 
 bits 64
-
-cpu_startup64:
-    call cpu_entrypoint
-    mov word [cpu_startup_increment], 1  ; Notify boot processor that this processor has been enabled, it waits for this variable to be non-zero
-.loop:
-    hlt
-    jmp .loop
 
 cpu_startup_increment:
     dw 0
