@@ -1,3 +1,4 @@
+#pragma once
 #define ATTRIBUTE_ALIGN16 __attribute__((aligned(16)))
 
 // This structure defines all the APIC (advanced programmable interrupt controller) registers

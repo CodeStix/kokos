@@ -1,4 +1,4 @@
-#include "../include/cpu.h"
+#include "cpu.h"
 
 inline CpuIdResult cpu_id(unsigned int function)
 {
@@ -55,4 +55,14 @@ inline unsigned long cpu_write_msr(unsigned int register_index, unsigned long va
 {
     asm volatile("wrmsr" ::"a"((unsigned int)value), "d"((unsigned int)(value >> 32)), "c"(register_index)
                  :);
+}
+
+inline struct Cpu *cpu_get_current()
+{
+    struct Cpu *cpu;
+
+    asm volatile("mov %0, [fs:0]"
+                 : "=rm"(cpu)::);
+
+    return cpu;
 }

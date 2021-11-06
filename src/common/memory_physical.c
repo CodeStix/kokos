@@ -1,5 +1,6 @@
-#include "../include/memory_physical.h"
-#include "../include/console.h"
+#include "memory_physical.h"
+#include "console.h"
+#include "lock.h"
 
 // Points to a table that contains bits that indicate which physical chunks are allocated
 static unsigned long *allocation_table = 0;
@@ -8,6 +9,8 @@ static unsigned long allocation_index = 0;
 // The amount of unsigned long entries in the allocation table
 static unsigned long allocation_table_length = 0;
 static unsigned long used_physical_pages = 0;
+
+static int memory_lock = 0;
 
 void memory_physical_initialize(void *allocation_table_location, unsigned long total_memory)
 {
@@ -25,6 +28,8 @@ void memory_physical_initialize(void *allocation_table_location, unsigned long t
 
 void memory_physical_reserve(void *physical_address, unsigned long bytes)
 {
+    lock_acquire(&memory_lock);
+
     // >> 12 is the same as divide by 4096
     unsigned long start_index = ((unsigned long)physical_address) >> 12;
     bytes += (unsigned long)physical_address & 0b111111111111;
@@ -53,11 +58,15 @@ void memory_physical_reserve(void *physical_address, unsigned long bytes)
             used_physical_pages++;
         }
     }
+
+    lock_release(&memory_lock);
 }
 
 // Frees a physical page
 void memory_physical_free(void *physical_address)
 {
+    lock_acquire(&memory_lock);
+
     // >> 12 is the same as divide by 4096
     unsigned long index = ((unsigned long)physical_address) >> 12;
 
@@ -69,6 +78,7 @@ void memory_physical_free(void *physical_address)
 
     if (byte >= allocation_table_length)
     {
+        lock_release(&memory_lock);
         console_print("warning: invalid address passed to memory_physical_free\n");
         return;
     }
@@ -85,10 +95,14 @@ void memory_physical_free(void *physical_address)
         console_print_u64((unsigned long)physical_address, 16);
         console_new_line();
     }
+
+    lock_release(&memory_lock);
 }
 
 void *memory_physical_allocate()
 {
+    lock_acquire(&memory_lock);
+
     // TODO this is infinite loop when no memory is available
     // Find first empty spot where a single bit is 0 (0xFFFFFFFFFFFFFFFFull represents all bits set to 1)
     // This will scan 64 pages per iterations for a spot (262144 bytes) (~30000 iterations worst case, when all ram is used on a 16gb pc)
@@ -114,6 +128,7 @@ void *memory_physical_allocate()
     if (bit >= 64)
     {
         // This cannot happen
+        lock_release(&memory_lock);
         console_print("error: memory_physical_allocate bit scan did not find bit in\n");
         console_print_u64(allocation_table[spot], 2);
         console_new_line();
@@ -125,11 +140,15 @@ void *memory_physical_allocate()
     allocation_index = spot;
     used_physical_pages++;
 
+    lock_release(&memory_lock);
+
     return (void *)((((spot << 6) + bit) << 12));
 }
 
 void *memory_physical_allocate_consecutive(unsigned long pages)
 {
+    lock_acquire(&memory_lock);
+
     // TODO this is infinite loop when no memory is available
     unsigned long chunk_count = pages >> 6;
     unsigned long spot = allocation_index;
@@ -161,6 +180,8 @@ void *memory_physical_allocate_consecutive(unsigned long pages)
     {
         allocation_table[spot + i] = 0xFFFFFFFFFFFFFFFFull;
     }
+
+    lock_release(&memory_lock);
 
     allocation_index = spot + chunk_count;
     return (void *)(((spot << 6) << 12));
