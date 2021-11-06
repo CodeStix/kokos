@@ -2,9 +2,9 @@
 #include "memory_physical.h"
 #include "paging.h"
 
-inline CpuIdResult cpu_id(unsigned int function)
+inline struct CpuIdResult cpu_id(unsigned int function)
 {
-    CpuIdResult result;
+    struct CpuIdResult result;
     asm volatile("cpuid"
                  : "=a"(result.eax), "=b"(result.ebx), "=c"(result.ecx), "=d"(result.edx)
                  : "a"(function)
