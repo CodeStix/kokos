@@ -46,5 +46,5 @@ unsigned long cpu_write_msr(unsigned int register_index, unsigned long value);
 Cpu *cpu_get_current();
 
 // Initializes the current cpu info.
-// memory_physical_initialize must be called first!
+// memory_physical_initialize and paging_initialize must be called first!
 Cpu *cpu_initialize();

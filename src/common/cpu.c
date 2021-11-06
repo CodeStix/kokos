@@ -1,4 +1,6 @@
 #include "cpu.h"
+#include "memory_physical.h"
+#include "paging.h"
 
 inline CpuIdResult cpu_id(unsigned int function)
 {
@@ -89,9 +91,30 @@ Cpu *cpu_initialize()
     Cpu *cpu_info = memory_physical_allocate();
     cpu_info->address = cpu_info;
     cpu_info->id = current_cpu_id++;
-    cpu_info->local_apic;
+    cpu_info->local_apic = paging_map(local_apic, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
     cpu_info->interrupt_descriptor_table = 0;
     cpu_write_msr(CPU_MSR_FS_BASE, cpu_info);
 
     return cpu_info;
+}
+
+typedef void (*EntrypointFunction)();
+
+static unsigned long current_process_id = 0;
+
+typedef struct Process
+{
+    struct Process *next;
+    struct Process *previous;
+    unsigned long id;
+    // void *stack;
+    // void *code;
+} Process;
+
+void cpu_execute(EntrypointFunction entrypoint)
+{
+    Cpu *current = cpu_get_current();
+    Process *process = memory_physical_allocate();
+    process->id = current_process_id++;
+    entrypoint();
 }

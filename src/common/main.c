@@ -29,11 +29,34 @@
 extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup16)();
 extern unsigned short cpu_startup_increment;
+extern void(interrupt_schedule)();
 
 int hugepages_supported()
 {
     CpuIdResult result = cpu_id(0x80000001);
     return result.edx & CPU_ID_1GB_PAGES_EDX;
+}
+
+// See AMD Volume 2 page 258
+typedef struct ScheduleStack
+{
+    void *return_address;
+    unsigned long return_code_segment;
+    unsigned long return_rflags;
+    unsigned long return_stack_pointer;
+    unsigned long return_stack_segment; // Unused in long mode, but used when jumping back to compatibility mode
+} ScheduleStack;
+
+void interrupt_schedule_handler(ScheduleStack *stack)
+{
+    Cpu *current_cpu = cpu_get_current();
+
+    console_print("[schedule] interrupt fired on cpu 0x");
+    console_print_u64(current_cpu->id, 16);
+    console_print(", return to 0x");
+    console_print_u64((unsigned long)stack->return_address, 16);
+    console_new_line();
+    current_cpu->local_apic->end_of_interrupt = 0;
 }
 
 void memory_debug()
@@ -216,19 +239,6 @@ void kernel_main()
         }
     }
 
-    console_print("[cpu] initialize cpu context\n");
-
-    cpu_initialize();
-
-    console_print("[interrupt] disable pic\n");
-
-    // Disable and remap pic
-    apic_disable_pic();
-
-    console_print("[interrupt] initialize\n");
-
-    interrupt_initialize();
-
     console_print("[paging] initialize paging\n");
 
     // Initialize paging
@@ -280,6 +290,19 @@ void kernel_main()
         console_print("\n");
         *virt = i * 500;
     }
+
+    console_print("[cpu] initialize cpu context\n");
+
+    cpu_initialize();
+
+    console_print("[interrupt] disable pic\n");
+
+    // Disable and remap pic
+    apic_disable_pic();
+
+    console_print("[interrupt] initialize\n");
+
+    interrupt_initialize();
 
     console_print("[acpi] find rsdt\n");
 
@@ -436,31 +459,7 @@ void kernel_main()
 
     // acpi_print_madt(madt);
 
-    apic_initialize(apic, ioapic);
-
-    console_print("[test] create test interrupts\n");
-
-    interrupt_register(0x22, interrupt_handle_test, INTERRUPT_GATE_TYPE_INTERRUPT);
-    apic->timer_initial_count = 1000;
-    apic->timer_divide_config = 0b1010; // 0b1011
-    apic->timer_vector = 0x22 | (1 << 17);
-
-    interrupt_register(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);
-    IOApicEntry timer_entry = {
-        .vector = 0x24,
-        .destination = apic->id >> 24,
-    };
-    apic_io_register(ioapic, 2, timer_entry);
-
-    console_print("[test] enable apic\n");
-
-    // Enable apic (0x100) and set spurious interrupt vector to 0xFF
-    apic->spurious_interrupt_vector = 0x1FF;
-
     // console_print("[test] triggering interrupt\n");
-
-    keyboard_initialize();
-    serial_initialize();
 
     console_print("[smp] cpu entry code at 0x");
     console_print_u64(cpu_startup16, 16);
@@ -527,9 +526,38 @@ void kernel_main()
 
     console_print("[smp] started all processors in a halted state\n");
 
+    apic_initialize(apic, ioapic);
+
+    console_print("[test] create test interrupts\n");
+    console_print("[test] interrupt at 0x");
+    console_print_u64((unsigned long)interrupt_schedule, 16);
+    console_new_line();
+
+    interrupt_register(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
+    apic->timer_initial_count = 1000000;
+    apic->timer_divide_config = 0b1010; // 0b1011
+    apic->timer_vector = 0x22 | (1 << 17);
+
+    interrupt_register(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);
+    IOApicEntry timer_entry = {
+        .vector = 0x24,
+        .destination = apic->id >> 24,
+    };
+    apic_io_register(ioapic, 2, timer_entry);
+
+    console_print("[test] enable apic\n");
+
+    // Enable apic (0x100) and set spurious interrupt vector to 0xFF
+    apic->spurious_interrupt_vector = 0x1FF;
+
     // console_print("[pci] iterating pci bus\n");
     // pci_scan();
     // console_print("[pci] done\n");
+
+    console_print("[boot] starting keyboard driver\n");
+    keyboard_initialize();
+    console_print("[boot] starting serial driver\n");
+    serial_initialize();
 
     console_print("[boot] reached end, type something...\n");
 

@@ -8,6 +8,7 @@ build: src/x86_64/** src/common/** src/include/**
 	nasm -f elf64 src/x86_64/main64.asm -o build/x86_64/main64.o
 	nasm -f elf64 src/x86_64/cpu.asm -o build/x86_64/cpu.o
 	nasm -f elf64 src/x86_64/multiboot2.asm -o build/x86_64/multiboot2.o
+	nasm -f elf64 src/x86_64/schedule.asm -o build/x86_64/schedule.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/console.c -o build/common/console.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/acpi.c -o build/common/acpi.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/pci.c -o build/common/pci.o
