@@ -1,5 +1,6 @@
 #pragma once
 #include "apic.h"
+#include "interrupt.h"
 
 #define CPU_ID_FUNCTION_0 0
 #define CPU_ID_1GB_PAGES_EDX 1 << 26
@@ -17,8 +18,9 @@ typedef struct
 struct Cpu
 {
     struct Cpu *address;
-    Apic *local_apic;
     unsigned int id;
+    Apic *local_apic;
+    InterruptDescriptor *interrupt_descriptor_table;
 };
 
 // Performs an cpuid instruction and returns the result
@@ -39,5 +41,10 @@ unsigned long cpu_read_msr(unsigned int register_index);
 // Writes to a model specific register
 unsigned long cpu_write_msr(unsigned int register_index, unsigned long value);
 
-// Returns os-relevant information about the current cpu
+// Returns os-relevant information about the current cpu.
+// cpu_initialize must be called first!
 struct Cpu *cpu_get_current();
+
+// Initializes the current cpu info.
+// memory_physical_initialize must be called first!
+struct Cpu *cpu_initialize();

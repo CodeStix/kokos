@@ -3,6 +3,16 @@
 #define ALIGN_TO_PREVIOUS(n, to) (n & -to)
 #define ALIGN_TO_NEXT(n, to) (((n - 1) & -to) + to)
 #define IS_ALIGNED(n, to) ((n & (to - 1)) == 0)
+#ifndef DEBUG
+#define MUST_BE(condition, message)             \
+    if (!(condition))                           \
+    {                                           \
+        console_print("[util] " message " \n"); \
+        while (1)                               \
+        {                                       \
+        }                                       \
+    }
+#endif
 
 int string_length(const char *str);
 int string_compare(const char *a, const char *b);

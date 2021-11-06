@@ -1,6 +1,8 @@
-#include "../include/interrupt.h"
-#include "../include/console.h"
-#include "../include/memory_physical.h"
+#include "interrupt.h"
+#include "console.h"
+#include "memory_physical.h"
+#include "cpu.h"
+#include "util.h"
 
 static char *exception_messages[] = {
     "divide by zero",
@@ -36,9 +38,6 @@ static char *exception_messages[] = {
     "security exception",
     "reserved",
 };
-
-static volatile InterruptDescriptor *interrupt_descriptor_table;
-static volatile unsigned short code_segment;
 
 // https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html#x86-Function-Attributes
 ATTRIBUTE_INTERRUPT
@@ -231,8 +230,13 @@ void interrupt_initialize()
     asm volatile("cli");
 
     // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
-    interrupt_descriptor_table = (InterruptDescriptor *)memory_physical_allocate();
-    code_segment = 8; // TODO
+    InterruptDescriptor *interrupt_descriptor_table = (InterruptDescriptor *)memory_physical_allocate();
+    struct Cpu *cpu = cpu_get_current();
+    cpu->interrupt_descriptor_table = interrupt_descriptor_table;
+
+    console_print("[interrupt] create interrupt_descriptor_table at 0x");
+    console_print_u64(interrupt_descriptor_table, 16);
+    console_new_line();
 
     if (!interrupt_descriptor_table)
     {
@@ -278,7 +282,7 @@ void interrupt_initialize()
     interrupt_register(19, interrupt_handle_simd_float_exception, INTERRUPT_GATE_TYPE_TRAP);
 
     // The last 17 interrupts handle spurious interrupts (16 from the PIC and 1 from the APIC)
-    for (int i = 255 - 17; i < 256; i++)
+    for (int i = 0xff - 17; i <= 0xff; i++)
     {
         interrupt_register(i, interrupt_handle_spurious, INTERRUPT_GATE_TYPE_TRAP);
     }
@@ -289,26 +293,31 @@ void interrupt_initialize()
 
 void interrupt_disable(unsigned char vector)
 {
-    interrupt_descriptor_table[vector].type_attributes &= ~(1 << 7);
+    struct Cpu *cpu = cpu_get_current();
+    cpu->interrupt_descriptor_table[vector].type_attributes &= ~(1 << 7);
 }
 
 void interrupt_enable(unsigned char vector)
 {
-    interrupt_descriptor_table[vector].type_attributes |= (1 << 7);
+    struct Cpu *cpu = cpu_get_current();
+    cpu->interrupt_descriptor_table[vector].type_attributes |= (1 << 7);
 }
 
 void interrupt_register(unsigned char vector, void *function_pointer, InterruptGateType interrupt_type)
 {
-    if (interrupt_descriptor_table[vector].type_attributes & (1 << 7))
+    struct Cpu *cpu = cpu_get_current();
+    MUST_BE(cpu != 0, "idt is not initialized.");
+
+    if (cpu->interrupt_descriptor_table[vector].type_attributes & (1 << 7))
     {
         console_print("warning: overwriting interrupt vector #");
         console_print_i32(vector, 10);
         console_new_line();
     }
 
-    InterruptDescriptor *descriptor = &interrupt_descriptor_table[vector];
+    InterruptDescriptor *descriptor = &cpu->interrupt_descriptor_table[vector];
     descriptor->offset1 = (unsigned long)function_pointer & 0xFFFF;
-    descriptor->selector = code_segment;
+    descriptor->selector = CODE_SEGMENT;
     descriptor->interrupt_stack_table = 0;                           // Unused
     descriptor->type_attributes = (interrupt_type & 0xF) | (1 << 7); // 1 << 7 enables interrupt
     descriptor->offset2 = ((unsigned long)function_pointer >> 16) & 0xFFFF;

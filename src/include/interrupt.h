@@ -3,6 +3,7 @@
 #define ATTRIBUTE_INTERRUPT __attribute__((interrupt))
 #define INTERRUPT_TYPE_INTERRUPT 0b1110
 #define INTERRUPT_TYPE_TRAP 0b1111
+#define CODE_SEGMENT 8
 
 typedef enum
 {
@@ -41,8 +42,8 @@ typedef struct
     InterruptDescriptor *address;
 } __attribute__((packed)) InterruptDescriptorPointer;
 
-// This function must be called before calling any other interrupt functions.
-// memory_physical_initialize must be called first!!
+// This function must be called before calling any other interrupt functions. This function fills the IDT only for the current cpu.
+// memory_physical_initialize and cpu_initialize must be called first!!
 void interrupt_initialize();
 
 // This function will be called by interrupts.asm

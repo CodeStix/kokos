@@ -2,34 +2,14 @@
 #include "console.h"
 #include "apic.h"
 #include "memory_physical.h"
-
-static int current_cpu_id = 0;
+#include "interrupt.h"
 
 void cpu_entrypoint()
 {
     console_print("[cpu] starting cpu\n");
 
-    // Get the local APIC address
-    unsigned long local_apic_info = cpu_read_msr(CPU_MSR_LOCAL_APIC);
-    Apic *local_apic = local_apic_info & 0x000ffffffffff000;
-
-    // Check 11th bit to check if it is enabled
-    if (!(local_apic_info & 0x800))
-    {
-        console_print("[cpu] fatal: local apic not enabled, cannot enable\n");
-        return;
-    }
-
-    console_print("[cpu] local_apic = 0x");
-    console_print_u64((unsigned long)local_apic, 16);
-    console_new_line();
-
-    // The FS segment register will point to cpu-specific information
-    struct Cpu *cpu_info = memory_physical_allocate();
-    cpu_info->address = cpu_info;
-    cpu_info->id = current_cpu_id++;
-    cpu_info->local_apic;
-    cpu_write_msr(CPU_MSR_FS_BASE, cpu_info);
+    struct Cpu *cpu_info = cpu_initialize();
+    interrupt_initialize();
 
     cpu_wait_millisecond();
 

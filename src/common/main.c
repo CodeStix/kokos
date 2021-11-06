@@ -216,6 +216,19 @@ void kernel_main()
         }
     }
 
+    console_print("[cpu] initialize cpu context\n");
+
+    cpu_initialize();
+
+    console_print("[interrupt] disable pic\n");
+
+    // Disable and remap pic
+    apic_disable_pic();
+
+    console_print("[interrupt] initialize\n");
+
+    interrupt_initialize();
+
     console_print("[paging] initialize paging\n");
 
     // Initialize paging
@@ -267,15 +280,6 @@ void kernel_main()
         console_print("\n");
         *virt = i * 500;
     }
-
-    console_print("[interrupt] disable pic\n");
-
-    // Disable and remap pic
-    apic_disable_pic();
-
-    console_print("[interrupt] initialize\n");
-
-    interrupt_initialize();
 
     console_print("[acpi] find rsdt\n");
 
@@ -438,7 +442,7 @@ void kernel_main()
 
     interrupt_register(0x22, interrupt_handle_test, INTERRUPT_GATE_TYPE_INTERRUPT);
     apic->timer_initial_count = 1000;
-    apic->timer_divide_config = 0b1010; //0b1011
+    apic->timer_divide_config = 0b1010; // 0b1011
     apic->timer_vector = 0x22 | (1 << 17);
 
     interrupt_register(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);

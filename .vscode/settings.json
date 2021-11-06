@@ -13,6 +13,7 @@
         "multiboot2.h": "c",
         "port.h": "c",
         "cpu.h": "c",
-        "serial.h": "c"
+        "serial.h": "c",
+        "interrupt.h": "c"
     }
 }
