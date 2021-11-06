@@ -8,7 +8,7 @@ void cpu_entrypoint()
 {
     console_print("[cpu] starting cpu\n");
 
-    struct Cpu *cpu_info = cpu_initialize();
+    Cpu *cpu_info = cpu_initialize();
     interrupt_initialize();
 
     cpu_wait_millisecond();

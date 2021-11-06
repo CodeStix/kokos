@@ -527,9 +527,9 @@ void kernel_main()
 
     console_print("[smp] started all processors in a halted state\n");
 
-    console_print("[pci] iterating pci bus\n");
-    pci_scan();
-    console_print("[pci] done\n");
+    // console_print("[pci] iterating pci bus\n");
+    // pci_scan();
+    // console_print("[pci] done\n");
 
     console_print("[boot] reached end, type something...\n");
 

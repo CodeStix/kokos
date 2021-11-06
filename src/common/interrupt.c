@@ -231,7 +231,7 @@ void interrupt_initialize()
 
     // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
     InterruptDescriptor *interrupt_descriptor_table = (InterruptDescriptor *)memory_physical_allocate();
-    struct Cpu *cpu = cpu_get_current();
+    Cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table = interrupt_descriptor_table;
 
     console_print("[interrupt] create interrupt_descriptor_table at 0x");
@@ -293,19 +293,19 @@ void interrupt_initialize()
 
 void interrupt_disable(unsigned char vector)
 {
-    struct Cpu *cpu = cpu_get_current();
+    Cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table[vector].type_attributes &= ~(1 << 7);
 }
 
 void interrupt_enable(unsigned char vector)
 {
-    struct Cpu *cpu = cpu_get_current();
+    Cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table[vector].type_attributes |= (1 << 7);
 }
 
 void interrupt_register(unsigned char vector, void *function_pointer, InterruptGateType interrupt_type)
 {
-    struct Cpu *cpu = cpu_get_current();
+    Cpu *cpu = cpu_get_current();
     MUST_BE(cpu != 0, "idt is not initialized.");
 
     if (cpu->interrupt_descriptor_table[vector].type_attributes & (1 << 7))

@@ -57,9 +57,9 @@ inline unsigned long cpu_write_msr(unsigned int register_index, unsigned long va
                  :);
 }
 
-inline struct Cpu *cpu_get_current()
+inline Cpu *cpu_get_current()
 {
-    struct Cpu *cpu;
+    Cpu *cpu;
 
     asm volatile("mov %0, [fs:0]"
                  : "=rm"(cpu)::);
@@ -69,7 +69,7 @@ inline struct Cpu *cpu_get_current()
 
 static int current_cpu_id = 0;
 
-struct Cpu *cpu_initialize()
+Cpu *cpu_initialize()
 {
     unsigned long local_apic_info = cpu_read_msr(CPU_MSR_LOCAL_APIC);
     Apic *local_apic = local_apic_info & 0x000ffffffffff000;
@@ -86,7 +86,7 @@ struct Cpu *cpu_initialize()
     console_new_line();
 
     // The FS segment register will point to cpu-specific information
-    struct Cpu *cpu_info = memory_physical_allocate();
+    Cpu *cpu_info = memory_physical_allocate();
     cpu_info->address = cpu_info;
     cpu_info->id = current_cpu_id++;
     cpu_info->local_apic;
