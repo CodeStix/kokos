@@ -195,8 +195,11 @@ void interrupt_handle_keyboard(InterruptFrame *frame)
         extended = 0;
     }
 
-    apic_get()->end_of_interrupt = 0;
+    Cpu *cpu = cpu_get_current();
+    cpu->local_apic->end_of_interrupt = 0;
 }
+
+extern IOApic *ioapic;
 
 void keyboard_initialize()
 {
@@ -243,12 +246,14 @@ void keyboard_initialize()
     interrupt_register(0x23, interrupt_handle_keyboard, INTERRUPT_GATE_TYPE_INTERRUPT);
     asm volatile("sti");
 
+    Cpu *cpu = cpu_get_current();
+
     IOApicEntry entry = {
         .vector = 0x23,
-        .destination = (apic_get()->id >> 24) & 0b11111111,
+        .destination = (cpu->local_apic->id >> 24) & 0b11111111,
     };
 
-    apic_io_register(apic_io_get(), 1, entry);
+    apic_io_register(ioapic, 1, entry);
     // apic_io_register(apic_io_get(), 12, entry);
 
     console_print("keyboard configuration done\n");

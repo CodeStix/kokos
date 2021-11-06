@@ -13,25 +13,6 @@
 //     port_out8(0x80, 0);
 // }
 
-Apic *local_apic;
-IOApic *default_io_apic;
-
-void apic_initialize(Apic *apic, IOApic *io_apic)
-{
-    local_apic = apic;
-    default_io_apic = io_apic;
-}
-
-Apic *apic_get()
-{
-    return local_apic;
-}
-
-IOApic *apic_io_get()
-{
-    return default_io_apic;
-}
-
 // TODO check if APIC is enabled in MSR
 
 // Because we will use the newer APIC (advanced programmable interrupt controller) instead of the old PIC's

@@ -35,12 +35,11 @@ void cpu_entrypoint()
     interrupt_register(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
     asm volatile("sti");
 
+    // Enable local APIC by setting bit 8 in the spurious_interrupt_vector register
     cpu_info->local_apic->spurious_interrupt_vector = 0x1FF;
     cpu_info->local_apic->timer_initial_count = 1000000;
     cpu_info->local_apic->timer_divide_config = 0b1010;
     cpu_info->local_apic->timer_vector = 0x22 | (1 << 17);
 
     console_print("[cpu] done");
-
-    asm volatile("int 0x22");
 }

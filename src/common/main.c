@@ -30,6 +30,7 @@ extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup16)();
 extern unsigned short cpu_startup_increment;
 extern void(interrupt_schedule)();
+IOApic *ioapic;
 
 int hugepages_supported()
 {
@@ -41,11 +42,11 @@ void interrupt_schedule_handler(InterruptFrame *stack)
 {
     Cpu *current_cpu = cpu_get_current();
 
-    console_print("[schedule] interrupt fired on cpu 0x");
-    console_print_u64(current_cpu->id, 16);
-    console_print(", return to 0x");
-    console_print_u64((unsigned long)stack->instruction_pointer, 16);
-    console_new_line();
+    // console_print("[schedule] interrupt fired on cpu 0x");
+    // console_print_u64(current_cpu->id, 16);
+    // console_print(", return to 0x");
+    // console_print_u64((unsigned long)stack->instruction_pointer, 16);
+    // console_new_line();
     current_cpu->local_apic->end_of_interrupt = 0;
 }
 
@@ -79,7 +80,8 @@ void interrupt_handle_test(InterruptFrame *frame)
     console_print_u64(counter++, 10);
     console_set_cursor(x, y);
 
-    apic_get()->end_of_interrupt = 0;
+    Cpu *cpu = cpu_get_current();
+    cpu->local_apic->end_of_interrupt = 0;
 }
 
 ATTRIBUTE_INTERRUPT
@@ -95,7 +97,8 @@ void interrupt_handle_timer(InterruptFrame *frame)
     console_print_char((counter2 & 0b111) < 4 ? '_' : ' ');
     console_set_cursor(x, y);
 
-    apic_get()->end_of_interrupt = 0;
+    Cpu *cpu = cpu_get_current();
+    cpu->local_apic->end_of_interrupt = 0;
 }
 
 void kernel_main()
@@ -418,7 +421,7 @@ void kernel_main()
 
     // Iterate all io apic's
     AcpiMadtEntry1IOAPIC *current_ioapic = 0;
-    IOApic *ioapic = 0;
+    ioapic = 0;
     while (current_ioapic = acpi_madt_iterate_type(madt, current_ioapic, ACPI_MADT_TYPE_IO_APIC))
     {
         console_print("[ioapic] id ");
@@ -516,7 +519,7 @@ void kernel_main()
 
     console_print("[smp] started all processors in a halted state\n");
 
-    apic_initialize(apic, ioapic);
+    // Enable APIC
     apic->spurious_interrupt_vector = 0x1FF;
 
     console_print("[test] create test interrupts\n");
