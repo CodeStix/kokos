@@ -4,6 +4,8 @@
 #include "memory_physical.h"
 #include "interrupt.h"
 
+extern void(interrupt_schedule)();
+
 void cpu_entrypoint()
 {
     console_print("[cpu] starting cpu\n");
@@ -26,4 +28,19 @@ void cpu_entrypoint()
     console_print(" and fs is ");
     console_print_u32(cpu_get_current()->id, 10);
     console_new_line();
+
+    console_print("[cpu] enabling schedule interrupt\n");
+
+    asm volatile("cli");
+    interrupt_register(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
+    asm volatile("sti");
+
+    cpu_info->local_apic->spurious_interrupt_vector = 0x1FF;
+    cpu_info->local_apic->timer_initial_count = 1000000;
+    cpu_info->local_apic->timer_divide_config = 0b1010;
+    cpu_info->local_apic->timer_vector = 0x22 | (1 << 17);
+
+    console_print("[cpu] done");
+
+    asm volatile("int 0x22");
 }

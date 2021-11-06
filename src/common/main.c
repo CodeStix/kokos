@@ -37,24 +37,14 @@ int hugepages_supported()
     return result.edx & CPU_ID_1GB_PAGES_EDX;
 }
 
-// See AMD Volume 2 page 258
-typedef struct ScheduleStack
-{
-    void *return_address;
-    unsigned long return_code_segment;
-    unsigned long return_rflags;
-    unsigned long return_stack_pointer;
-    unsigned long return_stack_segment; // Unused in long mode, but used when jumping back to compatibility mode
-} ScheduleStack;
-
-void interrupt_schedule_handler(ScheduleStack *stack)
+void interrupt_schedule_handler(InterruptFrame *stack)
 {
     Cpu *current_cpu = cpu_get_current();
 
     console_print("[schedule] interrupt fired on cpu 0x");
     console_print_u64(current_cpu->id, 16);
     console_print(", return to 0x");
-    console_print_u64((unsigned long)stack->return_address, 16);
+    console_print_u64((unsigned long)stack->instruction_pointer, 16);
     console_new_line();
     current_cpu->local_apic->end_of_interrupt = 0;
 }
@@ -527,6 +517,7 @@ void kernel_main()
     console_print("[smp] started all processors in a halted state\n");
 
     apic_initialize(apic, ioapic);
+    apic->spurious_interrupt_vector = 0x1FF;
 
     console_print("[test] create test interrupts\n");
     console_print("[test] interrupt at 0x");
@@ -548,7 +539,6 @@ void kernel_main()
     console_print("[test] enable apic\n");
 
     // Enable apic (0x100) and set spurious interrupt vector to 0xFF
-    apic->spurious_interrupt_vector = 0x1FF;
 
     // console_print("[pci] iterating pci bus\n");
     // pci_scan();

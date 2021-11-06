@@ -11,8 +11,8 @@ typedef enum
     INTERRUPT_GATE_TYPE_TRAP = 0b1111,
 } InterruptGateType;
 
-// Needed by gcc to make the interrupt attribute work
-// https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html#x86-Function-Attributes
+// This struct describes the format of the stack after an interrupt was fired. See AMD Volume 2 page 258.
+// (Also needed by gcc to make the interrupt attribute work, https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html#x86-Function-Attributes)
 typedef struct
 {
     unsigned long instruction_pointer;
