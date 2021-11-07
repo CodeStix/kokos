@@ -23,15 +23,8 @@ typedef struct Process
     struct Process *next;
     // Pointer to the previous process
     struct Process *previous;
-    // Pointer to the page table used by this process
-    unsigned long *current_level4_table;
-    unsigned long current_level4_index;
-    unsigned long *current_level3_table;
-    unsigned long current_level3_index;
-    unsigned long *current_level2_table;
-    unsigned long current_level2_index;
-    unsigned long *current_level1_table;
-    unsigned long current_level1_index;
+    // Pointer to the pages table used by this process
+    PagingIndex paging_index;
 
     // TODO move to thread struct
     // Address of the current instruction where it left off

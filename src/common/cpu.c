@@ -112,15 +112,9 @@ void cpu_execute(EntrypointFunction entrypoint)
     process->id = current_process_id++;
 
     // Set up page table information
-    process->current_level4_table = memory_physical_allocate();
-    memory_zero(process->current_level4_table, 4096);
-    process->current_level3_table = 0;
-    process->current_level2_table = 0;
-    process->current_level1_table = 0;
-    process->current_level4_index = 512;
-    process->current_level3_index = 512;
-    process->current_level2_index = 512;
-    process->current_level1_index = 512;
+
+    memory_zero(&process->paging_index, sizeof(PagingIndex));
+    process->paging_index.level4_table = memory_physical_allocate();
 
     if (cpu->current_process)
     {

@@ -61,6 +61,19 @@
 // This flag indicates that paging_map_physical should forcefully replace the existing virtual mapping if there is one
 #define PAGING_FLAG_REPLACE 0b1000000
 
+// Represents a location in the page structure
+typedef struct PagingIndex
+{
+    unsigned long *level4_table; // The uppermost level4 table
+    unsigned long *level3_table; // The current level3 table selected by level4_table[level4_index]
+    unsigned long *level2_table; // The current level2 table selected by level3_table[level3_index]
+    unsigned long *level1_table; // The current level1 table selected by level2_table[level2_index]
+    unsigned short level4_index;
+    unsigned short level3_index;
+    unsigned short level2_index;
+    unsigned short level1_index;
+} PagingIndex;
+
 // Sets up paging.
 // Physical memory allocation must be initialized first!
 void paging_initialize(unsigned long *level4_table);
@@ -68,18 +81,12 @@ void paging_initialize(unsigned long *level4_table);
 // Returns the physical address for virtual address and returns 0 if the virtual address is not mapped
 void *paging_get_physical_address(void *virtual_address);
 
-// Maps a page at the given physical address to a virtual address
-void *paging_map(void *physical_address, unsigned short paging_flag);
+// Maps physical memory to virtual memory. If physical address is null, the system allocates physical memory (RAM) for you. If virtual address is null,
+// the system will choose a virtual address for you.
+void *paging_map(void *physical_address_or_null, void *virtual_address_or_null, unsigned long bytes, unsigned long flags);
 
-// Maps x physical bytes to virtual bytes. If physical address is null, the system allocates RAM for you. If virtual address if null,
-// the system will allocate a virtual address for you.
-void *paging_map_physical(void *physical_address_or_null, void *virtual_address_or_null, unsigned long bytes, unsigned long flags);
-
-// Allocates a new page and returns its virtual address
-void *paging_allocate(unsigned short paging_flag);
-
-// Frees a single page allocated using paging_allocate or paging_map
-void paging_free(void *virtual_address, unsigned long bytes);
+// Unmaps memory previously mapped memory using paging_map
+void paging_unmap(void *virtual_address, unsigned long bytes);
 
 // Returs the number of used virtual pages
 unsigned long paging_used_pages();
