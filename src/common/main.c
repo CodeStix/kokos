@@ -253,9 +253,22 @@ void kernel_main()
 
     console_print("[cpu] test\n");
 
-    console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(0, 0, 4097, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(0, 0, 4096, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // for (int i = 0; i < 505; i++)
+    // {
+    //     console_debug("loop ", paging_map(0, 0, 1234, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // }
+    // console_debug("allocate ", paging_map(0, 0, 4096 * 2 + 1, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+
+    console_debug("allocate ", paging_map(0, 0x48000000000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    console_debug("allocate ", paging_map(0, 0x48000000000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    console_debug("allocate ", paging_map(0, 0x48000000001, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    console_debug("allocate ", paging_map(0, 0x48000001000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
 
     console_print("[cpu] done\n");
 

@@ -413,6 +413,12 @@ void *paging_map(void *physical_address_or_null, void *virtual_address_or_null, 
     Cpu *cpu = cpu_get_current();
     if (virtual_address_or_null)
     {
+        if ((unsigned long)virtual_address_or_null & 0xFFF)
+        {
+            console_print("[paging_map] virtual_address must be aligned to 0xFFF bytes (4KiB, 4096 bytes) when mapping page!\n");
+            return 0;
+        }
+
         // A virtual address was given, only get the uppermost (level 4) page table from the current process
         PagingIndex index;
         index.level4_table = cpu->current_process->paging_index.level4_table;
@@ -488,7 +494,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
     unsigned long level4_entry = level4_table[level4_index];
     if (level4_entry == 0)
     {
-        console_print("warning: paging_free tried to free unallocated page (level4_entry)\n");
+        console_print("[paging_unmap] tried to unmap unmapped page (level4_entry)\n");
         return 0;
     }
 
@@ -497,7 +503,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
     unsigned long level3_entry = level3_table[level3_index];
     if (level3_entry == 0)
     {
-        console_print("warning: paging_free tried to free unallocated page (level3_entry)\n");
+        console_print("[paging_unmap] tried to unmap unmapped page (level3_entry)\n");
         return 0;
     }
     if (level3_entry & PAGING_ENTRY_FLAG_SIZE)
@@ -505,7 +511,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
         unsigned long pages = ((bytes - 1) >> 30) + 1; // Divide by 1GB
         if ((unsigned long)virtual_address & 0x3FFFFFFF)
         {
-            console_print("[paging_free] virtual_address must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when freeing 1GB page!\n");
+            console_print("[paging_unmap] virtual_address must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when unmapping 1GB page!\n");
             return 0;
         }
 
@@ -517,7 +523,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
             {
                 if (++level4_index >= 512)
                 {
-                    console_print("[paging_free] invalid 1GiB free, reached end of level4 table\n");
+                    console_print("[paging_unmap] invalid 1GiB unmap, reached end of level4 table\n");
                     return 0;
                 }
 
@@ -525,7 +531,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
                 level3_table = (unsigned long *)(level4_table[level4_index] & PAGING_ADDRESS_MASK);
                 if (!level3_table)
                 {
-                    console_print("[paging_free] invalid 1GiB free, entering null level 3 table\n");
+                    console_print("[paging_unmap] invalid 1GiB unmap, entering null level 3 table\n");
                     return 0;
                 }
             }
@@ -540,7 +546,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
     unsigned long level2_entry = level2_table[level2_index];
     if (level2_entry == 0)
     {
-        console_print("[paging_free] warning: paging_free tried to free unallocated page (level2_entry)\n");
+        console_print("[paging_unmap] tried to unmap unallocated page (level2_entry)\n");
         return 0;
     }
     if (level2_entry & PAGING_ENTRY_FLAG_SIZE)
@@ -548,7 +554,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
         unsigned long pages = ((bytes - 1) >> 21) + 1; // Divide by 2MB
         if ((unsigned long)virtual_address & 0x1FFFFF)
         {
-            console_print("[paging_free] virtual_address must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when freeing 2MB page!\n");
+            console_print("[paging_unmap] virtual_address must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when unmapping 2MB page!\n");
             return 0;
         }
 
@@ -562,7 +568,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
                 {
                     if (++level4_index >= 512)
                     {
-                        console_print("[paging_free] invalid 2MiB free, reached end of level4 table\n");
+                        console_print("[paging_unmap] invalid 2MiB unmap, reached end of level4 table\n");
                         return 0;
                     }
 
@@ -570,7 +576,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
                     level3_table = (unsigned long *)(level4_table[level4_index] & PAGING_ADDRESS_MASK);
                     if (!level3_table)
                     {
-                        console_print("[paging_free] invalid 2MiB free, entering null level 3 table\n");
+                        console_print("[paging_unmap] invalid 2MiB unmap, entering null level 3 table\n");
                         return 0;
                     }
                 }
@@ -579,7 +585,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
                 level2_table = (unsigned long *)(level3_table[level3_index] & PAGING_ADDRESS_MASK);
                 if (!level2_table)
                 {
-                    console_print("[paging_free] invalid 2MiB free, entering null level 2 table\n");
+                    console_print("[paging_unmap] invalid 2MiB unmap, entering null level 2 table\n");
                     return 0;
                 }
             }
@@ -594,14 +600,14 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
     unsigned long level1_entry = level1_table[level1_index];
     if (level1_entry == 0)
     {
-        console_print("[paging_free] warning: paging_free tried to free unallocated page (level1_entry)\n");
+        console_print("[paging_unmap] tried to unmap unmapped page (level1_entry)\n");
         return 0;
     }
 
     unsigned long pages = ((bytes - 1) >> 12) + 1; // Divide by 4KB
     if ((unsigned long)virtual_address & 0xFFF)
     {
-        console_print("[paging_free] virtual_address must be aligned to 0xFFF bytes (4KiB, 4096 bytes) when freeing page!\n");
+        console_print("[paging_unmap] virtual_address must be aligned to 0xFFF bytes (4KiB, 4096 bytes) when unmapping page!\n");
         return 0;
     }
 
@@ -617,7 +623,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
                 {
                     if (++level4_index >= 512)
                     {
-                        console_print("[paging_free] invalid 4KiB free, reached end of level4 table\n");
+                        console_print("[paging_unmap] invalid 4KiB unmap, reached end of level4 table\n");
                         return 0;
                     }
 
@@ -625,7 +631,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
                     level3_table = (unsigned long *)(level4_table[level4_index] & PAGING_ADDRESS_MASK);
                     if (!level3_table)
                     {
-                        console_print("[paging_free] invalid 2MiB free, entering null level 3 table\n");
+                        console_print("[paging_unmap] invalid 2MiB unmap, entering null level 3 table\n");
                         return 0;
                     }
                 }
@@ -634,7 +640,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
                 level2_table = (unsigned long *)(level3_table[level3_index] & PAGING_ADDRESS_MASK);
                 if (!level2_table)
                 {
-                    console_print("[paging_free] invalid 2MiB free, entering null level 2 table\n");
+                    console_print("[paging_unmap] invalid 2MiB unmap, entering null level 2 table\n");
                     return 0;
                 }
             }
@@ -643,7 +649,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
             level1_table = (unsigned long *)(level2_table[level2_index] & PAGING_ADDRESS_MASK);
             if (!level1_table)
             {
-                console_print("[paging_free] invalid 2MiB free, entering null level 1 table\n");
+                console_print("[paging_unmap] invalid 2MiB unmap, entering null level 1 table\n");
                 return 0;
             }
         }
