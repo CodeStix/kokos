@@ -93,43 +93,39 @@ Logboek
             Het lezen van de memory map uit de multiboot2 boot informatie. Deze informatie gebruiken om verschillende pages te reserveren zodat deze later niet
             opgevraagd kunnen worden.
 
-
-
-
-
-
-
-
-
-
 =================================================================================
-Eerste tussenrapportering - <datum van ingave>
+Eerste tussenrapportering - 07/2
 =================================================================================
 
 Stand van zaken:
 
-<Geef hier een korte stand van zaken van wat er gebeurd is sinds de start: 
-Wat is er gerealiseerd? Wat moet nog gebeuren? Wat zijn bijzondere gebeurtenissen?
-Wat zijn problemen die je nog moet oplossen?>
+Goed op weg, doelen 1 en 2 zijn al even bereikt. Omdat deze doelen al heel snel bereikt waren, en ik wist dat ik deze zeker ging halen binnen de gestelde tijdslimieten, 
+ben ik andere dingen binnen dit project gaan uitvoeren. Namelijk: 64-bit modus (long mode, zie AMD64 Volume 2: Operating modes), testen op echte hardware (5 verschillende, 2 vaste pcs en 3 laptops met verschillende leeftijden), paging en virteel geheugen, ACPI tabellen inlezen, een scheduler (meerdere processen kunnen uitvoeren tegelijkertijd), meerdere processoren activeren ...
+
+Notitie voor doel 1: ik heb op dit moment gebruik gemaakt van een bestaande bootloader, GRUB. Mijn OS wordt gebuild naar een ELF64 bestand, met hierin een multiboot2 header. GRUB herkent deze header en laad mijn besturingsysteem in RAM en voert het uit. Dit is erg handig, multiboot2 heeft al verschillende dingen voor mij voorbereid, herkennen van RAM, instellen framebuffer ... zie de multiboot2 specification.
 
 Reflectie:
 
-<Hoe werkt je aanpak? Waar had je achteraf gezien beter anders te werk kunnen gaan?
-Hoe ga je eventueel bijsturen? Welke aanpassingen zijn er nodig in je planning?>
+De OSDev wiki (https://wiki.osdev.org/) is al extreem handig geweest. Ookal heb ik een aantal fouten gespot in de wiki (op de harde manier ondervonden), was dit de ultieme kick-start.
+Met enkel de OSDev wiki ben ik ook niks, ik moet ervoor zorgen dat ik alles begrijp voor ik verder ga, anders kom ik op obstakels waarvan ik niet weet vanwaar ze komen. 
+Daarom heb ik elk item op de wiki, handleidingen gelezen. Bijvoorbeeld: het artikel over APIC (https://wiki.osdev.org/APIC) is interressant, maar ben je eigenlijk niks
+mee zonder de beschrijving in de handleiding (daar is het eigenlijk beter uitgelegd): AMD64 Volume 2: Advanced Programmable Interrupt Controller (APIC).
 
+De volgende handleidingen heb ik al gebruikt (gesorteerd van veel tot weinig):
+- AMD64 Volume 2
+- AMD64 Volume 3
+- multiboot2 specification
+- Intel APIC datasheet
 
 Zelfevaluatie:
 
-<Geef jezelf hier een score (gaande van 'NVT' tot 'A') voor de items die in het 
-evaluatiedocument een witte achtergrond hebben>
-
+Top. Erg leuk om aan te werken (beetje verslavend ook).
 
 Feedback vanwege mentor - <datum van ingave>:
 (Laat steeds de feedback van de mentor in het opvolgingsdocument staan tot het einde
 van het opleidingsonderdeel.) 
 
 <Hier komt de feedback en opmerkingen vanwege de mentor>
-
 
 
 =================================================================================

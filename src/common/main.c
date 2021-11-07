@@ -265,7 +265,10 @@ void kernel_main()
     // console_debug("allocate ", paging_map(0, 0, 4096 * 2 + 1, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
     // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
 
-    console_debug("allocate ", paging_map(0, 0x48000000000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    void *address = paging_map(0x100000, 0x48000000000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+
+    console_debug("allocate ", address, 16);
+    console_debug("physical ", paging_get_physical_address(address), 16);
     console_debug("allocate ", paging_map(0, 0x48000000000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
     console_debug("allocate ", paging_map(0, 0x48000000001, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
     console_debug("allocate ", paging_map(0, 0x48000001000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
