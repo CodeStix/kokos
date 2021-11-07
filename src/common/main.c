@@ -104,6 +104,13 @@ void interrupt_handle_timer(InterruptFrame *frame)
     cpu->local_apic->end_of_interrupt = 0;
 }
 
+void console_debug(const char *str, unsigned long value, int base)
+{
+    console_print(str);
+    console_print_u64(value, base);
+    console_new_line();
+}
+
 void kernel_main()
 {
     console_clear();
@@ -244,6 +251,14 @@ void kernel_main()
 
     cpu_initialize();
 
+    console_print("[cpu] test\n");
+
+    console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+
+    console_print("[cpu] done\n");
+
     while (1)
     {
     }
@@ -258,7 +273,7 @@ void kernel_main()
         // Identity map whole memory using 1GB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x40000000ul); address += 0x40000000ul)
         {
-            paging_map((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_1GB | PAGING_FLAG_REPLACE | PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+            paging_map((unsigned long *)address, (unsigned long *)address, 4096 * 512 * 512, PAGING_FLAG_1GB | PAGING_FLAG_REPLACE | PAGING_FLAG_WRITE | PAGING_FLAG_READ);
         }
 
         console_print("[paging] done\n");
@@ -270,7 +285,7 @@ void kernel_main()
         // Identity map whole memory using 2MB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
         {
-            paging_map((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_2MB | PAGING_FLAG_REPLACE | PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+            paging_map((unsigned long *)address, (unsigned long *)address, 4096 * 512, PAGING_FLAG_2MB | PAGING_FLAG_REPLACE | PAGING_FLAG_WRITE | PAGING_FLAG_READ);
         }
 
         console_print("[paging] done\n");
@@ -399,7 +414,7 @@ void kernel_main()
         return;
     }
 
-    Apic *apic = (Apic *)paging_map(madt->local_apic_address, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    Apic *apic = (Apic *)paging_map(madt->local_apic_address, 0, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     unsigned char apic_id = (unsigned int)apic->id >> 24;
     unsigned char apic_version = apic->version & 0xFF;
@@ -443,7 +458,7 @@ void kernel_main()
 
         if (ioapic == 0)
         {
-            ioapic = (IOApic *)paging_map(current_ioapic->io_apic_address, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+            ioapic = (IOApic *)paging_map(current_ioapic->io_apic_address, 0, sizeof(IOApic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
             console_print("[ioapic] version: ");
             console_print_u64(apic_io_get_version(ioapic), 10);

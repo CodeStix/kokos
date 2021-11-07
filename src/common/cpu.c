@@ -102,11 +102,25 @@ Cpu *cpu_initialize()
     dummy_process->id = 0;
     dummy_process->next = dummy_process;
     dummy_process->previous = dummy_process;
-    memory_zero(&dummy_process->paging_index, sizeof(PagingIndex));
+
     dummy_process->paging_index.level4_table = memory_physical_allocate();
-    dummy_process->paging_index.level4_table[0] = page_table_level3;
-    dummy_process->paging_index.level4_index = 1;
     memory_zero(dummy_process->paging_index.level4_table, 4096);
+    dummy_process->paging_index.level3_table = memory_physical_allocate();
+    memory_zero(dummy_process->paging_index.level3_table, 4096);
+    dummy_process->paging_index.level2_table = memory_physical_allocate();
+    memory_zero(dummy_process->paging_index.level2_table, 4096);
+    dummy_process->paging_index.level1_table = memory_physical_allocate();
+    memory_zero(dummy_process->paging_index.level1_table, 4096);
+
+    dummy_process->paging_index.level4_index = 1;
+    dummy_process->paging_index.level3_index = 0;
+    dummy_process->paging_index.level2_index = 0;
+    dummy_process->paging_index.level1_index = 0;
+    dummy_process->paging_index.level4_table[0] = (unsigned long)page_table_level3 | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+    dummy_process->paging_index.level4_table[1] = (unsigned long)dummy_process->paging_index.level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+    dummy_process->paging_index.level3_table[0] = (unsigned long)dummy_process->paging_index.level2_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+    dummy_process->paging_index.level2_table[0] = (unsigned long)dummy_process->paging_index.level1_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+
     cpu->current_process = dummy_process;
 
     // Now that paging should work, map the local APIC
