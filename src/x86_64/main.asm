@@ -2,6 +2,7 @@
 global start32
 global gdt64.code_segment
 global page_table_level4
+global page_table_level3
 global memory_map
 global multiboot2_info
 extern start64

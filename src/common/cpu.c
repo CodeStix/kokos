@@ -71,6 +71,7 @@ inline Cpu *cpu_get_current()
 }
 
 static int current_cpu_id = 0;
+extern volatile unsigned long page_table_level3[512];
 
 Cpu *cpu_initialize()
 {
@@ -92,10 +93,24 @@ Cpu *cpu_initialize()
     Cpu *cpu = memory_physical_allocate();
     cpu->address = cpu;
     cpu->id = current_cpu_id++;
-    cpu->local_apic = paging_map(local_apic, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
     cpu->interrupt_descriptor_table = 0;
-    cpu->current_process = 0;
     cpu_write_msr(CPU_MSR_FS_BASE, cpu);
+
+    // Create dummy process, required for paging to work
+    Process *dummy_process = memory_physical_allocate();
+    dummy_process->instruction_pointer = 0;
+    dummy_process->id = 0;
+    dummy_process->next = dummy_process;
+    dummy_process->previous = dummy_process;
+    memory_zero(&dummy_process->paging_index, sizeof(PagingIndex));
+    dummy_process->paging_index.level4_table = memory_physical_allocate();
+    dummy_process->paging_index.level4_table[0] = page_table_level3;
+    dummy_process->paging_index.level4_index = 1;
+    memory_zero(dummy_process->paging_index.level4_table, 4096);
+    cpu->current_process = dummy_process;
+
+    // Now that paging should work, map the local APIC
+    cpu->local_apic = paging_map(local_apic, 0, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     return cpu;
 }

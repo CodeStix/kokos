@@ -54,11 +54,11 @@
 #define PAGING_FLAG_EXECUTE 0b100
 // This flag indicates that this page can be accessed by privilege level 3 when it is readable/writable
 #define PAGING_FLAG_USER 0b1000
-// This flag indicates that paging_map_physical should use 1GB pages
+// This flag indicates that paging_map should use 1GB pages
 #define PAGING_FLAG_1GB 0b10000
-// This flag indicates that paging_map_physical should use 2MB pages
+// This flag indicates that paging_map should use 2MB pages
 #define PAGING_FLAG_2MB 0b100000
-// This flag indicates that paging_map_physical should forcefully replace the existing virtual mapping if there is one
+// This flag indicates that paging_map should forcefully replace the existing virtual mapping if there is one
 #define PAGING_FLAG_REPLACE 0b1000000
 
 // Represents a location in the page structure
@@ -76,7 +76,7 @@ typedef struct PagingIndex
 
 // Sets up paging.
 // Physical memory allocation must be initialized first!
-void paging_initialize(unsigned long *level4_table);
+void paging_initialize();
 
 // Returns the physical address for virtual address and returns 0 if the virtual address is not mapped
 void *paging_get_physical_address(void *virtual_address);
@@ -86,7 +86,7 @@ void *paging_get_physical_address(void *virtual_address);
 void *paging_map(void *physical_address_or_null, void *virtual_address_or_null, unsigned long bytes, unsigned long flags);
 
 // Unmaps memory previously mapped memory using paging_map
-void paging_unmap(void *virtual_address, unsigned long bytes);
+int paging_unmap(void *virtual_address, unsigned long bytes);
 
 // Returs the number of used virtual pages
 unsigned long paging_used_pages();

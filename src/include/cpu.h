@@ -1,6 +1,7 @@
 #pragma once
 #include "apic.h"
 #include "interrupt.h"
+#include "paging.h"
 
 #define CPU_ID_FUNCTION_0 0
 #define CPU_ID_1GB_PAGES_EDX 1 << 26
