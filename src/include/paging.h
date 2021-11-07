@@ -72,13 +72,13 @@ void *paging_get_physical_address(void *virtual_address);
 void *paging_map(void *physical_address, unsigned short paging_flag);
 
 // Maps the page at a specific physical address to a specific virtual address
-void *paging_map_physical(void *virtual_address, void *physical_address, unsigned long paging_flag);
+void *paging_map_physical(void *physical_address, void *virtual_address_or_null, unsigned long bytes, unsigned long flags);
 
 // Allocates a new page and returns its virtual address
 void *paging_allocate(unsigned short paging_flag);
 
 // Frees a single page allocated using paging_allocate or paging_map
-void paging_free(void *virtual_address);
+void paging_free(void *virtual_address, unsigned long bytes);
 
 // Returs the number of used virtual pages
 unsigned long paging_used_pages();

@@ -110,12 +110,21 @@ void cpu_execute(EntrypointFunction entrypoint)
 
     Process *process = memory_physical_allocate();
     process->id = current_process_id++;
-    process->topmost_page_table = memory_physical_allocate();
-    memory_zero(process->topmost_page_table, 4096);
+
+    // Set up page table information
+    process->current_level4_table = memory_physical_allocate();
+    memory_zero(process->current_level4_table, 4096);
+    process->current_level3_table = 0;
+    process->current_level2_table = 0;
+    process->current_level1_table = 0;
+    process->current_level4_index = 512;
+    process->current_level3_index = 512;
+    process->current_level2_index = 512;
+    process->current_level1_index = 512;
 
     if (cpu->current_process)
     {
-        // Insert into linked list
+        // Insert new process into linked list
         process->next = cpu->current_process;
         process->previous = cpu->current_process->previous;
         cpu->current_process->previous = process;
