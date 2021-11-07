@@ -93,6 +93,8 @@ Logboek
             Het lezen van de memory map uit de multiboot2 boot informatie. Deze informatie gebruiken om verschillende pages te reserveren zodat deze later niet
             opgevraagd kunnen worden.
 
+... dit is lastig om bij te houden, zie git commits ...
+
 =================================================================================
 Eerste tussenrapportering - 07/10/2021
 =================================================================================
