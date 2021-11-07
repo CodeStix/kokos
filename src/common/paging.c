@@ -6,16 +6,6 @@
 #include "../include/memory_physical.h"
 
 static unsigned long used_virtual_pages = 0;
-
-static unsigned long *current_level4_table = 0;
-static unsigned long current_level4_index = 0;
-static unsigned long *current_level3_table = 0;
-static unsigned long current_level3_index = 0;
-static unsigned long *current_level2_table = 0;
-static unsigned long current_level2_index = 0;
-static unsigned long *current_level1_table = 0;
-static unsigned long current_level1_index = 0;
-
 static int hugepages_supported = 0;
 
 static inline void paging_clear_table(unsigned long *table)
@@ -35,17 +25,6 @@ void paging_initialize(unsigned long *level4_table)
 {
     // Each table has 512 other tables, there are 4 types of nested tables
     used_virtual_pages = 0;
-
-    current_level1_table = 0;
-    current_level2_table = 0;
-    current_level3_table = 0;
-    current_level4_table = level4_table;
-
-    // 512 is outside of a valid table range, so its creates new tables on first allocation
-    current_level4_index = 512;
-    current_level3_index = 512;
-    current_level2_index = 512;
-    current_level1_index = 512;
 
     // Check if hugepages is supported using cpuid
     CpuIdResult result = cpu_id(0x80000001);
@@ -502,8 +481,11 @@ static int paging_map_1gb(void *physical_address_or_null, PagingIndex *index, un
 
 void paging_unmap(void *virtual_address, unsigned long bytes)
 {
+    Cpu *cpu = cpu_get_current();
+
+    unsigned long *level4_table = cpu->current_process->paging_index.level4_table;
     unsigned int level4_index = ((unsigned long)virtual_address >> 39) & 0b111111111;
-    unsigned long level4_entry = current_level4_table[level4_index];
+    unsigned long level4_entry = level4_table[level4_index];
     if (level4_entry == 0)
     {
         console_print("warning: paging_free tried to free unallocated page (level4_entry)\n");
@@ -540,7 +522,7 @@ void paging_unmap(void *virtual_address, unsigned long bytes)
                 }
 
                 level3_index = 0;
-                level3_table = (unsigned long *)(current_level4_table[level4_index] & PAGING_ADDRESS_MASK);
+                level3_table = (unsigned long *)(level4_table[level4_index] & PAGING_ADDRESS_MASK);
                 if (!level3_table)
                 {
                     console_print("[paging_free] invalid 1GiB free, entering null level 3 table\n");
@@ -548,6 +530,7 @@ void paging_unmap(void *virtual_address, unsigned long bytes)
                 }
             }
         }
+
         used_virtual_pages -= pages * 512 * 512;
         return 1;
     }
@@ -584,7 +567,7 @@ void paging_unmap(void *virtual_address, unsigned long bytes)
                     }
 
                     level3_index = 0;
-                    level3_table = (unsigned long *)(current_level4_table[level4_index] & PAGING_ADDRESS_MASK);
+                    level3_table = (unsigned long *)(level4_table[level4_index] & PAGING_ADDRESS_MASK);
                     if (!level3_table)
                     {
                         console_print("[paging_free] invalid 2MiB free, entering null level 3 table\n");
@@ -601,6 +584,7 @@ void paging_unmap(void *virtual_address, unsigned long bytes)
                 }
             }
         }
+
         used_virtual_pages -= pages * 512;
         return 1;
     }
@@ -638,7 +622,7 @@ void paging_unmap(void *virtual_address, unsigned long bytes)
                     }
 
                     level3_index = 0;
-                    level3_table = (unsigned long *)(current_level4_table[level4_index] & PAGING_ADDRESS_MASK);
+                    level3_table = (unsigned long *)(level4_table[level4_index] & PAGING_ADDRESS_MASK);
                     if (!level3_table)
                     {
                         console_print("[paging_free] invalid 2MiB free, entering null level 3 table\n");
@@ -674,8 +658,11 @@ void *paging_get_physical_address(void *virtual_address)
 {
     unsigned long address = (unsigned long)virtual_address;
 
+    Cpu *cpu = cpu_get_current();
+
+    unsigned long *level4_table = cpu->current_process->paging_index.level4_table;
     unsigned int level4_offset = (address >> 39) & 0b111111111;
-    unsigned long level4_entry = current_level4_table[level4_offset];
+    unsigned long level4_entry = level4_table[level4_offset];
 
     // Check if page is present
     if (level4_entry == 0)
