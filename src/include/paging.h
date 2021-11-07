@@ -93,3 +93,5 @@ unsigned long paging_used_pages();
 
 // Returns non-zero number if huge pages (1GB pages) are supported
 int paging_get_hugepages_supported();
+
+void paging_debug();

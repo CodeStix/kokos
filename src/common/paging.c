@@ -726,3 +726,97 @@ unsigned long paging_used_pages()
 {
     return used_virtual_pages;
 }
+
+void paging_debug()
+{
+
+    Cpu *cpu = cpu_get_current();
+
+    PagingIndex *index = &cpu->current_process->paging_index;
+
+    console_print("level4 0x");
+    console_print_u64(index->level4_table, 16);
+    console_print(" [0x000000000000 .. 0xffffffffffff]\n");
+
+    for (int level4_index = 0; level4_index < 512; level4_index++)
+    {
+        unsigned long level4_entry = index->level4_table[level4_index];
+        if (!level4_entry)
+            continue;
+
+        unsigned long *level3_table = (unsigned long *)(level4_entry & PAGING_ADDRESS_MASK);
+        unsigned long level3_starting_address = (unsigned long)level4_index * 512 * 512 * 512 * 4096;
+        unsigned long level3_ending_address = ((unsigned long)level4_index + 1) * 512 * 512 * 512 * 4096 - 1;
+
+        console_print("|- level3 0x");
+        console_print_u64(level3_table, 16);
+        console_print(" [0x");
+        console_print_u64(level3_starting_address, 16);
+        console_print(" .. 0x");
+        console_print_u64(level3_ending_address, 16);
+        console_print("]\n");
+
+        for (int level3_index = 0; level3_index < 512; level3_index++)
+        {
+            unsigned long level3_entry = level3_table[level3_index];
+            if (!level3_entry)
+                continue;
+
+            unsigned long *level2_table = (unsigned long *)(level3_entry & PAGING_ADDRESS_MASK);
+            unsigned long level2_starting_address = level3_starting_address + (unsigned long)level3_index * 512 * 512 * 4096;
+            unsigned long level2_ending_address = level3_starting_address + (((unsigned long)level3_index + 1) * 512 * 512 * 4096 - 1);
+
+            if (level3_entry & PAGING_ENTRY_FLAG_SIZE)
+                console_print("|- hugepage1gb 0x");
+            else
+                console_print("   |- level2 0x");
+            console_print_u64(level2_table, 16);
+            console_print(" [0x");
+            console_print_u64(level2_starting_address, 16);
+            console_print(" .. 0x");
+            console_print_u64(level2_ending_address, 16);
+            console_print("]\n");
+
+            for (int level2_index = 0; level2_index < 512; level2_index++)
+            {
+                unsigned long level2_entry = level2_table[level2_index];
+                if (!level2_entry)
+                    continue;
+
+                unsigned long *level1_table = (unsigned long *)(level2_entry & PAGING_ADDRESS_MASK);
+                unsigned long level1_starting_address = level2_starting_address + (unsigned long)level2_index * 512 * 4096;
+                unsigned long level1_ending_address = level2_starting_address + ((unsigned long)level2_index + 1) * 512 * 4096 - 1;
+
+                if (level2_entry & PAGING_ENTRY_FLAG_SIZE)
+                    console_print("      |- hugepage2mb 0x");
+                else
+                    console_print("      |- level1 0x");
+                console_print_u64(level1_table, 16);
+                console_print(" [0x");
+                console_print_u64(level1_starting_address, 16);
+                console_print(" .. 0x");
+                console_print_u64(level1_ending_address, 16);
+                console_print("]\n");
+
+                for (int level1_index = 0; level1_index < 512; level1_index++)
+                {
+                    unsigned long level1_entry = level1_table[level1_index];
+                    if (!level1_entry)
+                        continue;
+
+                    unsigned long *page = (unsigned long *)(level1_entry & PAGING_ADDRESS_MASK);
+                    unsigned long page_starting_address = level1_starting_address + (unsigned long)level1_index * 4096;
+                    unsigned long page_ending_address = level1_starting_address + ((unsigned long)level1_index + 1) * 4096 - 1;
+
+                    console_print("         |- page 0x");
+                    console_print_u64(page, 16);
+                    console_print(" [0x");
+                    console_print_u64(page_starting_address, 16);
+                    console_print(" .. 0x");
+                    console_print_u64(page_ending_address, 16);
+                    console_print("]\n");
+                }
+            }
+        }
+    }
+}
