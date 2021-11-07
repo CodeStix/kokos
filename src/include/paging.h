@@ -54,11 +54,11 @@
 #define PAGING_FLAG_EXECUTE 0b100
 // This flag indicates that this page can be accessed by privilege level 3 when it is readable/writable
 #define PAGING_FLAG_USER 0b1000
-// This flag indicates that paging_map_at should use 1GB pages
+// This flag indicates that paging_map_physical should use 1GB pages
 #define PAGING_FLAG_1GB 0b10000
-// This flag indicates that paging_map_at should use 2MB pages
+// This flag indicates that paging_map_physical should use 2MB pages
 #define PAGING_FLAG_2MB 0b100000
-// This flag indicates that paging_map_at should forcefully replace the existing virtual mapping if there is one
+// This flag indicates that paging_map_physical should forcefully replace the existing virtual mapping if there is one
 #define PAGING_FLAG_REPLACE 0b1000000
 
 // Sets up paging.
@@ -69,13 +69,13 @@ void paging_initialize(unsigned long *level4_table);
 void *paging_get_physical_address(void *virtual_address);
 
 // Maps a page at the given physical address to a virtual address
-void *paging_map(void *physical_address, unsigned short flags);
+void *paging_map(void *physical_address, unsigned short paging_flag);
 
 // Maps the page at a specific physical address to a specific virtual address
-void *paging_map_at(void *virtual_address, void *physical_address, unsigned long flags);
+void *paging_map_physical(void *virtual_address, void *physical_address, unsigned long paging_flag);
 
 // Allocates a new page and returns its virtual address
-void *paging_allocate(unsigned short flags);
+void *paging_allocate(unsigned short paging_flag);
 
 // Frees a single page allocated using paging_allocate or paging_map
 void paging_free(void *virtual_address);

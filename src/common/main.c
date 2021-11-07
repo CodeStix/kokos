@@ -248,7 +248,7 @@ void kernel_main()
         // Identity map whole memory using 1GB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x40000000ul); address += 0x40000000ul)
         {
-            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_1GB | PAGING_FLAG_REPLACE);
+            paging_map_physical((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_1GB | PAGING_FLAG_REPLACE | PAGING_FLAG_WRITE | PAGING_FLAG_READ);
         }
 
         console_print("[paging] done\n");
@@ -260,7 +260,7 @@ void kernel_main()
         // Identity map whole memory using 2MB huge pages
         for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
         {
-            paging_map_at((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_2MB | PAGING_FLAG_REPLACE);
+            paging_map_physical((unsigned long *)address, (unsigned long *)address, PAGING_FLAG_2MB | PAGING_FLAG_REPLACE | PAGING_FLAG_WRITE | PAGING_FLAG_READ);
         }
 
         console_print("[paging] done\n");
@@ -393,7 +393,7 @@ void kernel_main()
         return;
     }
 
-    Apic *apic = (Apic *)paging_map(madt->local_apic_address, 0);
+    Apic *apic = (Apic *)paging_map(madt->local_apic_address, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     unsigned char apic_id = (unsigned int)apic->id >> 24;
     unsigned char apic_version = apic->version & 0xFF;

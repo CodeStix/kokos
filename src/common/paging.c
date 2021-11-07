@@ -172,12 +172,23 @@ static unsigned long *paging_next_empty_level1_table()
     }
 }
 
-void *paging_map_at(void *virtual_address, void *physical_address, unsigned long flags)
+void *paging_map_physical(void *virtual_address, void *physical_address, unsigned long flags)
 {
     unsigned int level4_index = ((unsigned long)virtual_address >> 39) & 0b111111111;
     unsigned int level3_index = ((unsigned long)virtual_address >> 30) & 0b111111111;
     unsigned int level2_index = ((unsigned long)virtual_address >> 21) & 0b111111111;
     unsigned int level1_index = ((unsigned long)virtual_address >> 12) & 0b111111111;
+
+    unsigned long page_entry_flags = PAGING_ENTRY_FLAG_PRESENT;
+    if (flags & PAGING_FLAG_WRITE)
+        page_entry_flags |= PAGING_ENTRY_FLAG_WRITABLE | PAGING_ENTRY_FLAG_PRESENT;
+    if (flags & PAGING_FLAG_USER)
+        page_entry_flags |= PAGING_ENTRY_FLAG_EVERYONE_ACCESS;
+    // if (flags & PAGING_FLAG_READ)
+    //     page_entry_flags |= PAGING_ENTRY_FLAG_PRESENT;
+    // TODO noexecute support
+    // if (!(flags & PAGING_FLAG_EXECUTE))
+    //     page_entry_flags |= PAGING_ENTRY_FLAG_NO_EXECUTE;
 
     unsigned long *level4_table = current_level4_table;
     unsigned long level4_entry = level4_table[level4_index];
@@ -191,7 +202,7 @@ void *paging_map_at(void *virtual_address, void *physical_address, unsigned long
         level3_table = memory_physical_allocate();
         paging_clear_table(level3_table);
 
-        level4_table[level4_index] = ((unsigned long)level3_table & PAGING_ADDRESS_MASK) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+        level4_table[level4_index] = ((unsigned long)level3_table & PAGING_ADDRESS_MASK) | page_entry_flags;
     }
 
     unsigned long level3_entry = level3_table[level3_index];
@@ -200,12 +211,12 @@ void *paging_map_at(void *virtual_address, void *physical_address, unsigned long
     {
         if (level3_entry != 0 && !(flags & PAGING_FLAG_REPLACE))
         {
-            console_print("error: paging_map_at tried to map at already mapped address (1gb)\n");
+            console_print("error: paging_map_physical tried to map at already mapped address (1gb)\n");
             return 0;
         }
         else
         {
-            level3_table[level3_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE | PAGING_ENTRY_FLAG_SIZE;
+            level3_table[level3_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
             used_virtual_pages += 512 * 512;
             return virtual_address;
         }
@@ -221,7 +232,7 @@ void *paging_map_at(void *virtual_address, void *physical_address, unsigned long
             level2_table = memory_physical_allocate();
             paging_clear_table(level2_table);
 
-            level3_table[level3_index] = ((unsigned long)level2_table & PAGING_ADDRESS_MASK) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+            level3_table[level3_index] = ((unsigned long)level2_table & PAGING_ADDRESS_MASK) | page_entry_flags;
         }
     }
 
@@ -232,12 +243,12 @@ void *paging_map_at(void *virtual_address, void *physical_address, unsigned long
     {
         if (level2_entry != 0 && !(flags & PAGING_FLAG_REPLACE))
         {
-            console_print("error: paging_map_at tried to map at already mapped address (2mb)\n");
+            console_print("error: paging_map_physical tried to map at already mapped address (2mb)\n");
             return 0;
         }
         else
         {
-            level2_table[level2_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE | PAGING_ENTRY_FLAG_SIZE;
+            level2_table[level2_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
             used_virtual_pages += 512;
             return virtual_address;
         }
@@ -253,42 +264,20 @@ void *paging_map_at(void *virtual_address, void *physical_address, unsigned long
             level1_table = memory_physical_allocate();
             paging_clear_table(level1_table);
 
-            level2_table[level3_index] = ((unsigned long)level1_table & PAGING_ADDRESS_MASK) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+            level2_table[level3_index] = ((unsigned long)level1_table & PAGING_ADDRESS_MASK) | page_entry_flags;
         }
     }
 
     if (level1_table[level1_index] != 0)
     {
-        console_print("error: paging_map_at tried to map at already mapped address\n");
+        console_print("error: paging_map_physical tried to map at already mapped address\n");
         return 0;
     }
     else
     {
-        level1_table[level1_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+        level1_table[level1_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | page_entry_flags;
         used_virtual_pages++;
         return virtual_address;
-    }
-}
-
-void paging_free_consecutive(void *virtual_address, unsigned long pages)
-{
-    if (pages == 0)
-    {
-        console_print("[paging] warning: paging_free_consecutive tried to free 0 pages");
-        return;
-    }
-
-    if (pages >= 512)
-    {
-        if (hugepages_supported && pages >= 512 * 512)
-        {
-        }
-        else
-        {
-        }
-    }
-    else
-    {
     }
 }
 
@@ -434,7 +423,7 @@ void *paging_allocate(unsigned short flags)
 
 void paging_free(void *virtual_address)
 {
-    // TODO is there an instruction for this slow mess?
+    // TODO is there an instruction for this mess?
 
     unsigned int level4_index = ((unsigned long)virtual_address >> 39) & 0b111111111;
     unsigned long level4_entry = current_level4_table[level4_index];
