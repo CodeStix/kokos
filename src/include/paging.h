@@ -71,8 +71,9 @@ void *paging_get_physical_address(void *virtual_address);
 // Maps a page at the given physical address to a virtual address
 void *paging_map(void *physical_address, unsigned short paging_flag);
 
-// Maps the page at a specific physical address to a specific virtual address
-void *paging_map_physical(void *physical_address, void *virtual_address_or_null, unsigned long bytes, unsigned long flags);
+// Maps x physical bytes to virtual bytes. If physical address is null, the system allocates RAM for you. If virtual address if null,
+// the system will allocate a virtual address for you.
+void *paging_map_physical(void *physical_address_or_null, void *virtual_address_or_null, unsigned long bytes, unsigned long flags);
 
 // Allocates a new page and returns its virtual address
 void *paging_allocate(unsigned short paging_flag);

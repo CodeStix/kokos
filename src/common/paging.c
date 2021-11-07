@@ -180,7 +180,7 @@ static unsigned long *paging_next_level1_table()
     }
 }
 
-void *paging_map_physical(void *physical_address, void *virtual_address_or_null, unsigned long bytes, unsigned long flags)
+void *paging_map_physical(void *physical_address_or_null, void *virtual_address_or_null, unsigned long bytes, unsigned long flags)
 {
     if (bytes <= 0)
     {
@@ -188,6 +188,7 @@ void *paging_map_physical(void *physical_address, void *virtual_address_or_null,
         return 0;
     }
 
+    // Convert function flags to page table entry compatible flags
     unsigned long page_entry_flags = PAGING_ENTRY_FLAG_PRESENT;
     if (flags & PAGING_FLAG_WRITE)
         page_entry_flags |= PAGING_ENTRY_FLAG_WRITABLE | PAGING_ENTRY_FLAG_PRESENT;
@@ -222,27 +223,45 @@ void *paging_map_physical(void *physical_address, void *virtual_address_or_null,
     {
         if (level3_entry != 0 && !(flags & PAGING_FLAG_REPLACE))
         {
-            console_print("error: paging_map_physical tried to map at already mapped address (1GiB)\n");
+            console_print("[paging_map_physical] tried to map at already mapped address (1GiB)\n");
             return 0;
         }
         else
         {
-            if ((unsigned long)physical_address & 0x3FFFFFFF)
+            if ((unsigned long)physical_address_or_null & 0x3FFFFFFF)
             {
-                console_print("[paging_map_physical] physical_address must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
+                console_print("[paging_map_physical] physical_address_or_null must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
                 return 0;
             }
-            if ((unsigned long)virtual_address_or_null & 0x3FFFFFFF)
+
+            if (virtual_address_or_null)
             {
-                console_print("[paging_map_physical] virtual_address must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
-                return 0;
+                if ((unsigned long)virtual_address_or_null & 0x3FFFFFFF)
+                {
+                    console_print("[paging_map_physical] virtual_address must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
+                    return 0;
+                }
+            }
+            else
+            {
+                // Find fitting spot
             }
 
             unsigned long pages = ((bytes - 1) >> 30) + 1; // Divide by 1GiB
             for (unsigned long i = 0; i < pages; i++)
             {
-                level3_table[level3_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
-                physical_address = (unsigned char *)physical_address + 4096 * 512 * 512;
+                if (physical_address_or_null)
+                {
+                    level3_table[level3_index] = (((unsigned long)physical_address_or_null + 4096 * 512 * 512 * i) & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
+                }
+                else
+                {
+                    // TODO not implemented
+                    // level3_table[level3_index] = ((unsigned long)memory_physical_allocate_1gb() & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
+                    console_print("[paging_map_physical] 1GiB allocation not implemented!\n");
+                    return 0;
+                }
+
                 if (++level3_index >= 512)
                 {
                     if (++level4_index >= 512)
@@ -286,27 +305,45 @@ void *paging_map_physical(void *physical_address, void *virtual_address_or_null,
     {
         if (level2_entry != 0 && !(flags & PAGING_FLAG_REPLACE))
         {
-            console_print("error: paging_map_physical tried to map at already mapped address (2MiB)\n");
+            console_print("[paging_map_physical] tried to map at already mapped address (2MiB)\n");
             return 0;
         }
         else
         {
-            if ((unsigned long)physical_address & 0x1FFFFF)
+            if ((unsigned long)physical_address_or_null & 0x1FFFFF)
             {
-                console_print("[paging_map_physical] physical_address must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
+                console_print("[paging_map_physical] physical_address_or_null must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
                 return 0;
             }
-            if ((unsigned long)virtual_address_or_null & 0x1FFFFF)
+
+            if (virtual_address_or_null)
             {
-                console_print("[paging_map_physical] virtual_address must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
-                return 0;
+                if ((unsigned long)virtual_address_or_null & 0x1FFFFF)
+                {
+                    console_print("[paging_map_physical] virtual_address must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
+                    return 0;
+                }
+            }
+            else
+            {
+                // Find fitting spot
             }
 
             unsigned long pages = ((bytes - 1) >> 21) + 1; // Divide by 2MiB
             for (unsigned long i = 0; i < pages; i++)
             {
-                level2_table[level2_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
-                physical_address = (unsigned char *)physical_address + 4096 * 512;
+                if (physical_address_or_null)
+                {
+                    level2_table[level2_index] = (((unsigned long)physical_address_or_null + 4096 * 512 * i) & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
+                }
+                else
+                {
+                    // TODO not implemented
+                    // level2_table[level2_index] = ((unsigned long)memory_physical_allocate_2mb() & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
+                    console_print("[paging_map_physical] 2MiB allocation not implemented!\n");
+                    return 0;
+                }
+
                 if (++level2_index >= 512)
                 {
                     if (++level3_index >= 512)
@@ -357,27 +394,42 @@ void *paging_map_physical(void *physical_address, void *virtual_address_or_null,
     unsigned int level1_index = ((unsigned long)virtual_address_or_null >> 12) & 0b111111111;
     if (level1_table[level1_index] != 0)
     {
-        console_print("error: paging_map_physical tried to map at already mapped address\n");
+        console_print("[paging_map_physical] tried to map at already mapped address (4KiB)\n");
         return 0;
     }
     else
     {
-        if ((unsigned long)physical_address & 0xFFF)
+        if ((unsigned long)physical_address_or_null & 0xFFF)
         {
-            console_print("[paging_map_physical] physical_address must be aligned to 4096 bytes!\n");
+            console_print("[paging_map_physical] physical_address_or_null must be aligned to 0x1000 bytes (4KiB, 4096 bytes)!\n");
             return 0;
         }
-        if ((unsigned long)virtual_address_or_null & 0xFFF)
+
+        if (virtual_address_or_null)
         {
-            console_print("[paging_map_physical] virtual_address_or_null must be aligned to 4096 bytes!\n");
-            return 0;
+            if ((unsigned long)virtual_address_or_null & 0xFFF)
+            {
+                console_print("[paging_map_physical] virtual_address_or_null must be aligned to 0x1000 bytes (4KiB, 4096 bytes)!\n");
+                return 0;
+            }
+        }
+        else
+        {
+            // Find fitting spot
         }
 
         unsigned long pages = ((bytes - 1) >> 12) + 1;
         for (unsigned long i = 0; i < pages; i++)
         {
-            level1_table[level1_index] = ((unsigned long)physical_address & PAGING_ADDRESS_MASK) | page_entry_flags;
-            physical_address = (unsigned char *)physical_address + 4096;
+            if (physical_address_or_null)
+            {
+                level1_table[level1_index] = ((unsigned long)(physical_address_or_null + 4096 * i) & PAGING_ADDRESS_MASK) | page_entry_flags;
+            }
+            else
+            {
+                level1_table[level1_index] = ((unsigned long)memory_physical_allocate() & PAGING_ADDRESS_MASK) | page_entry_flags;
+            }
+
             if (++level1_index >= 512)
             {
                 if (++level2_index >= 512)
@@ -386,7 +438,7 @@ void *paging_map_physical(void *physical_address, void *virtual_address_or_null,
                     {
                         if (++level4_index >= 512)
                         {
-                            console_print("[paging_map_physical] failed to allocate 2MiB pages, reached end of virtual address space.\n");
+                            console_print("[paging_map_physical] failed to allocate 4KiB pages, reached end of virtual address space.\n");
                             return 0;
                         }
                         level3_table = (unsigned long *)(current_level4_table[level4_index] & PAGING_ADDRESS_MASK);
@@ -421,74 +473,6 @@ void *paging_map_physical(void *physical_address, void *virtual_address_or_null,
         used_virtual_pages += pages;
         return virtual_address_or_null;
     }
-}
-
-// Maps physical addresses to a virtual addresses. When virtual_address_or_null is not null, the system tries to allocate it at that virtual address.
-// If this failed, it returns a null pointer.
-void *paging_map_consecutive_physical(void *physical_address, void *virtual_address_or_null, unsigned long bytes, unsigned short flags)
-{
-    if ((unsigned long)virtual_address_or_null & 0xFFF)
-    {
-        console_print("[paging_map_consecutive_physical] virtual_address_or_null must be aligned to 4096 bytes!\n");
-        return 0;
-    }
-
-    unsigned long pages = bytes >> 12; // Divide by 4096
-
-    if (virtual_address_or_null)
-    {
-        // A virtual address was specified, map it at that location
-    }
-    else
-    {
-        // No virtual address was specified, map it at any location
-    }
-}
-
-void *paging_map_consecutive(void *virtual_address_or_null, unsigned long bytes)
-{
-    if ((unsigned long)virtual_address_or_null & 0xFFF)
-    {
-        console_print("[paging_map_consecutive] virtual_address_or_null must be aligned to 4096 bytes!\n");
-        return 0;
-    }
-
-    unsigned long pages = bytes >> 12; // Divide by 4096
-
-    if (virtual_address_or_null)
-    {
-        // A virtual address was specified, map it at that location
-    }
-    else
-    {
-        // No virtual address was specified, map it at any location
-    }
-}
-
-void paging_free(void *virtual_address, unsigned long bytes)
-{
-}
-
-// Allocates 'pages' pages of 4096 bytes. Free these pages using paging_free_consecutive
-void *paging_map_consecutive(void *virtual_address_or_null, unsigned long pages, unsigned short flags)
-{
-    if (pages == 0)
-    {
-        console_print("[paging] warning: paging_map_consecutive tried to map 0 pages");
-        return (void *)0;
-    }
-
-    for (unsigned long i = 0; i < pages; i++)
-    {
-        if (++current_level1_index >= 512)
-        {
-            current_level1_index = 0;
-            current_level1_table = paging_next_level1_table();
-        }
-
-        current_level1_table[current_level1_index] = ((unsigned long)physical_address + i * 4096ul) | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-    }
-    used_virtual_pages += pages;
 }
 
 void paging_free(void *virtual_address, unsigned long bytes)
