@@ -15,12 +15,38 @@ typedef struct CpuIdResult
     unsigned int eax, ebx, ecx, edx;
 } CpuIdResult;
 
+typedef struct Process
+{
+    // The id of this process
+    unsigned long id;
+    // Pointer to the next process
+    struct Process *next;
+    // Pointer to the previous process
+    struct Process *previous;
+    // Pointer to the page table used by this process
+    unsigned long *topmost_page_table;
+
+    // TODO move to thread struct
+    // Address of the current instruction where it left off
+    void *instruction_pointer;
+    // Address of the stack
+    void *stack_pointer;
+    // Saved registers during a task switch
+    unsigned long saved_registers[10];
+} Process;
+
 typedef struct Cpu
 {
+    // Pointer to itself (trick for cpu_get_current and cpu_initialize)
     struct Cpu *address;
+    // The processor's id
     unsigned int id;
+    // Pointer to this processor's local APIC
     Apic *local_apic;
+    // Pointer to its interrupt descriptor table
     InterruptDescriptor *interrupt_descriptor_table;
+    // Pointer to currently running process
+    Process *current_process;
 } Cpu;
 
 // Performs an cpuid instruction and returns the result

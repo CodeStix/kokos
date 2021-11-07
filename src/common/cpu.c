@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "memory_physical.h"
 #include "paging.h"
+#include "../include/memory.h"
 
 inline struct CpuIdResult cpu_id(unsigned int function)
 {
@@ -88,34 +89,45 @@ Cpu *cpu_initialize()
     console_new_line();
 
     // The FS segment register will point to cpu-specific information
-    Cpu *cpu_info = memory_physical_allocate();
-    cpu_info->address = cpu_info;
-    cpu_info->id = current_cpu_id++;
-    cpu_info->local_apic = paging_map(local_apic, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
-    cpu_info->interrupt_descriptor_table = 0;
-    cpu_write_msr(CPU_MSR_FS_BASE, cpu_info);
+    Cpu *cpu = memory_physical_allocate();
+    cpu->address = cpu;
+    cpu->id = current_cpu_id++;
+    cpu->local_apic = paging_map(local_apic, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    cpu->interrupt_descriptor_table = 0;
+    cpu->current_process = 0;
+    cpu_write_msr(CPU_MSR_FS_BASE, cpu);
 
-    return cpu_info;
+    return cpu;
 }
 
 typedef void (*EntrypointFunction)();
 
 static unsigned long current_process_id = 0;
 
-typedef struct Process
-{
-    struct Process *next;
-    struct Process *previous;
-    unsigned long id;
-    // void *stack;
-    // void *code;
-} Process;
-
 void cpu_execute(EntrypointFunction entrypoint)
 {
-    Cpu *current = cpu_get_current();
+    Cpu *cpu = cpu_get_current();
+
     Process *process = memory_physical_allocate();
     process->id = current_process_id++;
-    // current->address = id;
-    entrypoint();
+    process->topmost_page_table = memory_physical_allocate();
+    memory_zero(process->topmost_page_table, 4096);
+
+    if (cpu->current_process)
+    {
+        // Insert into linked list
+        process->next = cpu->current_process;
+        process->previous = cpu->current_process->previous;
+        cpu->current_process->previous = process;
+    }
+    else
+    {
+        // This is the first process on this CPU
+        process->next = process;
+        process->previous = process;
+        cpu->current_process = process;
+    }
+
+    process->stack_pointer = memory_physical_allocate();
+    process->instruction_pointer = entrypoint;
 }

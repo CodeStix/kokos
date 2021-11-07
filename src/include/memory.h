@@ -10,7 +10,10 @@ typedef struct MemoryChunk
 extern MemoryChunk memory_chunk;
 
 // Sets a region of memory starting at `pointer` and ending at `pointer + amount` equal to `value`
-void memory_set(void *pointer, unsigned char value, int amount);
+void memory_set(void *pointer, unsigned long size, unsigned char amount);
+
+// Sets a region of memory to zero
+void memory_zero(void *address, unsigned long size);
 
 // Copies `amount` of bytes from `from` to `to`
 void memory_copy(void *from, void *to, int amount);

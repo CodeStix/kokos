@@ -6,45 +6,27 @@
 // When Allocating, the linked list of memory blocks is iterated and the first gap is filled. O(n)
 // When freeing, the memory block is removed from the linked list. O(1)
 
-void memory_set(void *pointer, unsigned char value, int amount)
+void memory_zero(void *address, unsigned long size)
 {
-    // if (IS_ALIGNED(amount, 8))
-    // {
-    //     unsigned long v = value | value << 8ul | value << 16ul | value << 24ul | value << 32ul | value << 40ul | value << 48ul | value << 56ul;
-    //     for (int i = 0; i < amount / sizeof(unsigned long); i++)
-    //     {
-    //         *((unsigned long *)pointer + i) = v;
-    //     }
-    // }
-    // else
-    if (IS_ALIGNED(amount, 4))
+    // TODO optimize
+    for (unsigned long i = 0; i < size; i++)
     {
-        unsigned int v = value | value << 8u | value << 16u | value << 24u;
-        for (int i = 0; i < amount / sizeof(unsigned int); i++)
-        {
-            *((unsigned int *)pointer + i) = v;
-        }
-    }
-    else if (IS_ALIGNED(amount, 2))
-    {
-        unsigned short v = value | value << 8u;
-        for (int i = 0; i < amount / sizeof(unsigned short); i++)
-        {
-            *((unsigned short *)pointer + i) = v;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < amount / sizeof(unsigned char); i++)
-        {
-            *((unsigned char *)pointer + i) = value;
-        }
+        *((unsigned char *)address + i) = 0;
     }
 }
 
-int memory_compare(void *a, void *b, unsigned long amount)
+void memory_set(void *address, unsigned long size, unsigned char value)
 {
-    for (unsigned long i = 0; i < amount; i++)
+    // TODO optimize
+    for (unsigned long i = 0; i < size; i++)
+    {
+        *((unsigned char *)address + i) = value;
+    }
+}
+
+int memory_compare(void *a, void *b, unsigned long size)
+{
+    for (unsigned long i = 0; i < size; i++)
     {
         if (*((unsigned char *)a) != *((unsigned char *)b))
         {
@@ -57,35 +39,12 @@ int memory_compare(void *a, void *b, unsigned long amount)
     return 1;
 }
 
-void memory_copy(void *from, void *to, int amount)
+void memory_copy(void *from, void *to, int size)
 {
-    if (IS_ALIGNED(amount, 8))
+    // TODO optimize
+    for (int i = 0; i < size; i++)
     {
-        for (int i = 0; i < amount / sizeof(unsigned long); i++)
-        {
-            *((unsigned long *)to + i) = *((unsigned long *)from + i);
-        }
-    }
-    else if (IS_ALIGNED(amount, 4))
-    {
-        for (int i = 0; i < amount / sizeof(unsigned int); i++)
-        {
-            *((unsigned int *)to + i) = *((unsigned int *)from + i);
-        }
-    }
-    else if (IS_ALIGNED(amount, 2))
-    {
-        for (int i = 0; i < amount / sizeof(unsigned short); i++)
-        {
-            *((unsigned short *)to + i) = *((unsigned short *)from + i);
-        }
-    }
-    else
-    {
-        for (int i = 0; i < amount / sizeof(unsigned char); i++)
-        {
-            *((unsigned char *)to + i) = *((unsigned char *)from + i);
-        }
+        *((unsigned char *)to + i) = *((unsigned char *)from + i);
     }
 }
 
