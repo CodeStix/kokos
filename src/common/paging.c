@@ -174,20 +174,147 @@ static unsigned long paging_convert_flags(unsigned short flags)
     return page_entry_flags;
 }
 
-// Maps a consecutive amount of 4KiB pages
-static int paging_map_4kb(void *physical_address_or_null, PagingIndex *index, unsigned long pages, unsigned short flags)
+static int paging_map_index_physical(void *physical_address, PagingIndex *index, unsigned long bytes, unsigned short flags)
 {
+    if (bytes <= 0)
+    {
+        console_print("[paging_map_index_physical] cannot map 0 bytes\n");
+        return 0;
+    }
+
     unsigned long page_entry_flags = paging_convert_flags(flags);
+
+    // Check if mapping huge pages (1GiB)
+    if ((index->level3_table[index->level3_index] & PAGING_ENTRY_FLAG_SIZE) || (flags & PAGING_FLAG_1GB))
+    {
+        if (!hugepages_supported)
+        {
+            console_print("[paging_map_index_physical] huge pages not supported (1GiB)\n");
+            return 0;
+        }
+
+        if (index->level1_index != 0 || index->level2_index != 0)
+        {
+            console_print("[paging_map_index_physical] virtual_address must be aligned to 0x40000000 bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
+            return 0;
+        }
+
+        if ((unsigned long)physical_address & 0x3FFFFFFF)
+        {
+            console_print("[paging_map_index_physical] physical_address must be aligned to 0x40000000 bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
+            return 0;
+        }
+
+        if (index->level3_table[index->level3_index] != 0 && !(flags & PAGING_FLAG_REPLACE))
+        {
+            console_print("[paging_map_index_physical] tried to map at already mapped address (1GiB)\n");
+            return 0;
+        }
+
+        unsigned long pages = ((bytes - 1) >> 30) + 1; // Divide by 1GiB
+        for (unsigned long i = 0; i < pages; i++)
+        {
+            index->level3_table[index->level3_index] = (((unsigned long)physical_address + 4096 * 512 * 512 * i) & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
+
+            if (++index->level3_index >= 512)
+            {
+                if (++index->level4_index >= 512)
+                {
+                    console_print("[paging_map_index_physical] failed to allocate 1GiB pages, reached end of virtual address space.\n");
+                    return 0;
+                }
+
+                index->level3_index = 0;
+                index->level3_table = index->level4_table[index->level4_index];
+                if (!index->level3_table)
+                {
+                    index->level3_table = memory_physical_allocate();
+                    memory_zero(index->level3_table, 4096);
+                    index->level4_table[index->level4_index] = (unsigned long)index->level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
+            }
+        }
+        used_virtual_pages += pages * 512 * 512;
+        return 1;
+    }
+
+    // Check if mapping huge pages (2MiB)
+    if ((index->level2_table[index->level2_index] & PAGING_ENTRY_FLAG_SIZE) || (flags & PAGING_FLAG_2MB))
+    {
+        if (index->level1_index != 0)
+        {
+            console_print("[paging_map_index_physical] virtual_address must be aligned to 0x200000 bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
+            return 0;
+        }
+
+        if ((unsigned long)physical_address & 0x1FFFFF)
+        {
+            console_print("[paging_map_index_physical] physical_address_or_null must be aligned to 0x200000 bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
+            return 0;
+        }
+
+        if (index->level2_table[index->level2_index] != 0 && !(flags & PAGING_FLAG_REPLACE))
+        {
+            console_print("[paging_map_index_physical] tried to map at already mapped address (2MiB)\n");
+            return 0;
+        }
+
+        unsigned long pages = ((bytes - 1) >> 21) + 1; // Divide by 2MiB
+        for (unsigned long i = 0; i < pages; i++)
+        {
+            index->level2_table[index->level2_index] = (((unsigned long)physical_address + 4096 * 512 * i) & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
+
+            if (++index->level2_index >= 512)
+            {
+                if (++index->level3_index >= 512)
+                {
+                    if (++index->level4_index >= 512)
+                    {
+                        console_print("[paging_map_index_physical] failed to allocate 2MiB pages, reached end of virtual address space.\n");
+                        return 0;
+                    }
+
+                    index->level3_index = 0;
+                    index->level3_table = (unsigned long *)(index->level4_table[index->level4_index] & PAGING_ADDRESS_MASK);
+                    if (!index->level3_table)
+                    {
+                        index->level3_table = memory_physical_allocate();
+                        memory_zero(index->level3_table, 4096);
+                        index->level4_table[index->level4_index] = (unsigned long)index->level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                    }
+                }
+
+                index->level2_index = 0;
+                index->level2_table = (unsigned long *)(index->level3_table[index->level3_index] & PAGING_ADDRESS_MASK);
+                if (!index->level2_table)
+                {
+                    index->level2_table = memory_physical_allocate();
+                    memory_zero(index->level2_table, 4096);
+                    index->level3_table[index->level3_index] = (unsigned long)index->level2_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
+            }
+        }
+        used_virtual_pages += pages * 512;
+        return 1;
+    }
+
+    // Map using 4KiB pages
+    if (index->level1_table[index->level1_index] != 0)
+    {
+        console_print("[paging_map_index_physical] tried to map at already mapped address (4KiB)\n");
+        return 0;
+    }
+
+    if ((unsigned long)physical_address & 0xFFF)
+    {
+        console_print("[paging_map_index_physical] physical_address_or_null must be aligned to 0x1000 bytes (4KiB, 4096 bytes)!\n");
+        return 0;
+    }
+
+    unsigned long pages = ((bytes - 1) >> 12) + 1; // Divide by 4KiB
     for (unsigned long i = 0; i < pages; i++)
     {
-        if (physical_address_or_null)
-        {
-            index->level1_table[index->level1_index] = ((unsigned long)(physical_address_or_null + 4096 * i) & PAGING_ADDRESS_MASK) | page_entry_flags;
-        }
-        else
-        {
-            index->level1_table[index->level1_index] = ((unsigned long)memory_physical_allocate() & PAGING_ADDRESS_MASK) | page_entry_flags;
-        }
+        index->level1_table[index->level1_index] = ((unsigned long)(physical_address + 4096 * i) & PAGING_ADDRESS_MASK) | page_entry_flags;
 
         if (++index->level1_index >= 512)
         {
@@ -197,7 +324,7 @@ static int paging_map_4kb(void *physical_address_or_null, PagingIndex *index, un
                 {
                     if (++index->level4_index >= 512)
                     {
-                        console_print("[paging_map_4kb] failed to allocate 4KiB pages, reached end of virtual address space.\n");
+                        console_print("[paging_map_index_physical] failed to allocate 4KiB pages, reached end of virtual address space.\n");
                         return 0;
                     }
 
@@ -231,106 +358,19 @@ static int paging_map_4kb(void *physical_address_or_null, PagingIndex *index, un
             }
         }
     }
+    used_virtual_pages += pages;
     return 1;
 }
 
-// Maps a consecutive amount of 2MiB pages
-static int paging_map_2mb(void *physical_address_or_null, PagingIndex *index, unsigned long pages, unsigned short flags)
-{
-    unsigned long page_entry_flags = paging_convert_flags(flags);
-    for (unsigned long i = 0; i < pages; i++)
-    {
-        if (physical_address_or_null)
-        {
-            index->level2_table[index->level2_index] = (((unsigned long)physical_address_or_null + 4096 * 512 * i) & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
-        }
-        else
-        {
-            // TODO not implemented
-            // index->level2_table[index->level2_index] = ((unsigned long)memory_physical_allocate_2mb() & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
-            console_print("[paging_map_2mb] 2MiB physical allocation not implemented yet!\n");
-            return 0;
-        }
-
-        if (++index->level2_index >= 512)
-        {
-            if (++index->level3_index >= 512)
-            {
-                if (++index->level4_index >= 512)
-                {
-                    console_print("[paging_map_2mb] failed to allocate 2MiB pages, reached end of virtual address space.\n");
-                    return 0;
-                }
-
-                index->level3_index = 0;
-                index->level3_table = (unsigned long *)(index->level4_table[index->level4_index] & PAGING_ADDRESS_MASK);
-                if (!index->level3_table)
-                {
-                    index->level3_table = memory_physical_allocate();
-                    memory_zero(index->level3_table, 4096);
-                    index->level4_table[index->level4_index] = (unsigned long)index->level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-                }
-            }
-
-            index->level2_index = 0;
-            index->level2_table = (unsigned long *)(index->level3_table[index->level3_index] & PAGING_ADDRESS_MASK);
-            if (!index->level2_table)
-            {
-                index->level2_table = memory_physical_allocate();
-                memory_zero(index->level2_table, 4096);
-                index->level3_table[index->level3_index] = (unsigned long)index->level2_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-            }
-        }
-    }
-    return 1;
-}
-
-// Maps a consecutive amount of 1GiB pages
-static int paging_map_1gb(void *physical_address_or_null, PagingIndex *index, unsigned long pages, unsigned short flags)
-{
-    unsigned long page_entry_flags = paging_convert_flags(flags);
-    for (unsigned long i = 0; i < pages; i++)
-    {
-        if (physical_address_or_null)
-        {
-            index->level3_table[index->level3_index] = (((unsigned long)physical_address_or_null + 4096 * 512 * 512 * i) & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
-        }
-        else
-        {
-            // TODO not implemented
-            // index->level3_table[index->level3_index] = ((unsigned long)memory_physical_allocate_1gb() & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
-            console_print("[paging_map_1gb] 1GiB physical allocation not implemented yet!\n");
-            return 0;
-        }
-
-        if (++index->level3_index >= 512)
-        {
-            if (++index->level4_index >= 512)
-            {
-                console_print("[paging_map_1gb] failed to allocate 1GiB pages, reached end of virtual address space.\n");
-                return 0;
-            }
-
-            index->level3_index = 0;
-            index->level3_table = index->level4_table[index->level4_index];
-            if (!index->level3_table)
-            {
-                index->level3_table = memory_physical_allocate();
-                memory_zero(index->level3_table, 4096);
-                index->level4_table[index->level4_index] = (unsigned long)index->level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-            }
-        }
-    }
-    return 1;
-}
-
-static int paging_map_index(void *physical_address_or_null, PagingIndex *index, unsigned long bytes, unsigned short flags)
+static int paging_map_index(PagingIndex *index, unsigned long bytes, unsigned short flags)
 {
     if (bytes <= 0)
     {
         console_print("[paging_map_index] cannot map 0 bytes\n");
         return 0;
     }
+
+    unsigned long page_entry_flags = paging_convert_flags(flags);
 
     // Check if mapping huge pages (1GiB)
     if ((index->level3_table[index->level3_index] & PAGING_ENTRY_FLAG_SIZE) || (flags & PAGING_FLAG_1GB))
@@ -341,53 +381,103 @@ static int paging_map_index(void *physical_address_or_null, PagingIndex *index, 
             return 0;
         }
 
+        if (index->level1_index != 0 || index->level2_index != 0)
+        {
+            console_print("[paging_map_index] virtual_address must be aligned to 0x40000000 bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
+            return 0;
+        }
+
         if (index->level3_table[index->level3_index] != 0 && !(flags & PAGING_FLAG_REPLACE))
         {
             console_print("[paging_map_index] tried to map at already mapped address (1GiB)\n");
             return 0;
         }
 
-        if ((unsigned long)physical_address_or_null & 0x3FFFFFFF)
-        {
-            console_print("[paging_map_index] physical_address_or_null must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
-            return 0;
-        }
-
-        if (index->level1_index != 0 || index->level2_index != 0)
-        {
-            console_print("[paging_map_index] virtual_address must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when mapping 1GB page!\n");
-            return 0;
-        }
-
         unsigned long pages = ((bytes - 1) >> 30) + 1; // Divide by 1GiB
+        for (unsigned long i = 0; i < pages; i++)
+        {
+            // TODO not implemented
+            // index->level3_table[index->level3_index] = ((unsigned long)memory_physical_allocate_1gb() & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
+            console_print("[paging_map_index] 1GiB physical allocation not implemented yet!\n");
+            return 0;
+
+            if (++index->level3_index >= 512)
+            {
+                if (++index->level4_index >= 512)
+                {
+                    console_print("[paging_map_index] failed to allocate 1GiB pages, reached end of virtual address space.\n");
+                    return 0;
+                }
+
+                index->level3_index = 0;
+                index->level3_table = index->level4_table[index->level4_index];
+                if (!index->level3_table)
+                {
+                    index->level3_table = memory_physical_allocate();
+                    memory_zero(index->level3_table, 4096);
+                    index->level4_table[index->level4_index] = (unsigned long)index->level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
+            }
+        }
         used_virtual_pages += pages * 512 * 512;
-        return paging_map_1gb(physical_address_or_null, index, pages, flags);
+        return 1;
     }
 
     // Check if mapping huge pages (2MiB)
     if ((index->level2_table[index->level2_index] & PAGING_ENTRY_FLAG_SIZE) || (flags & PAGING_FLAG_2MB))
     {
+        if (index->level1_index != 0)
+        {
+            console_print("[paging_map_index] virtual_address must be aligned to 0x200000 bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
+            return 0;
+        }
+
         if (index->level2_table[index->level2_index] != 0 && !(flags & PAGING_FLAG_REPLACE))
         {
             console_print("[paging_map_index] tried to map at already mapped address (2MiB)\n");
             return 0;
         }
 
-        if ((unsigned long)physical_address_or_null & 0x1FFFFF)
-        {
-            console_print("[paging_map_index] physical_address_or_null must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
-            return 0;
-        }
-
-        if (index->level1_index != 0)
-        {
-            console_print("[paging_map_index] virtual_address must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when mapping 2MiB page!\n");
-            return 0;
-        }
-
         unsigned long pages = ((bytes - 1) >> 21) + 1; // Divide by 2MiB
+        for (unsigned long i = 0; i < pages; i++)
+        {
+            // TODO not implemented
+            // index->level2_table[index->level2_index] = ((unsigned long)memory_physical_allocate_2mb() & PAGING_ADDRESS_MASK) | page_entry_flags | PAGING_ENTRY_FLAG_SIZE;
+            console_print("[paging_map_index] 2MiB physical allocation not implemented yet!\n");
+            return 0;
+
+            if (++index->level2_index >= 512)
+            {
+                if (++index->level3_index >= 512)
+                {
+                    if (++index->level4_index >= 512)
+                    {
+                        console_print("[paging_map_index] failed to allocate 2MiB pages, reached end of virtual address space.\n");
+                        return 0;
+                    }
+
+                    index->level3_index = 0;
+                    index->level3_table = (unsigned long *)(index->level4_table[index->level4_index] & PAGING_ADDRESS_MASK);
+                    if (!index->level3_table)
+                    {
+                        index->level3_table = memory_physical_allocate();
+                        memory_zero(index->level3_table, 4096);
+                        index->level4_table[index->level4_index] = (unsigned long)index->level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                    }
+                }
+
+                index->level2_index = 0;
+                index->level2_table = (unsigned long *)(index->level3_table[index->level3_index] & PAGING_ADDRESS_MASK);
+                if (!index->level2_table)
+                {
+                    index->level2_table = memory_physical_allocate();
+                    memory_zero(index->level2_table, 4096);
+                    index->level3_table[index->level3_index] = (unsigned long)index->level2_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
+            }
+        }
         used_virtual_pages += pages * 512;
-        return paging_map_2mb(physical_address_or_null, index, pages, flags);
+        return 1;
     }
 
     // Map using 4KiB pages
@@ -397,91 +487,172 @@ static int paging_map_index(void *physical_address_or_null, PagingIndex *index, 
         return 0;
     }
 
-    if ((unsigned long)physical_address_or_null & 0xFFF)
-    {
-        console_print("[paging_map_index] physical_address_or_null must be aligned to 0x1000 bytes (4KiB, 4096 bytes)!\n");
-        return 0;
-    }
-
     unsigned long pages = ((bytes - 1) >> 12) + 1; // Divide by 4KiB
+    for (unsigned long i = 0; i < pages; i++)
+    {
+        index->level1_table[index->level1_index] = ((unsigned long)memory_physical_allocate() & PAGING_ADDRESS_MASK) | page_entry_flags;
+
+        if (++index->level1_index >= 512)
+        {
+            if (++index->level2_index >= 512)
+            {
+                if (++index->level3_index >= 512)
+                {
+                    if (++index->level4_index >= 512)
+                    {
+                        console_print("[paging_map_index] failed to allocate 4KiB pages, reached end of virtual address space.\n");
+                        return 0;
+                    }
+
+                    index->level3_index = 0;
+                    index->level3_table = (unsigned long *)(index->level4_table[index->level4_index] & PAGING_ADDRESS_MASK);
+                    if (!index->level3_table)
+                    {
+                        index->level3_table = memory_physical_allocate();
+                        memory_zero(index->level3_table, 4096);
+                        index->level4_table[index->level4_index] = (unsigned long)index->level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                    }
+                }
+
+                index->level2_index = 0;
+                index->level2_table = (unsigned long *)(index->level3_table[index->level3_index] & PAGING_ADDRESS_MASK);
+                if (!index->level2_table)
+                {
+                    index->level2_table = memory_physical_allocate();
+                    memory_zero(index->level2_table, 4096);
+                    index->level3_table[index->level3_index] = (unsigned long)index->level2_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+                }
+            }
+
+            index->level1_index = 0;
+            index->level1_table = (unsigned long *)(index->level2_table[index->level2_index] & PAGING_ADDRESS_MASK);
+            if (!index->level1_table)
+            {
+                index->level1_table = memory_physical_allocate();
+                memory_zero(index->level1_table, 4096);
+                index->level2_table[index->level2_index] = (unsigned long)index->level1_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+            }
+        }
+    }
     used_virtual_pages += pages;
-    return paging_map_4kb(physical_address_or_null, index, pages, flags);
+    return 1;
 }
 
-void *paging_map(void *physical_address_or_null, void *virtual_address_or_null, unsigned long bytes, unsigned long flags)
+static void paging_virtual_address_to_index(PagingIndex *destination_index, void *virtual_address)
+{
+    destination_index->level4_index = ((unsigned long)virtual_address >> 39) & 0b111111111;
+
+    destination_index->level3_table = (unsigned long *)(destination_index->level4_table[destination_index->level4_index] & PAGING_ADDRESS_MASK);
+    if (!destination_index->level3_table)
+    {
+        destination_index->level3_table = memory_physical_allocate();
+        memory_zero(destination_index->level3_table, 4096);
+        destination_index->level4_table[destination_index->level4_index] = (unsigned long)destination_index->level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+    }
+    destination_index->level3_index = ((unsigned long)virtual_address >> 30) & 0b111111111;
+
+    destination_index->level2_table = (unsigned long *)(destination_index->level3_table[destination_index->level3_index] & PAGING_ADDRESS_MASK);
+    if (!destination_index->level2_table)
+    {
+        destination_index->level2_table = memory_physical_allocate();
+        memory_zero(destination_index->level2_table, 4096);
+        destination_index->level3_table[destination_index->level3_index] = (unsigned long)destination_index->level2_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+    }
+    destination_index->level2_index = ((unsigned long)virtual_address >> 21) & 0b111111111;
+
+    destination_index->level1_table = (unsigned long *)(destination_index->level2_table[destination_index->level2_index] & PAGING_ADDRESS_MASK);
+    if (!destination_index->level1_table)
+    {
+        destination_index->level1_table = memory_physical_allocate();
+        memory_zero(destination_index->level1_table, 4096);
+        destination_index->level2_table[destination_index->level3_index] = (unsigned long)destination_index->level1_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
+    }
+    destination_index->level1_index = ((unsigned long)virtual_address >> 12) & 0b111111111;
+}
+
+void *paging_map_physical(void *physical_address, unsigned long bytes, unsigned long flags)
 {
     Cpu *cpu = cpu_get_current();
-    if (virtual_address_or_null)
+
+    PagingIndex *index = &cpu->current_process->paging_index;
+    if (paging_index_find_spot(index, bytes))
     {
-        if ((unsigned long)virtual_address_or_null & 0xFFF)
+        void *virtual_address = (void *)(((unsigned long)index->level1_index << 12) | ((unsigned long)index->level2_index << 21) | ((unsigned long)index->level3_index << 30) | ((unsigned long)index->level4_index << 39));
+        if (paging_map_index_physical(physical_address, index, bytes, flags))
         {
-            console_print("[paging_map] virtual_address must be aligned to 0xFFF bytes (4KiB, 4096 bytes) when mapping page!\n");
-            return 0;
-        }
-
-        // A virtual address was given, only get the uppermost (level 4) page table from the current process
-        PagingIndex index;
-        index.level4_table = cpu->current_process->paging_index.level4_table;
-        index.level4_index = ((unsigned long)virtual_address_or_null >> 39) & 0b111111111;
-
-        index.level3_table = (unsigned long *)(index.level4_table[index.level4_index] & PAGING_ADDRESS_MASK);
-        if (!index.level3_table)
-        {
-            index.level3_table = memory_physical_allocate();
-            memory_zero(index.level3_table, 4096);
-            index.level4_table[index.level4_index] = (unsigned long)index.level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-        }
-        index.level3_index = ((unsigned long)virtual_address_or_null >> 30) & 0b111111111;
-
-        index.level2_table = (unsigned long *)(index.level3_table[index.level3_index] & PAGING_ADDRESS_MASK);
-        if (!index.level2_table)
-        {
-            index.level2_table = memory_physical_allocate();
-            memory_zero(index.level2_table, 4096);
-            index.level3_table[index.level3_index] = (unsigned long)index.level2_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-        }
-        index.level2_index = ((unsigned long)virtual_address_or_null >> 21) & 0b111111111;
-
-        index.level1_table = (unsigned long *)(index.level2_table[index.level2_index] & PAGING_ADDRESS_MASK);
-        if (!index.level1_table)
-        {
-            index.level1_table = memory_physical_allocate();
-            memory_zero(index.level1_table, 4096);
-            index.level2_table[index.level3_index] = (unsigned long)index.level1_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-        }
-        index.level1_index = ((unsigned long)virtual_address_or_null >> 12) & 0b111111111;
-
-        if (paging_map_index(physical_address_or_null, &index, bytes, flags))
-        {
-            return virtual_address_or_null;
+            return virtual_address;
         }
         else
         {
+            // Mapping failed for some reason
             return 0;
         }
     }
     else
     {
-        // Find a spot to allocate in the current process' virtual memory
-        PagingIndex *index = &cpu->current_process->paging_index;
-        if (paging_index_find_spot(index, bytes))
+        return 0;
+    }
+}
+
+void *paging_map(unsigned long bytes, unsigned long flags)
+{
+    Cpu *cpu = cpu_get_current();
+
+    PagingIndex *index = &cpu->current_process->paging_index;
+    if (paging_index_find_spot(index, bytes))
+    {
+        void *virtual_address = (void *)(((unsigned long)index->level1_index << 12) | ((unsigned long)index->level2_index << 21) | ((unsigned long)index->level3_index << 30) | ((unsigned long)index->level4_index << 39));
+        if (paging_map_index(index, bytes, flags))
         {
-            void *virtual_address = (void *)(((unsigned long)index->level1_index << 12) | ((unsigned long)index->level2_index << 21) | ((unsigned long)index->level3_index << 30) | ((unsigned long)index->level4_index << 39));
-            if (paging_map_index(physical_address_or_null, index, bytes, flags))
-            {
-                return virtual_address;
-            }
-            else
-            {
-                // Mapping failed for some reason
-                return 0;
-            }
+            return virtual_address;
         }
         else
         {
-            // Could not find a spot
+            // Mapping failed for some reason
             return 0;
         }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void *paging_map_physical_at(void *physical_address, void *virtual_address, unsigned long bytes, unsigned long flags)
+{
+    Cpu *cpu = cpu_get_current();
+
+    // A virtual address was given, only get the uppermost (level 4) page table from the current process
+    PagingIndex index;
+    index.level4_table = cpu->current_process->paging_index.level4_table;
+    paging_virtual_address_to_index(&index, virtual_address);
+
+    if (paging_map_index_physical(physical_address, &index, bytes, flags))
+    {
+        return virtual_address;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void *paging_map_at(void *virtual_address, unsigned long bytes, unsigned long flags)
+{
+    Cpu *cpu = cpu_get_current();
+
+    // A virtual address was given, only get the uppermost (level 4) page table from the current process
+    PagingIndex index;
+    index.level4_table = cpu->current_process->paging_index.level4_table;
+    paging_virtual_address_to_index(&index, virtual_address);
+
+    if (paging_map_index(&index, bytes, flags))
+    {
+        return virtual_address;
+    }
+    else
+    {
+        return 0;
     }
 }
 
@@ -511,7 +682,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
         unsigned long pages = ((bytes - 1) >> 30) + 1; // Divide by 1GB
         if ((unsigned long)virtual_address & 0x3FFFFFFF)
         {
-            console_print("[paging_unmap] virtual_address must be aligned to 0x3FFFFFFF bytes (1GiB, 1073741824 bytes) when unmapping 1GB page!\n");
+            console_print("[paging_unmap] virtual_address must be aligned to 0x40000000 bytes (1GiB, 1073741824 bytes) when unmapping 1GB page!\n");
             return 0;
         }
 
@@ -554,7 +725,7 @@ int paging_unmap(void *virtual_address, unsigned long bytes)
         unsigned long pages = ((bytes - 1) >> 21) + 1; // Divide by 2MB
         if ((unsigned long)virtual_address & 0x1FFFFF)
         {
-            console_print("[paging_unmap] virtual_address must be aligned to 0x1FFFFF bytes (2MiB, 2097152 bytes) when unmapping 2MB page!\n");
+            console_print("[paging_unmap] virtual_address must be aligned to 0x200000 bytes (2MiB, 2097152 bytes) when unmapping 2MB page!\n");
             return 0;
         }
 
@@ -675,6 +846,10 @@ void *paging_get_physical_address(void *virtual_address)
     {
         return 0;
     }
+    if (!(level4_entry & PAGING_ENTRY_FLAG_PRESENT))
+    {
+        console_print("[paging_get_physical_address] warning: level4 not present but has address\n");
+    }
 
     unsigned long *level3_table = (unsigned long *)(level4_entry & PAGING_ADDRESS_MASK);
     unsigned int level3_offset = (address >> 30) & 0b111111111;
@@ -684,6 +859,10 @@ void *paging_get_physical_address(void *virtual_address)
     if (level3_entry == 0)
     {
         return 0;
+    }
+    if (!(level3_entry & PAGING_ENTRY_FLAG_PRESENT))
+    {
+        console_print("[paging_get_physical_address] warning: level3 not present but has address\n");
     }
 
     // Check if this is 1gb page
@@ -701,6 +880,10 @@ void *paging_get_physical_address(void *virtual_address)
     {
         return 0;
     }
+    if (!(level2_entry & PAGING_ENTRY_FLAG_PRESENT))
+    {
+        console_print("[paging_get_physical_address] warning: level2 not present but has address\n");
+    }
 
     // Check if this is 2mb page
     if (level2_entry & PAGING_ENTRY_FLAG_SIZE)
@@ -717,6 +900,10 @@ void *paging_get_physical_address(void *virtual_address)
     {
         return 0;
     }
+    if (!(level1_entry & PAGING_ENTRY_FLAG_PRESENT))
+    {
+        console_print("[paging_get_physical_address] warning: level1 not present but has address\n");
+    }
 
     unsigned int offset = address & 0b111111111111; // Offset is 12 bits because each page is 4096 bytes in size
     return (void *)((level1_entry & 0xFFFFFFFFFF000) + offset);
@@ -725,6 +912,28 @@ void *paging_get_physical_address(void *virtual_address)
 unsigned long paging_used_pages()
 {
     return used_virtual_pages;
+}
+
+static void paging_debug_attributes(unsigned long entry)
+{
+    if (entry & PAGING_ENTRY_FLAG_PRESENT)
+        console_print_char('P');
+    if (entry & PAGING_ENTRY_FLAG_WRITABLE)
+        console_print_char('W');
+    if (entry & PAGING_ENTRY_FLAG_EVERYONE_ACCESS)
+        console_print_char('U');
+    if (entry & PAGING_ENTRY_FLAG_SIZE)
+        console_print_char('S');
+    if (entry & PAGING_ENTRY_FLAG_ACCESSED)
+        console_print_char('A');
+    if (entry & PAGING_ENTRY_FLAG_DIRTY)
+        console_print_char('D');
+    if (!(entry & PAGING_ENTRY_FLAG_NO_EXECUTE))
+        console_print_char('X');
+    if (!(entry & PAGING_ENTRY_FLAG_CACHE_DISABLED))
+        console_print_char('C');
+    if (entry & PAGING_ENTRY_FLAG_WRITETHROUGH)
+        console_print_char('T');
 }
 
 void paging_debug()
@@ -750,6 +959,8 @@ void paging_debug()
 
         console_print("|- level3 0x");
         console_print_u64(level3_table, 16);
+        console_print_char(' ');
+        paging_debug_attributes(level4_entry);
         console_print(" [0x");
         console_print_u64(level3_starting_address, 16);
         console_print(" .. 0x");
@@ -767,15 +978,20 @@ void paging_debug()
             unsigned long level2_ending_address = level3_starting_address + (((unsigned long)level3_index + 1) * 512 * 512 * 4096 - 1);
 
             if (level3_entry & PAGING_ENTRY_FLAG_SIZE)
-                console_print("|- hugepage1gb 0x");
+                console_print("   |- hugepage1gb 0x");
             else
                 console_print("   |- level2 0x");
             console_print_u64(level2_table, 16);
+            console_print_char(' ');
+            paging_debug_attributes(level3_entry);
             console_print(" [0x");
             console_print_u64(level2_starting_address, 16);
             console_print(" .. 0x");
             console_print_u64(level2_ending_address, 16);
             console_print("]\n");
+
+            if (level3_entry & PAGING_ENTRY_FLAG_SIZE)
+                continue;
 
             for (int level2_index = 0; level2_index < 512; level2_index++)
             {
@@ -792,11 +1008,16 @@ void paging_debug()
                 else
                     console_print("      |- level1 0x");
                 console_print_u64(level1_table, 16);
+                console_print_char(' ');
+                paging_debug_attributes(level2_entry);
                 console_print(" [0x");
                 console_print_u64(level1_starting_address, 16);
                 console_print(" .. 0x");
                 console_print_u64(level1_ending_address, 16);
                 console_print("]\n");
+
+                if (level2_entry & PAGING_ENTRY_FLAG_SIZE)
+                    continue;
 
                 for (int level1_index = 0; level1_index < 512; level1_index++)
                 {
@@ -810,6 +1031,8 @@ void paging_debug()
 
                     console_print("         |- page 0x");
                     console_print_u64(page, 16);
+                    console_print_char(' ');
+                    paging_debug_attributes(level1_entry);
                     console_print(" [0x");
                     console_print_u64(page_starting_address, 16);
                     console_print(" .. 0x");

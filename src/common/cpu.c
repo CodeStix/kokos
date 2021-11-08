@@ -124,7 +124,7 @@ Cpu *cpu_initialize()
     cpu->current_process = dummy_process;
 
     // Now that paging should work, map the local APIC
-    cpu->local_apic = paging_map(local_apic, 0, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    cpu->local_apic = paging_map_physical(local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     return cpu;
 }

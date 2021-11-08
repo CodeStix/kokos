@@ -81,9 +81,17 @@ void paging_initialize();
 // Returns the physical address for virtual address and returns 0 if the virtual address is not mapped
 void *paging_get_physical_address(void *virtual_address);
 
-// Maps physical memory to virtual memory. If physical address is null, the system allocates physical memory (RAM) for you. If virtual address is null,
-// the system will choose a virtual address for you.
-void *paging_map(void *physical_address_or_null, void *virtual_address_or_null, unsigned long bytes, unsigned long flags);
+// Maps the specified physical memory to any available virtual memory
+void *paging_map_physical(void *physical_address, unsigned long bytes, unsigned long flags);
+
+// Tries to map the specified physical memory to specific virtual memory
+void *paging_map_physical_at(void *physical_address, void *virtual_address, unsigned long bytes, unsigned long flags);
+
+// Maps certain amount of available physical memory to any virtual memory
+void *paging_map(unsigned long bytes, unsigned long flags);
+
+// Tries to map certain amount of available physical memory specific virtual memory
+void *paging_map_at(void *virtual_address, unsigned long bytes, unsigned long flags);
 
 // Unmaps memory previously mapped memory using paging_map
 int paging_unmap(void *virtual_address, unsigned long bytes);

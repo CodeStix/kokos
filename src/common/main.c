@@ -32,12 +32,6 @@ unsigned short cpu_startup_increment;
 extern void(interrupt_schedule)();
 IOApic *ioapic;
 
-int hugepages_supported()
-{
-    CpuIdResult result = cpu_id(0x80000001);
-    return result.edx & CPU_ID_1GB_PAGES_EDX;
-}
-
 void interrupt_schedule_handler(InterruptFrame *stack)
 {
     Cpu *current_cpu = cpu_get_current();
@@ -211,6 +205,10 @@ void kernel_main()
         }
     }
 
+    while (1)
+    {
+    }
+
     if (allocation_table_start == (void *)0xFFFFFFFF)
     {
         console_print("[physical memory] fatal: could not find spot for allocation table\n");
@@ -265,32 +263,27 @@ void kernel_main()
     // console_debug("allocate ", paging_map(0, 0, 4096 * 2 + 1, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
     // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
 
-    void *address = paging_map(0x100000, 0x48000000000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    // paging_debug();
 
-    console_debug("allocate ", address, 16);
-    console_debug("physical ", paging_get_physical_address(address), 16);
-    console_debug("allocate ", paging_map(0, 0x48000000000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    console_debug("allocate ", paging_map(0, 0x48000000001, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    console_debug("allocate ", paging_map(0, 0x48000001000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // void *address = paging_map((void *)0x200000ul, (void *)0x480400000ul, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ | PAGING_FLAG_2MB);
 
-    console_print("[cpu] done\n");
+    // console_debug("allocate ", address, 16);
+    // console_debug("physical ", paging_get_physical_address(address), 16);
+    // console_debug("physical ", paging_get_physical_address((unsigned char *)address + 80000), 16);
 
-    while (1)
-    {
-    }
+    // volatile int a = (unsigned char *)address + 80000;
+    // console_debug("allocate ", paging_map(0, 0x48000000001, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(0, 0x48000001000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
 
     console_print("[paging] identity map\n");
 
     // Identity map whole memory
-    if (hugepages_supported())
+    if (paging_get_hugepages_supported())
     {
         console_print("[paging] 1gb pages supported, using this to identity map memory\n");
 
         // Identity map whole memory using 1GB huge pages
-        for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x40000000ul); address += 0x40000000ul)
-        {
-            paging_map((unsigned long *)address, (unsigned long *)address, 4096 * 512 * 512, PAGING_FLAG_1GB | PAGING_FLAG_REPLACE | PAGING_FLAG_WRITE | PAGING_FLAG_READ);
-        }
+        paging_map_physical_at(0, 0, ALIGN_TO_PREVIOUS(max_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
         console_print("[paging] done\n");
     }
@@ -299,13 +292,15 @@ void kernel_main()
         console_print("[paging] 1gb pages not supported, using 2mb pages to identity map memory\n");
 
         // Identity map whole memory using 2MB huge pages
-        for (unsigned long address = 0; address < ALIGN_TO_PREVIOUS(max_address, 0x200000ul); address += 0x200000ul)
-        {
-            paging_map((unsigned long *)address, (unsigned long *)address, 4096 * 512, PAGING_FLAG_2MB | PAGING_FLAG_REPLACE | PAGING_FLAG_WRITE | PAGING_FLAG_READ);
-        }
+        paging_map_physical_at(0, 0, ALIGN_TO_PREVIOUS(max_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
         console_print("[paging] done\n");
     }
+
+    // Set new page table in cr3
+    Cpu *cpu = cpu_get_current();
+    asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_index.level4_table)
+                 :);
 
     for (int i = 0; i < 3; i++)
     {
@@ -317,17 +312,6 @@ void kernel_main()
         console_print("\n");
     }
 
-    for (int i = 0; i < 3; i++)
-    {
-        console_print("[paging] allocate test: 0x");
-        int *virt = paging_allocate(0);
-        console_print_u64((unsigned long)virt, 16);
-        console_print(" -> 0x");
-        console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
-        console_print("\n");
-        *virt = i * 500;
-    }
-
     console_print("[interrupt] disable pic\n");
 
     // Disable and remap pic
@@ -336,6 +320,21 @@ void kernel_main()
     console_print("[interrupt] initialize\n");
 
     interrupt_initialize();
+
+    for (int i = 0; i < 3; i++)
+    {
+        console_print("[paging] allocate test: 0x");
+        int *virt = paging_map(100 * i + 123, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+        console_print_u64((unsigned long)virt, 16);
+        console_print(" -> 0x");
+        console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
+        console_print("\n");
+
+        // paging_debug();
+        int a = *virt;
+
+        *virt = i * 500;
+    }
 
     console_print("[acpi] find rsdt\n");
 
@@ -430,7 +429,11 @@ void kernel_main()
         return;
     }
 
-    Apic *apic = (Apic *)paging_map(madt->local_apic_address, 0, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    Apic *apic = (Apic *)paging_map_physical(madt->local_apic_address, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+
+    console_print("[apic] mapped at 0x");
+    console_print_u64((unsigned long)apic, 16);
+    console_new_line();
 
     unsigned char apic_id = (unsigned int)apic->id >> 24;
     unsigned char apic_version = apic->version & 0xFF;
@@ -474,7 +477,7 @@ void kernel_main()
 
         if (ioapic == 0)
         {
-            ioapic = (IOApic *)paging_map(current_ioapic->io_apic_address, 0, sizeof(IOApic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+            ioapic = (IOApic *)paging_map_physical(current_ioapic->io_apic_address, sizeof(IOApic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
             console_print("[ioapic] version: ");
             console_print_u64(apic_io_get_version(ioapic), 10);
