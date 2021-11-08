@@ -205,10 +205,6 @@ void kernel_main()
         }
     }
 
-    while (1)
-    {
-    }
-
     if (allocation_table_start == (void *)0xFFFFFFFF)
     {
         console_print("[physical memory] fatal: could not find spot for allocation table\n");
@@ -251,21 +247,19 @@ void kernel_main()
 
     console_print("[cpu] test\n");
 
-    // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(0, 0, 4097, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(0, 0, 4096, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(4097, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(4096, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
     // for (int i = 0; i < 505; i++)
     // {
-    //     console_debug("loop ", paging_map(0, 0, 1234, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    //     console_debug("loop ", paging_map(1234, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
     // }
-    // console_debug("allocate ", paging_map(0, 0, 4096 * 2 + 1, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(0, 0, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(4096 * 2 + 1, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
+    // console_debug("allocate ", paging_map(100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
 
-    // paging_debug();
-
-    // void *address = paging_map((void *)0x200000ul, (void *)0x480400000ul, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ | PAGING_FLAG_2MB);
+    // void *address = paging_map_physical_at((void *)0x200000ul, (void *)0x4800200000ul, 10000, PAGING_FLAG_WRITE | PAGING_FLAG_READ | PAGING_FLAG_2MB);
 
     // console_debug("allocate ", address, 16);
     // console_debug("physical ", paging_get_physical_address(address), 16);
@@ -283,7 +277,7 @@ void kernel_main()
         console_print("[paging] 1gb pages supported, using this to identity map memory\n");
 
         // Identity map whole memory using 1GB huge pages
-        paging_map_physical_at(0, 0, ALIGN_TO_PREVIOUS(max_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+        paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
         console_print("[paging] done\n");
     }
@@ -292,9 +286,16 @@ void kernel_main()
         console_print("[paging] 1gb pages not supported, using 2mb pages to identity map memory\n");
 
         // Identity map whole memory using 2MB huge pages
-        paging_map_physical_at(0, 0, ALIGN_TO_PREVIOUS(max_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+        paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
         console_print("[paging] done\n");
+    }
+
+    paging_debug();
+    console_print("[paging] done\n");
+
+    while (1)
+    {
     }
 
     // Set new page table in cr3
