@@ -294,10 +294,6 @@ void kernel_main()
     paging_debug();
     console_print("[paging] done\n");
 
-    while (1)
-    {
-    }
-
     // Set new page table in cr3
     Cpu *cpu = cpu_get_current();
     asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_index.level4_table)
@@ -325,7 +321,7 @@ void kernel_main()
     for (int i = 0; i < 3; i++)
     {
         console_print("[paging] allocate test: 0x");
-        int *virt = paging_map(100 * i + 123, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+        int *virt = paging_map(10000 * i + 123, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
         console_print_u64((unsigned long)virt, 16);
         console_print(" -> 0x");
         console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
@@ -335,6 +331,14 @@ void kernel_main()
         int a = *virt;
 
         *virt = i * 500;
+    }
+
+    paging_debug();
+
+    console_print("[test] end");
+
+    while (1)
+    {
     }
 
     console_print("[acpi] find rsdt\n");
