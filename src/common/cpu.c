@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "memory_physical.h"
 #include "paging.h"
+#include "util.h"
 #include "../include/memory.h"
 
 inline struct CpuIdResult cpu_id(unsigned int function)
@@ -71,6 +72,7 @@ inline Cpu *cpu_get_current()
 }
 
 static int current_cpu_id = 0;
+extern unsigned long max_memory_address;
 // extern volatile unsigned long page_table_level3[512];
 
 Cpu *cpu_initialize()
@@ -112,25 +114,34 @@ Cpu *cpu_initialize()
     dummy_process->paging_index.level3_index = 0;
     dummy_process->paging_index.level2_index = 0;
     dummy_process->paging_index.level1_index = 0;
-    // dummy_process->paging_index.level3_table = memory_physical_allocate();
-    // memory_zero(dummy_process->paging_index.level3_table, 4096);
-    // dummy_process->paging_index.level2_table = memory_physical_allocate();
-    // memory_zero(dummy_process->paging_index.level2_table, 4096);
-    // dummy_process->paging_index.level1_table = memory_physical_allocate();
-    // memory_zero(dummy_process->paging_index.level1_table, 4096);
-
-    // dummy_process->paging_index.level4_index = 0;
-    // dummy_process->paging_index.level3_index = 0;
-    // dummy_process->paging_index.level2_index = 0;
-    // dummy_process->paging_index.level1_index = 0;
-    // dummy_process->paging_index.level4_table[0] = (unsigned long)dummy_process->paging_index.level3_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-    // dummy_process->paging_index.level3_table[0] = (unsigned long)dummy_process->paging_index.level2_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-    // dummy_process->paging_index.level2_table[0] = (unsigned long)dummy_process->paging_index.level1_table | PAGING_ENTRY_FLAG_PRESENT | PAGING_ENTRY_FLAG_WRITABLE;
-
     cpu->current_process = dummy_process;
 
+    // Identity map whole RAM
+    if (paging_get_hugepages_supported())
+    {
+        console_print("[paging] 1gb pages supported, using this to identity map memory\n");
+
+        // Identity map whole memory using 1GB huge pages
+        paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_memory_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+
+        console_print("[paging] done\n");
+    }
+    else
+    {
+        console_print("[paging] 1gb pages not supported, using 2mb pages to identity map memory\n");
+
+        // Identity map whole memory using 2MB huge pages
+        paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_memory_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+
+        console_print("[paging] done\n");
+    }
+
+    // Tell cpu to use new page table
+    asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_index.level4_table)
+                 :);
+
     // Now that paging should work, map the local APIC
-    // cpu->local_apic = paging_map_physical(local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    cpu->local_apic = paging_map_physical(local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     return cpu;
 }

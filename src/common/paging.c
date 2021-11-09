@@ -1091,13 +1091,9 @@ void paging_debug()
                 for (int level1_index = 0; level1_index < 512; level1_index++)
                 {
                     if (!level1_table[level1_index])
-                    {
                         break;
-                    }
                     else
-                    {
                         level1_count++;
-                    }
                 }
 
                 if (level1_count >= 20)

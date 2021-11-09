@@ -30,6 +30,7 @@ extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup16)();
 unsigned short cpu_startup_increment;
 extern void(interrupt_schedule)();
+unsigned long max_memory_address;
 IOApic *ioapic;
 
 void interrupt_schedule_handler(InterruptFrame *stack)
@@ -135,17 +136,17 @@ void kernel_main()
     }
 
     // Find total amount of memory
-    unsigned long max_address = 0;
     unsigned long usable_memory = 0;
+    max_memory_address = 0;
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
         Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
         if (entry->type == 1)
         {
             usable_memory += entry->length;
-            if (entry->address + entry->length > max_address)
+            if (entry->address + entry->length > max_memory_address)
             {
-                max_address = entry->address + entry->length;
+                max_memory_address = entry->address + entry->length;
             }
         }
 
@@ -156,7 +157,7 @@ void kernel_main()
         console_print(" with type ");
         console_print_u32(entry->type, 10);
         console_print(" (0x");
-        console_print_u64(max_address, 16);
+        console_print_u64(max_memory_address, 16);
         console_print(")");
         console_new_line();
     }
@@ -164,12 +165,12 @@ void kernel_main()
     console_print("[physical memory] total usable ram = ");
     console_print_u64(usable_memory, 10);
     console_print(" from 0x0 ... 0x");
-    console_print_u64(max_address, 16);
+    console_print_u64(max_memory_address, 16);
     console_new_line();
 
     // Find first memory region that can fit allocation table
     // Each bit (8 per byte) in the allocation will determine if a memory region of 4096 bytes is taken or not
-    unsigned long allocation_table_size = max_address / 4096 / 8;
+    unsigned long allocation_table_size = max_memory_address / 4096 / 8;
 
     console_print("[physical memory] allocation_table_size = ");
     console_print_u64(allocation_table_size, 10);
@@ -215,7 +216,7 @@ void kernel_main()
     console_print_u64((unsigned long)allocation_table_start, 16);
     console_new_line();
 
-    memory_physical_initialize(allocation_table_start, max_address);
+    memory_physical_initialize(allocation_table_start, max_memory_address);
 
     // Reserve memory for the allocation table itself
     memory_physical_reserve(allocation_table_start, allocation_table_size);
@@ -245,70 +246,6 @@ void kernel_main()
 
     cpu_initialize();
 
-    console_print("[cpu] test\n");
-
-    // console_debug("allocate ", paging_map(100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(4097, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(4096, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // for (int i = 0; i < 505; i++)
-    // {
-    //     console_debug("loop ", paging_map(1234, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // }
-    // console_debug("allocate ", paging_map(4096 * 2 + 1, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-
-    // void *address = paging_map_physical_at((void *)0x200000ul, (void *)0x4800200000ul, 10000, PAGING_FLAG_WRITE | PAGING_FLAG_READ | PAGING_FLAG_2MB);
-
-    // console_debug("allocate ", address, 16);
-    // console_debug("physical ", paging_get_physical_address(address), 16);
-    // console_debug("physical ", paging_get_physical_address((unsigned char *)address + 80000), 16);
-
-    // volatile int a = (unsigned char *)address + 80000;
-    // console_debug("allocate ", paging_map(0, 0x48000000001, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-    // console_debug("allocate ", paging_map(0, 0x48000001000, 100, PAGING_FLAG_WRITE | PAGING_FLAG_READ), 16);
-
-    console_print("[paging] identity map\n");
-
-    // Identity map whole memory
-    if (paging_get_hugepages_supported())
-    {
-        console_print("[paging] 1gb pages supported, using this to identity map memory\n");
-
-        // Identity map whole memory using 1GB huge pages
-        paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
-
-        console_print("[paging] done\n");
-    }
-    else
-    {
-        console_print("[paging] 1gb pages not supported, using 2mb pages to identity map memory\n");
-
-        // Identity map whole memory using 2MB huge pages
-        paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
-
-        console_print("[paging] done\n");
-    }
-
-    paging_debug();
-    console_print("[paging] done\n");
-
-    // Set new page table in cr3
-    Cpu *cpu = cpu_get_current();
-    asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_index.level4_table)
-                 :);
-
-    for (int i = 0; i < 3; i++)
-    {
-        console_print("[paging] identity test: 0x");
-        int *virt = (int *)0x000fe0000 + i;
-        console_print_u64((unsigned long)virt, 16);
-        console_print(" -> 0x");
-        console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
-        console_print("\n");
-    }
-
     console_print("[interrupt] disable pic\n");
 
     // Disable and remap pic
@@ -320,8 +257,18 @@ void kernel_main()
 
     for (int i = 0; i < 3; i++)
     {
+        console_print("[paging] identity test: 0x");
+        int *virt = (int *)0x000fe0000 + i;
+        console_print_u64((unsigned long)virt, 16);
+        console_print(" -> 0x");
+        console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
+        console_print("\n");
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
         console_print("[paging] allocate test: 0x");
-        int *virt = paging_map(10000 * i + 123, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+        int *virt = paging_map(1000 * i + 123, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
         console_print_u64((unsigned long)virt, 16);
         console_print(" -> 0x");
         console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
@@ -331,14 +278,6 @@ void kernel_main()
         int a = *virt;
 
         *virt = i * 500;
-    }
-
-    paging_debug();
-
-    console_print("[test] end");
-
-    while (1)
-    {
     }
 
     console_print("[acpi] find rsdt\n");
@@ -434,7 +373,7 @@ void kernel_main()
         return;
     }
 
-    Apic *apic = (Apic *)paging_map_physical(madt->local_apic_address, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    Apic *apic = cpu_get_current()->local_apic;
 
     console_print("[apic] mapped at 0x");
     console_print_u64((unsigned long)apic, 16);
