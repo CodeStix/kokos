@@ -1087,6 +1087,27 @@ void paging_debug()
                 if (level2_entry & PAGING_ENTRY_FLAG_SIZE)
                     continue;
 
+                unsigned long level1_count = 0;
+                for (int level1_index = 0; level1_index < 512; level1_index++)
+                {
+                    if (!level1_table[level1_index])
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        level1_count++;
+                    }
+                }
+
+                if (level1_count >= 20)
+                {
+                    console_print("         |- ... ");
+                    console_print_u64(level1_count, 10);
+                    console_print(" pages ...\n");
+                    continue;
+                }
+
                 for (int level1_index = 0; level1_index < 512; level1_index++)
                 {
                     unsigned long level1_entry = level1_table[level1_index];
