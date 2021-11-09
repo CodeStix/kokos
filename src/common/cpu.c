@@ -74,7 +74,6 @@ inline Cpu *cpu_get_current()
 
 static int current_cpu_id = 0;
 extern unsigned long max_memory_address;
-// extern volatile unsigned long page_table_level3[512];
 
 Cpu *cpu_initialize()
 {
@@ -99,9 +98,15 @@ Cpu *cpu_initialize()
     cpu->interrupt_descriptor_table = 0;
     cpu_write_msr(CPU_MSR_FS_BASE, cpu);
 
+    // Set up this CPU's interrupt descriptor table (IDT)
+    console_print("[cpu] set up IDT\n");
+    interrupt_initialize();
+
+    console_print("[cpu] set up dummy process\n");
+
     // Create dummy process, required for paging to work
-    Process *dummy_process = memory_physical_allocate();
-    dummy_process->instruction_pointer = 0;
+    SchedulerProcess *dummy_process = memory_physical_allocate();
+    dummy_process->saved_instruction_pointer = 0;
     dummy_process->id = 0;
     dummy_process->next = dummy_process;
     dummy_process->previous = dummy_process;
@@ -147,48 +152,12 @@ Cpu *cpu_initialize()
     console_print("[cpu] mapping local APIC\n");
     cpu->local_apic = paging_map_physical(local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
-    // Set up this CPU's interrupt descriptor table (IDT)
-    console_print("[cpu] set up IDT\n");
-    interrupt_initialize();
-
     // Enable APIC after interrupt vectors were intialized
     console_print("[cpu] enable local APIC\n");
     cpu->local_apic->spurious_interrupt_vector = 0x1FF;
 
+    console_print("[cpu] set up scheduler\n");
+    scheduler_initialize();
+
     return cpu;
-}
-
-typedef void (*EntrypointFunction)();
-
-static unsigned long current_process_id = 0;
-
-void cpu_execute(EntrypointFunction entrypoint)
-{
-    Cpu *cpu = cpu_get_current();
-
-    Process *process = memory_physical_allocate();
-    process->id = current_process_id++;
-
-    // Set up page table information
-
-    memory_zero(&process->paging_index, sizeof(PagingIndex));
-    process->paging_index.level4_table = memory_physical_allocate();
-
-    if (cpu->current_process)
-    {
-        // Insert new process into linked list
-        process->next = cpu->current_process;
-        process->previous = cpu->current_process->previous;
-        cpu->current_process->previous = process;
-    }
-    else
-    {
-        // This is the first process on this CPU
-        process->next = process;
-        process->previous = process;
-        cpu->current_process = process;
-    }
-
-    process->stack_pointer = memory_physical_allocate();
-    process->instruction_pointer = entrypoint;
 }

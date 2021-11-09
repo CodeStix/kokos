@@ -58,6 +58,7 @@ void console_new_line()
 
 void console_print_char(char c)
 {
+    // serial_write(c);
     if (c == '\n')
     {
         console_new_line();

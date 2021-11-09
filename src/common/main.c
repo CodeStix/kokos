@@ -230,7 +230,7 @@ void kernel_main()
 
     console_print("[interrupt] disable pic\n");
 
-    // Disable and remap pic
+    // Disable and remap pic before initializing the APCI in cpu_initialize
     apic_disable_pic();
 
     console_print("[cpu] initialize cpu context\n");
@@ -522,6 +522,14 @@ void kernel_main()
     serial_initialize();
 
     console_print("[boot] reached end, type something...\n");
+
+    unsigned long flags;
+    asm volatile("pushfq; pop %0"
+                 : "=rm"(flags));
+
+    console_print("flags=0b");
+    console_print_u64(flags, 2);
+    console_new_line();
 
     // int a = 100 / 0;
 

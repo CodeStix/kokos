@@ -28,7 +28,7 @@ typedef struct Cpu
     // Pointer to its interrupt descriptor table
     InterruptDescriptor *interrupt_descriptor_table;
     // Pointer to currently running process
-    Process *current_process;
+    SchedulerProcess *current_process;
 } Cpu;
 
 // Performs an cpuid instruction and returns the result
