@@ -39,19 +39,13 @@ static int paging_index_find_spot(PagingIndex *index, unsigned long bytes, unsig
         return 0;
     }
 
-    console_print("bytes=");
-    console_print_u64(bytes, 10);
-    console_new_line();
-
     // If less than 2MiB is being allocated, it can fit in a single level1 table
     if (bytes <= 512ul * 4096ul && index->level2_table != 0 && !(flags & PAGING_FLAG_1GB))
     {
-        console_print("finding 4KiB spot\n");
         // Check if it still fits in the current level1 table
         unsigned long pages = ((bytes - 1) >> 12) + 1;
         if (index->level1_index + pages > 512 || index->level1_table == 0)
         {
-            console_print("creating new 2MiB spot\n");
             // Does not fit anymore in current level1 table, find and allocate next empty level1 table
             while (index->level2_table[index->level2_index])
             {
@@ -96,12 +90,10 @@ static int paging_index_find_spot(PagingIndex *index, unsigned long bytes, unsig
     }
     else if (bytes <= 512ul * 512ul * 4096ul && index->level3_table != 0)
     {
-        console_print("finding 2MiB spot\n");
         // Check 2th level table
         unsigned long hugepages = ((bytes - 1) >> 21) + 1;
         if (index->level2_index + hugepages > 512 || index->level2_table == 0)
         {
-            console_print("creating new 1GiB spot\n");
             // Does not fit anymore in current level2 table, find and allocate next empty level2 table
             while (index->level3_table[index->level3_index])
             {
@@ -142,12 +134,10 @@ static int paging_index_find_spot(PagingIndex *index, unsigned long bytes, unsig
     }
     else if (bytes <= 512ul * 512ul * 512ul * 4096ul)
     {
-        console_print("finding 1GiB spot\n");
         // Check 3th level table
         unsigned long hugepages = ((bytes - 1) >> 30) + 1;
         if (index->level3_index + hugepages > 512 || index->level3_table == 0)
         {
-            console_print("creating new 512GiB spot\n");
             // Does not fit anymore in current level3 table, find and allocate next empty level3 table
             while (index->level4_table[index->level4_index])
             {
@@ -181,7 +171,6 @@ static int paging_index_find_spot(PagingIndex *index, unsigned long bytes, unsig
     }
     else
     {
-        console_print("finding 4TiB spot\n");
         // Check 4th level table
         unsigned long hugepages = ((bytes - 1) >> 39) + 1;
         if (index->level4_index + hugepages > 512)
@@ -655,10 +644,8 @@ void *paging_map(unsigned long bytes, unsigned long flags)
     Cpu *cpu = cpu_get_current();
 
     PagingIndex *index = &cpu->current_process->paging_index;
-    console_print("finding spot\n");
     if (paging_index_find_spot(index, bytes, flags))
     {
-        console_print("found spot\n");
         void *virtual_address = (void *)(((unsigned long)index->level1_index << 12) | ((unsigned long)index->level2_index << 21) | ((unsigned long)index->level3_index << 30) | ((unsigned long)index->level4_index << 39));
         if (paging_map_index(index, bytes, flags))
         {
@@ -1006,7 +993,6 @@ static void paging_debug_attributes(unsigned long entry)
 
 void paging_debug()
 {
-
     Cpu *cpu = cpu_get_current();
 
     PagingIndex *index = &cpu->current_process->paging_index;
