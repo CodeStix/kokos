@@ -2,6 +2,7 @@
 #include "memory_physical.h"
 #include "paging.h"
 #include "util.h"
+#include "interrupt.h"
 #include "../include/memory.h"
 
 inline struct CpuIdResult cpu_id(unsigned int function)
@@ -119,7 +120,7 @@ Cpu *cpu_initialize()
     // Identity map whole RAM
     if (paging_get_hugepages_supported())
     {
-        console_print("[paging] 1gb pages supported, using this to identity map memory\n");
+        console_print("[paging] identity map using 1GiB pages\n");
 
         // Identity map whole memory using 1GB huge pages
         paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_memory_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
@@ -128,7 +129,7 @@ Cpu *cpu_initialize()
     }
     else
     {
-        console_print("[paging] 1gb pages not supported, using 2mb pages to identity map memory\n");
+        console_print("[paging] identity map using 2MiB pages (1GiB pages not supported)\n");
 
         // Identity map whole memory using 2MB huge pages
         paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_memory_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
@@ -136,12 +137,23 @@ Cpu *cpu_initialize()
         console_print("[paging] done\n");
     }
 
+    console_print("[cpu] setting new page table\n");
+
     // Tell cpu to use new page table
     asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_index.level4_table)
                  :);
 
     // Now that paging should work, map the local APIC
+    console_print("[cpu] mapping local APIC\n");
     cpu->local_apic = paging_map_physical(local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+
+    // Set up this CPU's interrupt descriptor table (IDT)
+    console_print("[cpu] set up IDT\n");
+    interrupt_initialize();
+
+    // Enable APIC after interrupt vectors were intialized
+    console_print("[cpu] enable local APIC\n");
+    cpu->local_apic->spurious_interrupt_vector = 0x1FF;
 
     return cpu;
 }

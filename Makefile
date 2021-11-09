@@ -24,6 +24,7 @@ build: src/x86_64/** src/common/** src/include/**
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/serial.c -o build/common/serial.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/lock.c -o build/common/lock.o
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/entrypoint.c -o build/common/entrypoint.o
+	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector src/common/scheduler.c -o build/common/scheduler.o
 # Compile using -mgeneral-regs-only so we can use gcc's interrupt attribute (see interrupt.c), this is needed because gcc only preserves general purpose registers and not
 # SEE, MMX and x87 registers and states
 	gcc -c -I src/include -masm=intel -nostdlib -ffreestanding -mno-red-zone -fno-stack-protector -mgeneral-regs-only src/common/interrupt.c -o build/common/interrupt.o

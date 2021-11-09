@@ -12,6 +12,7 @@
 #include "../include/cpu.h"
 #include "../include/port.h"
 #include "../include/serial.h"
+#include "../include/scheduler.h"
 
 #define uint8 unsigned char
 #define int8 signed char
@@ -29,24 +30,9 @@
 extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup16)();
 unsigned short cpu_startup_increment;
-extern void(interrupt_schedule)();
+
 unsigned long max_memory_address;
 IOApic *ioapic;
-
-void interrupt_schedule_handler(InterruptFrame *stack)
-{
-    Cpu *current_cpu = cpu_get_current();
-
-    console_print("[schedule] interrupt fired on cpu 0x");
-    console_print_u64(current_cpu->id, 16);
-    console_print(" when at ");
-    console_print_u64(stack->code_segment, 16);
-    console_print(":0x");
-    console_print_u64((unsigned long)stack->instruction_pointer, 16);
-    console_new_line();
-
-    current_cpu->local_apic->end_of_interrupt = 0;
-}
 
 void memory_debug()
 {
@@ -242,18 +228,14 @@ void kernel_main()
     // Initialize paging
     paging_initialize();
 
-    console_print("[cpu] initialize cpu context\n");
-
-    cpu_initialize();
-
     console_print("[interrupt] disable pic\n");
 
     // Disable and remap pic
     apic_disable_pic();
 
-    console_print("[interrupt] initialize\n");
+    console_print("[cpu] initialize cpu context\n");
 
-    interrupt_initialize();
+    cpu_initialize();
 
     for (int i = 0; i < 3; i++)
     {
@@ -507,17 +489,17 @@ void kernel_main()
     console_print("[smp] started all processors in a halted state\n");
 
     // Enable APIC
-    apic->spurious_interrupt_vector = 0x1FF;
+    // apic->spurious_interrupt_vector = 0x1FF;
 
-    console_print("[test] create test interrupts\n");
-    console_print("[test] interrupt at 0x");
-    console_print_u64((unsigned long)interrupt_schedule, 16);
-    console_new_line();
+    // console_print("[test] create test interrupts\n");
+    // console_print("[test] interrupt at 0x");
+    // console_print_u64((unsigned long)interrupt_schedule, 16);
+    // console_new_line();
 
-    interrupt_register(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
-    apic->timer_initial_count = 10000000;
-    apic->timer_divide_config = 0b1010;
-    apic->timer_vector = 0x22 | (1 << 17);
+    // interrupt_register(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
+    // apic->timer_initial_count = 10000000;
+    // apic->timer_divide_config = 0b1010;
+    // apic->timer_vector = 0x22 | (1 << 17);
 
     interrupt_register(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);
     IOApicEntry timer_entry = {

@@ -1,27 +1,27 @@
-global interrupt_schedule
-extern interrupt_schedule_handler
+global scheduler_interrupt
+extern scheduler_handle_interrupt
 
 bits 64
 section .text
 
-interrupt_schedule:
-    push rax
-    push rbx ; Test: will be preserved?
-    push rcx
-    push rdx
-    push rdi
-    push rsi
-    push r8
-    push r9
-    push r10
-    push r11    
+scheduler_interrupt:
+    push rax    ; rsp + 72
+    push rbx    ; rsp + 64 Test: will be preserved?
+    push rcx    ; rsp + 56
+    push rdx    ; rsp + 48
+    push rdi    ; rsp + 40
+    push rsi    ; rsp + 32
+    push r8     ; rsp + 24
+    push r9     ; rsp + 16
+    push r10    ; rsp + 8
+    push r11    ; rsp    
 
-    lea rdi, [rsp + 80]
+    mov rdi, rsp
     ; Same as
     ; mov rdi, rsp
     ; add rdi, 8 * 10
     cld 
-    call interrupt_schedule_handler
+    call scheduler_handle_interrupt
 
     pop r11
     pop r10
