@@ -91,7 +91,9 @@ static void interrupt_handle_bound_range(InterruptFrame *frame)
 ATTRIBUTE_INTERRUPT
 static void interrupt_handle_invalid_opcode(InterruptFrame *frame)
 {
-    console_print("interrupt: invalid opcode!\n");
+    console_print("interrupt: invalid opcode! at 0x\n");
+    console_print_u64(frame->instruction_pointer, 16);
+    console_new_line();
 
     asm volatile("cli\n"
                  "hlt");
@@ -171,7 +173,9 @@ static void interrupt_handle_page_fault(InterruptFrame *frame, unsigned long err
                  :);
     // When a page fault happens, the error code (which contains how the page fault happened), is pushed onto the stack by the processor.
     // Note: only interrupt vectors 8, 10, 11, 12, 13, 14, 17 push an error code onto the stack
-    console_print("interrupt: page fault! process tried to access 0x");
+    console_print("interrupt: page fault! process at 0x");
+    console_print_u64(frame->instruction_pointer, 16);
+    console_print(" tried to access 0x");
     console_print_u64(fault_address, 16);
     console_print(", error code 0b");
     console_print_u64(error_code, 2);
@@ -220,14 +224,14 @@ static void interrupt_handle_simd_float_exception(InterruptFrame *frame)
 ATTRIBUTE_INTERRUPT
 static void interrupt_handle_spurious(InterruptFrame *frame)
 {
-    console_print("interrupt: spurious\n");
-    console_new_line();
+    // console_print("interrupt: spurious\n");
+    // console_new_line();
 }
 
 void interrupt_initialize()
 {
     // Disable interrupts
-    asm volatile("cli");
+    // asm volatile("cli");
 
     // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
     InterruptDescriptor *interrupt_descriptor_table = (InterruptDescriptor *)memory_physical_allocate();
@@ -236,6 +240,10 @@ void interrupt_initialize()
 
     console_print("[interrupt] create interrupt_descriptor_table at 0x");
     console_print_u64(interrupt_descriptor_table, 16);
+    console_print(" for cpu ");
+    console_print_u64(cpu->id, 10);
+    console_print(" at 0x");
+    console_print_u64(cpu, 16);
     console_new_line();
 
     if (!interrupt_descriptor_table)
@@ -288,7 +296,7 @@ void interrupt_initialize()
     }
 
     // Enable interrupts
-    asm volatile("sti");
+    // asm volatile("sti");
 }
 
 void interrupt_disable(unsigned char vector)

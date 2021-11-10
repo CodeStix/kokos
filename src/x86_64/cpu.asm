@@ -11,14 +11,14 @@ align 4096
 bits 16
 
 cpu_startup16:
-    cli
+    lidt [idt32.pointer]
+    lgdt [gdt32.pointer]
+
     mov esp, stack_top
 
     mov eax, cr0 ; Enter 32 bit protected mode
     or al, 1
     mov cr0, eax
-
-    lgdt [gdt32.pointer]
 
     mov ax, 0x10
     mov ss, ax
@@ -31,6 +31,9 @@ cpu_startup16:
 bits 32
 
 cpu_startup32:
+    lidt [idt64.pointer]
+    lgdt [gdt64.pointer]
+
     mov eax, cr0                ; Disable paging
     and eax, ~(1 << 31)
     mov cr0, eax
@@ -51,8 +54,6 @@ cpu_startup32:
     or eax, 1 << 31
     mov cr0, eax
 
-    lgdt [gdt64.pointer]
-
     mov ax, 0x10
     mov ss, ax
     mov gs, ax
@@ -65,6 +66,19 @@ bits 64
 
 cpu_startup_increment:
     dw 0
+
+idt32:
+    dq 0
+.pointer:
+    dw $ - idt32 - 1
+    dd idt32
+
+idt64:
+    dq 0
+    dq 0
+.pointer:
+    dw $ - idt64 - 1
+    dd idt64
 
 gdt32:
     dq 0          ; Null entry
@@ -112,6 +126,3 @@ align 16
 stack_bottom:
     resb 1024
 stack_top:
-
-info_done:
-    db "[smp] message from other core", 0xA, 0

@@ -499,6 +499,13 @@ void kernel_main()
 
     console_print("[smp] started all processors in a halted state\n");
 
+    // asm volatile("sti");
+
+    while (1)
+    {
+        asm volatile("hlt");
+    }
+
     // Enable APIC
     // apic->spurious_interrupt_vector = 0x1FF;
 
@@ -534,27 +541,10 @@ void kernel_main()
 
     console_print("[boot] reached end, type something...\n");
 
-    unsigned long flags;
-    asm volatile("pushfq; pop %0"
-                 : "=rm"(flags));
-
-    console_print("flags=0b");
-    console_print_u64(flags, 2);
-    console_new_line();
-
-    // int a = 100 / 0;
-
-    // asm volatile("mov rax, 0x777" ::
-    //                  : "rax");
-    // asm volatile("int3");
-
-    // *((int *)0x123123123123) = 10;
-    // console_print_i32(*((int *)0x123123123123), 10); // 100ac9
-
-    // console_print("[test] reached end\n");
-    // console_clear();
-
-    // while (1)
-    // {
-    // }
+    // unsigned long flags;
+    // asm volatile("pushfq; pop %0"
+    //              : "=rm"(flags));
+    // console_print("flags=0b");
+    // console_print_u64(flags, 2);
+    // console_new_line();
 }

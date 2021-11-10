@@ -9,6 +9,8 @@ extern unsigned short cpu_startup_increment;
 void cpu_entrypoint()
 {
     console_print("[cpu] starting cpu\n");
+    // cpu_startup_increment = 1;
+    // return;
 
     Cpu *cpu_info = cpu_initialize();
     // interrupt_initialize();

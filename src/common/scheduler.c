@@ -9,34 +9,34 @@ void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
 {
     Cpu *current_cpu = cpu_get_current();
 
-    console_print("[schedule] interrupt fired on cpu 0x");
-    console_print_u64(current_cpu->id, 16);
-    console_print(" when at ");
-    console_print_u64(stack->base.code_segment, 16);
-    console_print(":0x");
-    console_print_u64((unsigned long)stack->base.instruction_pointer, 16);
-    console_new_line();
+    // console_print("[schedule] interrupt fired on cpu 0x");
+    // console_print_u64(current_cpu->id, 16);
+    // console_print(" when at ");
+    // console_print_u64(stack->base.code_segment, 16);
+    // console_print(":0x");
+    // console_print_u64((unsigned long)stack->base.instruction_pointer, 16);
+    // console_new_line();
 
-    SchedulerProcess *next = current_cpu->current_process->next;
-    if (current_cpu->current_process != next)
-    {
-        // There are other processes scheduled on this CPU, switch process now
-        // TODO preserve xmm/mmx registers
+    // SchedulerProcess *next = current_cpu->current_process->next;
+    // if (current_cpu->current_process != next)
+    // {
+    //     // There are other processes scheduled on this CPU, switch process now
+    //     // TODO preserve xmm/mmx registers
 
-        // Save current registers
-        current_cpu->current_process->saved_rflags = stack->base.rflags;
-        current_cpu->current_process->saved_instruction_pointer = stack->base.instruction_pointer;
-        current_cpu->current_process->saved_stack_pointer = stack->base.stack_pointer;
-        current_cpu->current_process->saved_registers = stack->registers;
+    //     // Save current registers
+    //     current_cpu->current_process->saved_rflags = stack->base.rflags;
+    //     current_cpu->current_process->saved_instruction_pointer = stack->base.instruction_pointer;
+    //     current_cpu->current_process->saved_stack_pointer = stack->base.stack_pointer;
+    //     current_cpu->current_process->saved_registers = stack->registers;
 
-        // Restore next process registers
-        stack->base.instruction_pointer = next->saved_instruction_pointer;
-        stack->base.stack_pointer = next->saved_stack_pointer;
-        stack->base.rflags = next->saved_rflags;
-        stack->registers = next->saved_registers;
+    //     // Restore next process registers
+    //     stack->base.instruction_pointer = next->saved_instruction_pointer;
+    //     stack->base.stack_pointer = next->saved_stack_pointer;
+    //     stack->base.rflags = next->saved_rflags;
+    //     stack->registers = next->saved_registers;
 
-        current_cpu->current_process = next;
-    }
+    //     current_cpu->current_process = next;
+    // }
 
     current_cpu->local_apic->end_of_interrupt = 0;
 }
@@ -45,10 +45,10 @@ void scheduler_initialize()
 {
     Cpu *cpu = cpu_get_current();
 
-    interrupt_register(0x22, scheduler_interrupt, INTERRUPT_GATE_TYPE_INTERRUPT);
-    cpu->local_apic->timer_initial_count = 10000000;
+    interrupt_register(0x23, scheduler_interrupt, INTERRUPT_TYPE_INTERRUPT);
+    cpu->local_apic->timer_initial_count = 100000;
     cpu->local_apic->timer_divide_config = 0b1010;
-    cpu->local_apic->timer_vector = 0x22 | (1 << 17);
+    cpu->local_apic->timer_vector = 0x23 | (1 << 17);
 }
 
 typedef void (*EntrypointFunction)();

@@ -77,20 +77,6 @@ extern unsigned long max_memory_address;
 
 Cpu *cpu_initialize()
 {
-    unsigned long local_apic_info = cpu_read_msr(CPU_MSR_LOCAL_APIC);
-    Apic *local_apic = local_apic_info & 0x000ffffffffff000;
-
-    // Check 11th bit to check if it is enabled
-    if (!(local_apic_info & 0x800))
-    {
-        console_print("[cpu] fatal: local apic not enabled, cannot enable\n");
-        return;
-    }
-
-    console_print("[cpu] local_apic = 0x");
-    console_print_u64((unsigned long)local_apic, 16);
-    console_new_line();
-
     // The FS segment register will point to cpu-specific information
     Cpu *cpu = memory_physical_allocate();
     cpu->address = cpu;
@@ -99,10 +85,10 @@ Cpu *cpu_initialize()
     cpu_write_msr(CPU_MSR_FS_BASE, cpu);
 
     // Set up this CPU's interrupt descriptor table (IDT)
-    console_print("[cpu] set up IDT\n");
+    // console_print("[cpu] set up IDT\n");
     interrupt_initialize();
 
-    console_print("[cpu] set up dummy process\n");
+    // console_print("[cpu] set up dummy process\n");
 
     // Create dummy process, required for paging to work
     SchedulerProcess *dummy_process = memory_physical_allocate();
@@ -150,6 +136,21 @@ Cpu *cpu_initialize()
 
     // Now that paging should work, map the local APIC
     console_print("[cpu] mapping local APIC\n");
+
+    unsigned long local_apic_info = cpu_read_msr(CPU_MSR_LOCAL_APIC);
+    Apic *local_apic = local_apic_info & 0x000ffffffffff000;
+
+    // Check 11th bit to check if it is enabled
+    if (!(local_apic_info & 0x800))
+    {
+        console_print("[cpu] fatal: local apic not enabled, cannot enable\n");
+        return;
+    }
+
+    console_print("[cpu] local_apic = 0x");
+    console_print_u64((unsigned long)local_apic, 16);
+    console_new_line();
+
     cpu->local_apic = paging_map_physical(local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     // Enable APIC after interrupt vectors were intialized
@@ -158,6 +159,8 @@ Cpu *cpu_initialize()
 
     console_print("[cpu] set up scheduler\n");
     scheduler_initialize();
+
+    asm volatile("sti");
 
     return cpu;
 }
