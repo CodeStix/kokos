@@ -225,6 +225,14 @@ void kernel_main()
         }
     }
 
+    // Get CPU manufacturer https://kokos.run/#WzAsIkludGVsVm9sdW1lMkEucGRmIiwyOTIsWzI5MiwxOCwyOTIsMThdXQ==
+    CpuIdResult cpu_name = cpu_id(0x0);
+    console_print("[cpu] cpu manufacturer ");
+    console_print_length(&cpu_name.ebx, 4);
+    console_print_length(&cpu_name.edx, 4);
+    console_print_length(&cpu_name.ecx, 4);
+    console_new_line();
+
     console_print("[paging] initialize paging\n");
 
     // Initialize paging
