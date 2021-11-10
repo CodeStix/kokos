@@ -114,6 +114,8 @@ void kernel_main()
         return;
     }
 
+    // Read the memory map provided by multiboot, is contains information about what regions of RAM we can freely use
+    // https://kokos.run/#WzAsIk11bHRpYm9vdC5wZGYiLDEzLFsxMywxNjIsMTMsMTYyXV0=
     Multiboot2InfoTagMemoryMap *memory_information = (Multiboot2InfoTagMemoryMap *)multiboot2_info_get(MULTIBOOT2_TYPE_MEMORY_MAP);
     if (!memory_information)
     {
@@ -337,6 +339,7 @@ void kernel_main()
     //     return;
     // }
 
+    // https://kokos.run/#WzAsIkFDUEkucGRmIiwxNjFd
     AcpiMadt *madt = (AcpiMadt *)acpi_rsdt_get_table(rsdt, ACPI_MADT_SIGNATURE);
     if (!madt)
     {

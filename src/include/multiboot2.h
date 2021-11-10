@@ -64,6 +64,8 @@ typedef struct
 
 // TODO create all multiboot2 structures
 
+// This variable is set in main.asm, because multiboot loads an operating system and then sets the ECX register to point to a Multiboot2 info structure.
+// https://kokos.run/#WzAsIk11bHRpYm9vdC5wZGYiLDEwLFsxMCw1NywxMCw1N11d
 extern Multiboot2Info *multiboot2_info;
 
 // Returns 1 if multiboot2 boot information is supported

@@ -27,6 +27,7 @@ void paging_initialize()
     used_virtual_pages = 0;
 
     // Check if hugepages is supported using cpuid
+    // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMy5wZGYiLDY1NCxbNjU0LDg0LDY1NCw4NF1d
     CpuIdResult result = cpu_id(0x80000001);
     hugepages_supported = result.edx & CPU_ID_1GB_PAGES_EDX;
 }
@@ -976,6 +977,7 @@ unsigned long paging_used_pages()
 
 static void paging_debug_attributes(unsigned long entry)
 {
+    // Format described at https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDIwMV0=
     if (entry & PAGING_ENTRY_FLAG_PRESENT)
         console_print_char('P');
     if (entry & PAGING_ENTRY_FLAG_WRITABLE)

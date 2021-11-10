@@ -84,6 +84,7 @@ typedef struct
 
 // The AcpiFadt is a ACPI table with signature 'FACP'
 // https://wiki.osdev.org/AcpiFadt
+// https://kokos.run/#WzAsIkFDUEkucGRmIiwxNzgsWzE3OCwxMCwxNzgsMTFdXQ==
 // The extended fields are only used when the addresses do not fit in their non-extended variants
 typedef struct
 {
@@ -180,6 +181,7 @@ typedef struct
 // The MADT ACPI table has signature 'APIC', it contains information about the different programmable interrupt controllers (PIC, APIC, IOAPIC) in the system
 // After this struct, a variable list of MADT entries are stored.
 // https://wiki.osdev.org/AcpiMadt
+// https://kokos.run/#WzAsIkFDUEkucGRmIiwyMDMsWzIwMywzMiwyMDMsMzNdXQ==
 typedef struct
 {
     AcpiSdt base;
