@@ -20,7 +20,7 @@ typedef struct CpuIdResult
 typedef struct Cpu
 {
     // Pointer to itself (trick for cpu_get_current and cpu_initialize)
-    Cpu *address;
+    struct Cpu *address;
     // The processor's id
     unsigned int id;
     // Pointer to this processor's local APIC
@@ -60,7 +60,7 @@ typedef struct CpuGlobalDescriptor
         };
         unsigned long as_long;
     };
-} CpuGlobalDescriptor;
+} ATTRIBUTE_PACKED CpuGlobalDescriptor;
 
 // https://wiki.osdev.org/IDT
 typedef struct CpuInterruptDescriptor
@@ -84,7 +84,19 @@ typedef struct CpuInterruptDescriptor
         };
         unsigned long as_long[2];
     };
-} CpuInterruptDescriptor;
+} ATTRIBUTE_PACKED CpuInterruptDescriptor;
+
+typedef struct CpuTaskState
+{
+    unsigned int unused0;
+    unsigned long rsp[3];
+    unsigned int unused1;
+    unsigned int unused2;
+    unsigned long ist[7];
+    unsigned int unused3;
+    unsigned int unused4;
+    unsigned int iopb_offset;
+} ATTRIBUTE_PACKED CpuTaskState;
 
 // Performs an cpuid instruction and returns the result
 CpuIdResult cpu_id(unsigned int function);

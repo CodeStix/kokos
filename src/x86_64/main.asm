@@ -161,18 +161,6 @@ gdt64:
     db 0b00100000 ; Flags & limit (long mode)
     db 0 ; Base
 
-.task_segment: equ $ - gdt64
-    dw tss64.size ; Limit
-    dw tss64 ; Base
-    db 0 ; Base
-    db 0b10000010 ; Access byte (readable/writable, task state segment, present)
-    db 0b00100000 ; Flags & limit (long mode)
-    db 0 ; Base
-
 .pointer:
     dw $ - gdt64 - 1
     dq gdt64
-
-tss64:
-
-.size: equ $ - tss64
