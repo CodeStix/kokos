@@ -1,4 +1,4 @@
-#include "kokos/interrupt.h"
+#include "kokos/idt.h"
 #include "kokos/console.h"
 #include "kokos/memory_physical.h"
 #include "kokos/cpu.h"
@@ -41,7 +41,7 @@ static char *exception_messages[] = {
 
 // https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html#x86-Function-Attributes
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_divide_by_zero(InterruptFrame *frame)
+static void idt_handle_divide_by_zero(IdtFrame *frame)
 {
     console_print("interrupt: divide by zero!\n");
 
@@ -50,13 +50,13 @@ static void interrupt_handle_divide_by_zero(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_debug(InterruptFrame *frame)
+static void idt_handle_debug(IdtFrame *frame)
 {
     console_print("interrupt: debug!\n");
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_non_maskable_interrupt(InterruptFrame *frame)
+static void idt_handle_non_maskable_interrupt(IdtFrame *frame)
 {
     console_print("interrupt: non maskable!\n");
 
@@ -65,13 +65,13 @@ static void interrupt_handle_non_maskable_interrupt(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_breakpoint(InterruptFrame *frame)
+static void idt_handle_breakpoint(IdtFrame *frame)
 {
     console_print("interrupt: breakpoint!\n");
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_overflow(InterruptFrame *frame)
+static void idt_handle_overflow(IdtFrame *frame)
 {
     console_print("interrupt: overflow!\n");
 
@@ -80,7 +80,7 @@ static void interrupt_handle_overflow(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_bound_range(InterruptFrame *frame)
+static void idt_handle_bound_range(IdtFrame *frame)
 {
     console_print("interrupt: bound range!\n");
 
@@ -89,7 +89,7 @@ static void interrupt_handle_bound_range(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_invalid_opcode(InterruptFrame *frame)
+static void idt_handle_invalid_opcode(IdtFrame *frame)
 {
     console_print("interrupt: invalid opcode! at 0x\n");
     console_print_u64(frame->instruction_pointer, 16);
@@ -100,7 +100,7 @@ static void interrupt_handle_invalid_opcode(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_device_not_available(InterruptFrame *frame)
+static void idt_handle_device_not_available(IdtFrame *frame)
 {
     console_print("interrupt: device not available!\n");
 
@@ -109,7 +109,7 @@ static void interrupt_handle_device_not_available(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_invalid_double_fault(InterruptFrame *frame, unsigned long error_code)
+static void idt_handle_invalid_double_fault(IdtFrame *frame, unsigned long error_code)
 {
     console_print("interrupt: double fault!\n");
 
@@ -118,7 +118,7 @@ static void interrupt_handle_invalid_double_fault(InterruptFrame *frame, unsigne
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_segment_overrun(InterruptFrame *frame)
+static void idt_handle_segment_overrun(IdtFrame *frame)
 {
     console_print("interrupt: segment overrun!\n");
 
@@ -127,7 +127,7 @@ static void interrupt_handle_segment_overrun(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_invalid_tss(InterruptFrame *frame, unsigned long error_code)
+static void idt_handle_invalid_tss(IdtFrame *frame, unsigned long error_code)
 {
     console_print("interrupt: invalid tss!\n");
 
@@ -136,7 +136,7 @@ static void interrupt_handle_invalid_tss(InterruptFrame *frame, unsigned long er
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_segment_not_present(InterruptFrame *frame, unsigned long error_code)
+static void idt_handle_segment_not_present(IdtFrame *frame, unsigned long error_code)
 {
     console_print("interrupt: segment not present!\n");
 
@@ -145,7 +145,7 @@ static void interrupt_handle_segment_not_present(InterruptFrame *frame, unsigned
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_stack(InterruptFrame *frame, unsigned long error_code)
+static void idt_handle_stack(IdtFrame *frame, unsigned long error_code)
 {
     console_print("interrupt: stack!\n");
 
@@ -154,7 +154,7 @@ static void interrupt_handle_stack(InterruptFrame *frame, unsigned long error_co
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_general_protection(InterruptFrame *frame, unsigned long error_code)
+static void idt_handle_general_protection(IdtFrame *frame, unsigned long error_code)
 {
     console_print("interrupt: general protection!\n");
 
@@ -163,7 +163,7 @@ static void interrupt_handle_general_protection(InterruptFrame *frame, unsigned 
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_page_fault(InterruptFrame *frame, unsigned long error_code)
+static void idt_handle_page_fault(IdtFrame *frame, unsigned long error_code)
 {
     // When a page fault happens, the address that was tried to be accessed, is in control register 2 (cr2). (AMD Volume 2 8.2.15)
     unsigned long fault_address;
@@ -186,7 +186,7 @@ static void interrupt_handle_page_fault(InterruptFrame *frame, unsigned long err
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_float_exception(InterruptFrame *frame)
+static void idt_handle_float_exception(IdtFrame *frame)
 {
     console_print("interrupt: floating-point exception!\n");
 
@@ -195,7 +195,7 @@ static void interrupt_handle_float_exception(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_alignment_check(InterruptFrame *frame, unsigned long error_code)
+static void idt_handle_alignment_check(IdtFrame *frame, unsigned long error_code)
 {
     console_print("interrupt: alignment check!\n");
 
@@ -204,7 +204,7 @@ static void interrupt_handle_alignment_check(InterruptFrame *frame, unsigned lon
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_machine_check(InterruptFrame *frame)
+static void idt_handle_machine_check(IdtFrame *frame)
 {
     console_print("interrupt: machine check!\n");
 
@@ -213,7 +213,7 @@ static void interrupt_handle_machine_check(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_simd_float_exception(InterruptFrame *frame)
+static void idt_handle_simd_float_exception(IdtFrame *frame)
 {
     console_print("interrupt: simd floating-point exception!\n");
 
@@ -222,19 +222,19 @@ static void interrupt_handle_simd_float_exception(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void interrupt_handle_spurious(InterruptFrame *frame)
+static void idt_handle_spurious(IdtFrame *frame)
 {
     // console_print("interrupt: spurious\n");
     // console_new_line();
 }
 
-void interrupt_initialize()
+void idt_initialize()
 {
     // Disable interrupts
     // asm volatile("cli");
 
     // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
-    InterruptDescriptor *interrupt_descriptor_table = (InterruptDescriptor *)memory_physical_allocate();
+    IdtEntry *interrupt_descriptor_table = (IdtEntry *)memory_physical_allocate();
     Cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table = interrupt_descriptor_table;
 
@@ -258,7 +258,7 @@ void interrupt_initialize()
         ((unsigned long *)interrupt_descriptor_table)[i] = 0ull;
     }
 
-    InterruptDescriptorPointer pointer = {
+    IdtPointer pointer = {
         .address = interrupt_descriptor_table,
         .limit = 256 * 16 - 1,
     };
@@ -269,49 +269,49 @@ void interrupt_initialize()
                  : "m"(pointer)
                  :);
 
-    interrupt_register(0, interrupt_handle_divide_by_zero, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(1, interrupt_handle_debug, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(2, interrupt_handle_non_maskable_interrupt, INTERRUPT_GATE_TYPE_INTERRUPT); // This is recommended by Intel (Intel Volume 1 6.7.1)
-    interrupt_register(3, interrupt_handle_breakpoint, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(4, interrupt_handle_overflow, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(5, interrupt_handle_bound_range, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(6, interrupt_handle_invalid_opcode, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(7, interrupt_handle_device_not_available, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(8, interrupt_handle_invalid_double_fault, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(9, interrupt_handle_segment_overrun, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(10, interrupt_handle_invalid_tss, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(11, interrupt_handle_segment_not_present, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(12, interrupt_handle_stack, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(13, interrupt_handle_general_protection, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(14, interrupt_handle_page_fault, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(16, interrupt_handle_float_exception, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(17, interrupt_handle_alignment_check, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(18, interrupt_handle_machine_check, INTERRUPT_GATE_TYPE_TRAP);
-    interrupt_register(19, interrupt_handle_simd_float_exception, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(0, idt_handle_divide_by_zero, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(1, idt_handle_debug, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(2, idt_handle_non_maskable_interrupt, INTERRUPT_GATE_TYPE_INTERRUPT); // This is recommended by Intel (Intel Volume 1 6.7.1)
+    idt_register_interrupt(3, idt_handle_breakpoint, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(4, idt_handle_overflow, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(5, idt_handle_bound_range, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(6, idt_handle_invalid_opcode, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(7, idt_handle_device_not_available, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(8, idt_handle_invalid_double_fault, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(9, idt_handle_segment_overrun, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(10, idt_handle_invalid_tss, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(11, idt_handle_segment_not_present, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(12, idt_handle_stack, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(13, idt_handle_general_protection, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(14, idt_handle_page_fault, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(16, idt_handle_float_exception, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(17, idt_handle_alignment_check, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(18, idt_handle_machine_check, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(19, idt_handle_simd_float_exception, INTERRUPT_GATE_TYPE_TRAP);
 
     // The last 17 interrupts handle spurious interrupts (16 from the PIC and 1 from the APIC)
     for (int i = 0xff - 17; i <= 0xff; i++)
     {
-        interrupt_register(i, interrupt_handle_spurious, INTERRUPT_GATE_TYPE_TRAP);
+        idt_register_interrupt(i, idt_handle_spurious, INTERRUPT_GATE_TYPE_TRAP);
     }
 
     // Enable interrupts
     // asm volatile("sti");
 }
 
-void interrupt_disable(unsigned char vector)
+void idt_disable_interrupt(unsigned char vector)
 {
     Cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table[vector].present = 0;
 }
 
-void interrupt_enable(unsigned char vector)
+void idt_enable_interrupt(unsigned char vector)
 {
     Cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table[vector].present = 1;
 }
 
-void interrupt_register(unsigned char vector, void *function_pointer, InterruptGateType interrupt_type)
+void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type)
 {
     Cpu *cpu = cpu_get_current();
 
@@ -322,7 +322,7 @@ void interrupt_register(unsigned char vector, void *function_pointer, InterruptG
         console_new_line();
     }
 
-    InterruptDescriptor *descriptor = &cpu->interrupt_descriptor_table[vector];
+    IdtEntry *descriptor = &cpu->interrupt_descriptor_table[vector];
     descriptor->offset1 = (unsigned long)function_pointer & 0xFFFF;
     descriptor->code_segment = CODE_SEGMENT;
     descriptor->interrupt_stack_table_offset = 0; // Unused

@@ -1,5 +1,5 @@
 #pragma once
-#include "kokos/interrupt.h"
+#include "kokos/idt.h"
 #include "kokos/paging.h"
 
 // See schedule.asm
@@ -21,7 +21,7 @@ typedef struct SchedulerSavedRegisters
 typedef struct
 {
     SchedulerSavedRegisters registers;
-    InterruptFrame base;
+    IdtFrame base;
 } SchedulerInterruptFrame;
 
 typedef struct SchedulerProcess

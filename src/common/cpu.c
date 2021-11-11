@@ -4,7 +4,7 @@
 #include "kokos/util.h"
 #include "kokos/scheduler.h"
 #include "kokos/console.h"
-#include "kokos/interrupt.h"
+#include "kokos/idt.h"
 #include "kokos/memory.h"
 
 inline struct CpuIdResult cpu_id(unsigned int function)
@@ -88,7 +88,7 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
 
     // Set up this CPU's interrupt descriptor table (IDT)
     console_print("[cpu] set up IDT\n");
-    interrupt_initialize();
+    idt_initialize();
 
     console_print("[cpu] set up dummy process\n");
 

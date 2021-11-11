@@ -3,7 +3,7 @@
 #include "kokos/console.h"
 #include "kokos/memory.h"
 #include "kokos/memory_physical.h"
-#include "kokos/interrupt.h"
+#include "kokos/idt.h"
 #include "kokos/lock.h"
 #include "kokos/util.h"
 
@@ -57,7 +57,7 @@ void scheduler_initialize()
 {
     Cpu *cpu = cpu_get_current();
 
-    interrupt_register(0x23, scheduler_interrupt, INTERRUPT_TYPE_INTERRUPT);
+    idt_register_interrupt(0x23, scheduler_interrupt, INTERRUPT_TYPE_INTERRUPT);
     cpu->local_apic->timer_initial_count = 1000;
     cpu->local_apic->timer_divide_config = 0b1010;
     cpu->local_apic->timer_vector = 0x23 | (1 << 17);

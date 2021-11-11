@@ -9,22 +9,22 @@ typedef enum
 {
     INTERRUPT_GATE_TYPE_INTERRUPT = 0b1110,
     INTERRUPT_GATE_TYPE_TRAP = 0b1111,
-} InterruptGateType;
+} IdtGateType;
 
 // This struct describes the format of the stack after an interrupt was fired. See AMD Volume 2 page 258.
 // (Also needed by gcc to make the interrupt attribute work, https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html#x86-Function-Attributes)
-typedef struct
+typedef struct IdtFrame
 {
     unsigned long instruction_pointer;
     unsigned long code_segment;
     unsigned long rflags;
     unsigned long stack_pointer;
     unsigned long stack_segment;
-} InterruptFrame;
+} IdtFrame;
 
 // An entry in the IDT (interrupt descriptor table)
 // https://wiki.osdev.org/IDT
-typedef struct InterruptDescriptor
+typedef struct IdtEntry
 {
     union
     {
@@ -45,27 +45,24 @@ typedef struct InterruptDescriptor
         };
         unsigned long as_long[2];
     };
-} ATTRIBUTE_PACKED InterruptDescriptor;
+} ATTRIBUTE_PACKED IdtEntry;
 
 // This structure is used for the lidt instruction, which loads the interrupt descriptor table
 typedef struct
 {
     unsigned short limit;
-    InterruptDescriptor *address;
-} ATTRIBUTE_PACKED InterruptDescriptorPointer;
+    IdtEntry *address;
+} ATTRIBUTE_PACKED IdtPointer;
 
 // This function must be called before calling any other interrupt functions. This function fills the IDT only for the current cpu.
 // memory_physical_initialize and cpu_initialize must be called first!!
-void interrupt_initialize();
-
-// This function will be called by interrupts.asm
-void interrupt_handle(int vector);
+void idt_initialize();
 
 // Disables an interrupt vector
-void interrupt_disable(unsigned char vector);
+void idt_disable_interrupt(unsigned char vector);
 
 // Enables an interrupt vector
-void interrupt_enable(unsigned char vector);
+void idt_enable_interrupt(unsigned char vector);
 
 // Registers and enables an interrupt vector
-void interrupt_register(unsigned char vector, void *function_pointer, InterruptGateType interrupt_type);
+void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type);

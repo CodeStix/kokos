@@ -18,6 +18,7 @@
         "scheduler.h": "c",
         "lock.h": "c",
         "acpi.h": "c",
-        "core.h": "c"
+        "core.h": "c",
+        "interrupt_descriptor.h": "c"
     }
 }

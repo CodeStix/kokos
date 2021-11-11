@@ -2,7 +2,7 @@
 #include "kokos/console.h"
 #include "kokos/apic.h"
 #include "kokos/memory_physical.h"
-#include "kokos/interrupt.h"
+#include "kokos/idt.h"
 
 extern unsigned short cpu_startup_increment;
 extern unsigned short cpu_startup_done;
@@ -15,7 +15,7 @@ void cpu_entrypoint()
     // return;
 
     // Cpu *cpu_info = cpu_initialize();
-    // interrupt_initialize();
+    // idt_initialize();
 
     cpu_wait_millisecond();
 
@@ -36,7 +36,7 @@ void cpu_entrypoint()
     // console_print("[cpu] enabling schedule interrupt\n");
 
     // asm volatile("cli");
-    // interrupt_register(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
+    // idt_register_interrupt(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
     // asm volatile("sti");
 
     // Enable local APIC by setting bit 8 in the spurious_interrupt_vector register

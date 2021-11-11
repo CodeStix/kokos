@@ -8,7 +8,7 @@
 #include "kokos/paging.h"
 #include "kokos/multiboot2.h"
 #include "kokos/memory_physical.h"
-#include "kokos/interrupt.h"
+#include "kokos/idt.h"
 #include "kokos/cpu.h"
 #include "kokos/port.h"
 #include "kokos/serial.h"
@@ -58,7 +58,7 @@ static volatile unsigned long counter = 0;
 static volatile unsigned long counter2 = 0;
 
 ATTRIBUTE_INTERRUPT
-void interrupt_handle_test(InterruptFrame *frame)
+void interrupt_handle_test(IdtFrame *frame)
 {
     unsigned int x, y;
     console_get_cursor(&x, &y);
@@ -71,7 +71,7 @@ void interrupt_handle_test(InterruptFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-void interrupt_handle_timer(InterruptFrame *frame)
+void interrupt_handle_timer(IdtFrame *frame)
 {
     // unsigned int x, y;
     // console_get_cursor(&x, &y);
@@ -188,7 +188,7 @@ void idt_debug()
 
     for (int i = 0; i < 256; i++)
     {
-        InterruptDescriptor entry = cpu->interrupt_descriptor_table[i];
+        IdtEntry entry = cpu->interrupt_descriptor_table[i];
         if (!entry.present)
             continue;
         console_print("[idt] entry #");
@@ -214,6 +214,8 @@ void root_program()
 {
     gdt_debug();
     idt_debug();
+
+    asm volatile("int3");
     // console_clear();
     // console_print("[cpu] root program start 2\n");
 
@@ -652,12 +654,12 @@ void kernel_main()
     // console_print_u64((unsigned long)interrupt_schedule, 16);
     // console_new_line();
 
-    // interrupt_register(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
+    // idt_register_interrupt(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
     // apic->timer_initial_count = 10000000;
     // apic->timer_divide_config = 0b1010;
     // apic->timer_vector = 0x22 | (1 << 17);
 
-    interrupt_register(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);
+    idt_register_interrupt(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);
     IOApicEntry timer_entry = {
         .vector = 0x24,
         .destination = apic->id >> 24,

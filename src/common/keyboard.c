@@ -2,7 +2,7 @@
 #include "kokos/console.h"
 #include "kokos/port.h"
 #include "kokos/cpu.h"
-#include "kokos/interrupt.h"
+#include "kokos/idt.h"
 #include "kokos/apic.h"
 #include "kokos/serial.h"
 #include "kokos/util.h"
@@ -74,7 +74,7 @@ static int caps_lock = 0;
 static int extended = 0;
 
 ATTRIBUTE_INTERRUPT
-void interrupt_handle_keyboard(InterruptFrame *frame)
+void interrupt_handle_keyboard(IdtFrame *frame)
 {
     unsigned char input = port_in8(0x60);
 
@@ -243,7 +243,7 @@ void keyboard_initialize()
     console_print("registering interrupt\n");
 
     asm volatile("cli");
-    interrupt_register(0x23, interrupt_handle_keyboard, INTERRUPT_GATE_TYPE_INTERRUPT);
+    idt_register_interrupt(0x23, interrupt_handle_keyboard, INTERRUPT_GATE_TYPE_INTERRUPT);
     asm volatile("sti");
 
     Cpu *cpu = cpu_get_current();
