@@ -1,5 +1,5 @@
 #pragma once
-#include "core.h"
+#include "kokos/core.h"
 
 // The signature that identifies the RSDP structure, ascii "RSD PTR " in a packed long
 #define ACPI_RSDTP_SIGNATURE 0x2052545020445352

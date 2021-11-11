@@ -1,6 +1,6 @@
-#include "../include/apic.h"
-#include "../include/port.h"
-#include "../include/cpu.h"
+#include "kokos/apic.h"
+#include "kokos/port.h"
+#include "kokos/cpu.h"
 
 #define PIC_MASTER_COMMAND_PORT 0x20
 #define PIC_MASTER_DATA_PORT 0x21

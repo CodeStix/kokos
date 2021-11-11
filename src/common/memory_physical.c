@@ -1,6 +1,6 @@
-#include "memory_physical.h"
-#include "console.h"
-#include "lock.h"
+#include "kokos/memory_physical.h"
+#include "kokos/console.h"
+#include "kokos/lock.h"
 
 // Points to a table that contains bits that indicate which physical chunks are allocated
 static unsigned long *allocation_table = 0;

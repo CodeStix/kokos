@@ -1,11 +1,11 @@
-#include "scheduler.h"
-#include "cpu.h"
-#include "console.h"
-#include "../include/memory.h"
-#include "memory_physical.h"
-#include "interrupt.h"
-#include "lock.h"
-#include "util.h"
+#include "kokos/scheduler.h"
+#include "kokos/cpu.h"
+#include "kokos/console.h"
+#include "kokos/memory.h"
+#include "kokos/memory_physical.h"
+#include "kokos/interrupt.h"
+#include "kokos/lock.h"
+#include "kokos/util.h"
 
 // Defined in src/x86_64/schedule.asm, this assembly code calls scheduler_handle_interrupt below
 extern void(scheduler_interrupt)();

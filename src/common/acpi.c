@@ -1,6 +1,6 @@
-#include "../include/acpi.h"
-#include "../include/console.h"
-#include "../include/util.h"
+#include "kokos/acpi.h"
+#include "kokos/console.h"
+#include "kokos/util.h"
 
 AcpiRsdtp *acpi_find_rsdt_pointer()
 {

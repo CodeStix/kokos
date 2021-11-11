@@ -1,5 +1,5 @@
-#include "../include/multiboot2.h"
-#include "../include/util.h"
+#include "kokos/multiboot2.h"
+#include "kokos/util.h"
 
 Multiboot2InfoTag *multiboot2_info_get(MULTIBOOT2_TYPE type)
 {

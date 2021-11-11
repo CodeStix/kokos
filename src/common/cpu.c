@@ -1,11 +1,11 @@
-#include "cpu.h"
-#include "memory_physical.h"
-#include "paging.h"
-#include "util.h"
-#include "scheduler.h"
-#include "console.h"
-#include "interrupt.h"
-#include "../include/memory.h"
+#include "kokos/cpu.h"
+#include "kokos/memory_physical.h"
+#include "kokos/paging.h"
+#include "kokos/util.h"
+#include "kokos/scheduler.h"
+#include "kokos/console.h"
+#include "kokos/interrupt.h"
+#include "kokos/memory.h"
 
 inline struct CpuIdResult cpu_id(unsigned int function)
 {

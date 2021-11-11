@@ -1,6 +1,6 @@
-#include "../include/pci.h"
-#include "../include/console.h"
-#include "../include/memory.h"
+#include "kokos/pci.h"
+#include "kokos/console.h"
+#include "kokos/memory.h"
 
 // This function reads a part at offset from the pci header for bus, slot, function.
 extern unsigned int pci_config_read32(int bus, int slot, int function, int offset);

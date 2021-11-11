@@ -1,5 +1,5 @@
-#include "../include/console.h"
-#include "../include/util.h"
+#include "kokos/console.h"
+#include "kokos/util.h"
 
 volatile ConsoleVideoChar *video_memory = (ConsoleVideoChar *)0xb8000;
 

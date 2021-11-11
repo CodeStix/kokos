@@ -1,5 +1,5 @@
-#include "../include/util.h"
-#include "../include/memory.h"
+#include "kokos/util.h"
+#include "kokos/memory.h"
 
 // Simple memory allocation strategy:
 // Every allocated block of memory starts with a header (MemoryChunk) and is linked together to the next and previous blocks of memory

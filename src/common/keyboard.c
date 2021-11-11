@@ -1,11 +1,11 @@
-#include "../include/keyboard.h"
-#include "../include/console.h"
-#include "../include/port.h"
-#include "../include/cpu.h"
-#include "../include/interrupt.h"
-#include "../include/apic.h"
-#include "../include/serial.h"
-#include "../include/util.h"
+#include "kokos/keyboard.h"
+#include "kokos/console.h"
+#include "kokos/port.h"
+#include "kokos/cpu.h"
+#include "kokos/interrupt.h"
+#include "kokos/apic.h"
+#include "kokos/serial.h"
+#include "kokos/util.h"
 
 // This file contains the driver for the old Intel 8042 ps/2 controller, which is still emulated by most systems
 // https://wiki.osdev.org/%228042%22_PS/2_Controller

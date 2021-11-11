@@ -1,8 +1,8 @@
 #pragma once
-#include "apic.h"
-#include "interrupt.h"
-#include "paging.h"
-#include "scheduler.h"
+#include "kokos/apic.h"
+#include "kokos/interrupt.h"
+#include "kokos/paging.h"
+#include "kokos/scheduler.h"
 
 #define CPU_ID_FUNCTION_0 0
 #define CPU_ID_1GB_PAGES_EDX 1 << 26

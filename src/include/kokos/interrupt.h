@@ -1,5 +1,5 @@
 #pragma once
-#include "core.h"
+#include "kokos/core.h"
 
 #define INTERRUPT_TYPE_INTERRUPT 0b1110
 #define INTERRUPT_TYPE_TRAP 0b1111

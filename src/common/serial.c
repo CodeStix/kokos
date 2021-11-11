@@ -1,7 +1,7 @@
-#include "../include/port.h"
-#include "../include/serial.h"
-#include "../include/console.h"
-#include "../include/cpu.h"
+#include "kokos/port.h"
+#include "kokos/serial.h"
+#include "kokos/console.h"
+#include "kokos/cpu.h"
 
 int serial_available()
 {

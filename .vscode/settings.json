@@ -16,6 +16,8 @@
         "serial.h": "c",
         "interrupt.h": "c",
         "scheduler.h": "c",
-        "lock.h": "c"
+        "lock.h": "c",
+        "acpi.h": "c",
+        "core.h": "c"
     }
 }

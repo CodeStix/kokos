@@ -1,4 +1,4 @@
-
+#include "kokos/lock.h"
 
 int lock_try_acquire(int *lock_state)
 {

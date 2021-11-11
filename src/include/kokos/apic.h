@@ -1,5 +1,5 @@
 #pragma once
-#include "core.h"
+#include "kokos/core.h"
 
 // This structure defines all the APIC (advanced programmable interrupt controller) registers
 typedef struct

@@ -1,4 +1,4 @@
-#include "../include/util.h"
+#include "kokos/util.h"
 
 int string_length(const char *str)
 {

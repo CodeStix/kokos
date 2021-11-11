@@ -1,8 +1,8 @@
-#include "cpu.h"
-#include "console.h"
-#include "apic.h"
-#include "memory_physical.h"
-#include "interrupt.h"
+#include "kokos/cpu.h"
+#include "kokos/console.h"
+#include "kokos/apic.h"
+#include "kokos/memory_physical.h"
+#include "kokos/interrupt.h"
 
 extern unsigned short cpu_startup_increment;
 extern unsigned short cpu_startup_done;

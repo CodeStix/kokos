@@ -1,6 +1,6 @@
 #pragma once
-#include "interrupt.h"
-#include "paging.h"
+#include "kokos/interrupt.h"
+#include "kokos/paging.h"
 
 // See schedule.asm
 typedef struct SchedulerSavedRegisters

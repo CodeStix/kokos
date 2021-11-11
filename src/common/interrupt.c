@@ -1,8 +1,8 @@
-#include "interrupt.h"
-#include "console.h"
-#include "memory_physical.h"
-#include "cpu.h"
-#include "util.h"
+#include "kokos/interrupt.h"
+#include "kokos/console.h"
+#include "kokos/memory_physical.h"
+#include "kokos/cpu.h"
+#include "kokos/util.h"
 
 static char *exception_messages[] = {
     "divide by zero",

@@ -1,9 +1,9 @@
-#include "../include/paging.h"
-#include "../include/console.h"
-#include "../include/cpu.h"
-#include "../include/util.h"
-#include "../include/memory.h"
-#include "../include/memory_physical.h"
+#include "kokos/paging.h"
+#include "kokos/console.h"
+#include "kokos/cpu.h"
+#include "kokos/util.h"
+#include "kokos/memory.h"
+#include "kokos/memory_physical.h"
 
 static unsigned long used_virtual_pages = 0;
 static int hugepages_supported = 0;
