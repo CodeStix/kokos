@@ -2,6 +2,8 @@
 #include "memory_physical.h"
 #include "paging.h"
 #include "util.h"
+#include "scheduler.h"
+#include "console.h"
 #include "interrupt.h"
 #include "../include/memory.h"
 
@@ -75,7 +77,7 @@ inline Cpu *cpu_get_current()
 static int current_cpu_id = 0;
 extern unsigned long max_memory_address;
 
-Cpu *cpu_initialize()
+Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
 {
     // The FS segment register will point to cpu-specific information
     Cpu *cpu = memory_physical_allocate();
@@ -85,10 +87,10 @@ Cpu *cpu_initialize()
     cpu_write_msr(CPU_MSR_FS_BASE, cpu);
 
     // Set up this CPU's interrupt descriptor table (IDT)
-    // console_print("[cpu] set up IDT\n");
+    console_print("[cpu] set up IDT\n");
     interrupt_initialize();
 
-    // console_print("[cpu] set up dummy process\n");
+    console_print("[cpu] set up dummy process\n");
 
     // Create dummy process, required for paging to work
     SchedulerProcess *dummy_process = memory_physical_allocate();
@@ -153,6 +155,10 @@ Cpu *cpu_initialize()
 
     cpu->local_apic = paging_map_physical(local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
+    console_print("[cpu] apic id ");
+    console_print_u64(cpu->local_apic->id >> 24, 10);
+    console_new_line();
+
     // Enable APIC after interrupt vectors were intialized
     console_print("[cpu] enable local APIC\n");
     cpu->local_apic->spurious_interrupt_vector = 0x1FF;
@@ -160,7 +166,22 @@ Cpu *cpu_initialize()
     console_print("[cpu] set up scheduler\n");
     scheduler_initialize();
 
+    // Set new stack pointer
+    console_print("[cpu] allocating stack space\n");
+    void *stack = paging_map(4096 * 8, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+
+    // Because parameters can be passed on the stack, we must assure that the entrypoint parameter is available after a stack switch
+    // Store it in a register using the register keyword before the stack switch
+    register SchedulerEntrypoint entrypoint_saved = entrypoint;
+    asm volatile("mov rsp, %0" ::"rm"((unsigned char *)stack + 4096 * 8));
+
+    // Enable hardware interrupts
     asm volatile("sti");
 
-    return cpu;
+    entrypoint_saved();
+
+    while (1)
+    {
+        asm volatile("hlt");
+    }
 }

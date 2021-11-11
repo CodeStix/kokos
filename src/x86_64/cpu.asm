@@ -1,5 +1,4 @@
 global cpu_startup16
-global cpu_startup_increment
 global cpu_startup64_loop
 extern page_table_level4
 extern console_print
@@ -64,9 +63,6 @@ cpu_startup32:
 
 bits 64
 
-cpu_startup_increment:
-    dw 0
-
 idt32:
     dq 0
 .pointer:
@@ -124,5 +120,5 @@ gdt64:
 align 16
 
 stack_bottom:
-    resb 1024
+    resb 4096
 stack_top:

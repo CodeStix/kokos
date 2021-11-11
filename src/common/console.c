@@ -29,22 +29,24 @@ void console_new_line()
 {
     if (++y >= CONSOLE_BUFFER_HEIGHT)
     {
+        console_clear();
+
         // Shift entire buffer so the new line can fit on the screen
-        for (int iy = 0; iy < CONSOLE_BUFFER_HEIGHT - 1; iy++)
-        {
-            for (int ix = 0; ix < CONSOLE_BUFFER_WIDTH; ix++)
-            {
-                history[ix + iy * CONSOLE_BUFFER_WIDTH] = history[ix + (iy + 1) * CONSOLE_BUFFER_WIDTH];
-            }
-        }
+        // for (int iy = 0; iy < CONSOLE_BUFFER_HEIGHT - 1; iy++)
+        // {
+        //     for (int ix = 0; ix < CONSOLE_BUFFER_WIDTH; ix++)
+        //     {
+        //         history[ix + iy * CONSOLE_BUFFER_WIDTH] = history[ix + (iy + 1) * CONSOLE_BUFFER_WIDTH];
+        //     }
+        // }
 
         // Insert new empty line
-        y = CONSOLE_BUFFER_HEIGHT - 1;
-        for (int ix = 0; ix < CONSOLE_BUFFER_WIDTH; ix++)
-        {
-            history[ix + y * CONSOLE_BUFFER_WIDTH].charater = 0x0;
-            history[ix + y * CONSOLE_BUFFER_WIDTH].color = 0x0;
-        }
+        // y = CONSOLE_BUFFER_HEIGHT - 1;
+        // for (int ix = 0; ix < CONSOLE_BUFFER_WIDTH; ix++)
+        // {
+        //     history[ix + y * CONSOLE_BUFFER_WIDTH].charater = 0x0;
+        //     history[ix + y * CONSOLE_BUFFER_WIDTH].color = 0x0;
+        // }
     }
     x = 0;
 

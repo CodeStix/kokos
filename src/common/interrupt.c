@@ -238,13 +238,13 @@ void interrupt_initialize()
     Cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table = interrupt_descriptor_table;
 
-    console_print("[interrupt] create interrupt_descriptor_table at 0x");
-    console_print_u64(interrupt_descriptor_table, 16);
-    console_print(" for cpu ");
-    console_print_u64(cpu->id, 10);
-    console_print(" at 0x");
-    console_print_u64(cpu, 16);
-    console_new_line();
+    // console_print("[interrupt] create interrupt_descriptor_table at 0x");
+    // console_print_u64(interrupt_descriptor_table, 16);
+    // console_print(" for cpu ");
+    // console_print_u64(cpu->id, 10);
+    // console_print(" at 0x");
+    // console_print_u64(cpu, 16);
+    // console_new_line();
 
     if (!interrupt_descriptor_table)
     {

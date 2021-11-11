@@ -43,3 +43,5 @@ typedef struct SchedulerProcess
     // Saved registers during a task switch
     SchedulerSavedRegisters saved_registers;
 } SchedulerProcess;
+
+typedef void (*SchedulerEntrypoint)();

@@ -15,6 +15,7 @@
         "cpu.h": "c",
         "serial.h": "c",
         "interrupt.h": "c",
-        "scheduler.h": "c"
+        "scheduler.h": "c",
+        "lock.h": "c"
     }
 }

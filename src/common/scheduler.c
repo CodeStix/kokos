@@ -1,13 +1,28 @@
 #include "scheduler.h"
 #include "cpu.h"
+#include "console.h"
 #include "interrupt.h"
+#include "lock.h"
 
 // Defined in src/x86_64/schedule.asm, this assembly code calls scheduler_handle_interrupt below
 extern void(scheduler_interrupt)();
 
+unsigned int print_lock = 0;
+unsigned int counters[16] = {0};
+
 void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
 {
     Cpu *current_cpu = cpu_get_current();
+
+    // lock_acquire(&print_lock);
+
+    // unsigned int x, y;
+    // console_get_cursor(&x, &y);
+    // console_set_cursor(0, 24 - current_cpu->id);
+
+    // counters[current_cpu->id]++;
+
+    // console_print_u64(counters[current_cpu->id], 10);
 
     // console_print("[schedule] interrupt fired on cpu 0x");
     // console_print_u64(current_cpu->id, 16);
@@ -16,6 +31,9 @@ void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
     // console_print(":0x");
     // console_print_u64((unsigned long)stack->base.instruction_pointer, 16);
     // console_new_line();
+
+    // console_set_cursor(x, y);
+    // lock_release(&print_lock);
 
     // SchedulerProcess *next = current_cpu->current_process->next;
     // if (current_cpu->current_process != next)
@@ -46,16 +64,14 @@ void scheduler_initialize()
     Cpu *cpu = cpu_get_current();
 
     interrupt_register(0x23, scheduler_interrupt, INTERRUPT_TYPE_INTERRUPT);
-    cpu->local_apic->timer_initial_count = 100000;
+    cpu->local_apic->timer_initial_count = 1000;
     cpu->local_apic->timer_divide_config = 0b1010;
     cpu->local_apic->timer_vector = 0x23 | (1 << 17);
 }
 
-typedef void (*EntrypointFunction)();
-
 static unsigned long current_process_id = 0;
 
-void scheduler_execute(EntrypointFunction entrypoint)
+void scheduler_execute(SchedulerEntrypoint entrypoint)
 {
     Cpu *cpu = cpu_get_current();
 

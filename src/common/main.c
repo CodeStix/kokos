@@ -29,7 +29,8 @@
 
 extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup16)();
-unsigned short cpu_startup_increment;
+unsigned short cpu_startup_increment = 0;
+unsigned short cpu_startup_done = 0;
 
 unsigned long max_memory_address;
 IOApic *ioapic;
@@ -90,6 +91,11 @@ void console_debug(const char *str, unsigned long value, int base)
     console_print(str);
     console_print_u64(value, base);
     console_new_line();
+}
+
+void root_program()
+{
+    console_print("[cpu] root program start 2\n");
 }
 
 void kernel_main()
@@ -245,32 +251,32 @@ void kernel_main()
 
     console_print("[cpu] initialize cpu context\n");
 
-    cpu_initialize();
+    cpu_initialize(root_program);
 
-    for (int i = 0; i < 3; i++)
-    {
-        console_print("[paging] identity test: 0x");
-        int *virt = (int *)0x000fe0000 + i;
-        console_print_u64((unsigned long)virt, 16);
-        console_print(" -> 0x");
-        console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
-        console_print("\n");
-    }
+    // for (int i = 0; i < 3; i++)
+    // {
+    //     console_print("[paging] identity test: 0x");
+    //     int *virt = (int *)0x000fe0000 + i;
+    //     console_print_u64((unsigned long)virt, 16);
+    //     console_print(" -> 0x");
+    //     console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
+    //     console_print("\n");
+    // }
 
-    for (int i = 0; i < 4; i++)
-    {
-        console_print("[paging] allocate test: 0x");
-        int *virt = paging_map(1000 * i + 123, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
-        console_print_u64((unsigned long)virt, 16);
-        console_print(" -> 0x");
-        console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
-        console_print("\n");
+    // for (int i = 0; i < 4; i++)
+    // {
+    //     console_print("[paging] allocate test: 0x");
+    //     int *virt = paging_map(1000 * i + 123, PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    //     console_print_u64((unsigned long)virt, 16);
+    //     console_print(" -> 0x");
+    //     console_print_u64((unsigned long)paging_get_physical_address(virt), 16);
+    //     console_print("\n");
 
-        // paging_debug();
-        int a = *virt;
+    //     // paging_debug();
+    //     int a = *virt;
 
-        *virt = i * 500;
-    }
+    //     *virt = i * 500;
+    // }
 
     console_print("[acpi] find rsdt\n");
 
@@ -448,13 +454,15 @@ void kernel_main()
         return;
     }
 
+    console_clear();
+
     AcpiMadtEntry0LocalAPIC *current_processor = 0;
     while (current_processor = acpi_madt_iterate_type(madt, current_processor, ACPI_MADT_TYPE_LOCAL_APIC))
     {
-        console_print("[smp] starting processor ");
-        console_print_i32(current_processor->processor_id, 10);
-        console_print(" and wait");
-        console_new_line();
+        // console_print("[smp] starting processor ");
+        // console_print_i32(current_processor->processor_id, 10);
+        // console_print(" and wait");
+        // console_new_line();
 
         if (!(current_processor->flags & 0b1))
         {
@@ -493,13 +501,15 @@ void kernel_main()
             asm volatile("pause");
         }
 
-        console_print("[smp] startup ok\n");
-        console_new_line();
+        // console_print("[smp] startup ok\n");
+        // console_new_line();
     }
 
-    console_print("[smp] started all processors in a halted state\n");
+    cpu_startup_done = 1;
 
-    // asm volatile("sti");
+    // console_print("[smp] started all processors in a halted state\n");
+
+    asm volatile("sti");
 
     while (1)
     {
