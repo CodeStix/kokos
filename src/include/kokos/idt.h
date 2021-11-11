@@ -66,3 +66,6 @@ void idt_enable_interrupt(unsigned char vector);
 
 // Registers and enables an interrupt vector
 void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type);
+
+// Prints the current idt to the console
+void idt_debug();

@@ -331,3 +331,31 @@ void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGat
     descriptor->offset2 = ((unsigned long)function_pointer >> 16) & 0xFFFF;
     descriptor->offset3 = ((unsigned long)function_pointer >> 32) & 0xFFFFFFFF;
 }
+
+void idt_debug()
+{
+    Cpu *cpu = cpu_get_current();
+
+    for (int i = 0; i < 256; i++)
+    {
+        IdtEntry entry = cpu->interrupt_descriptor_table[i];
+        if (!entry.present)
+            continue;
+        console_print("[idt] entry #");
+        console_print_u64(i, 10);
+        console_print(" offset=0x");
+        console_print_u64((unsigned long)entry.offset1 | ((unsigned long)entry.offset2 << 16) | ((unsigned long)entry.offset3 << 32), 16);
+        console_print(" code_segment=");
+        console_print_u64(entry.code_segment, 10);
+        console_print(" type=0b");
+        console_print_u64(entry.gate_type, 2);
+        console_print(" level=");
+        console_print_u64(entry.privilege_level, 10);
+        if (entry.interrupt_stack_table_offset)
+        {
+            console_print(" ist=");
+            console_print_u64(entry.interrupt_stack_table_offset, 10);
+        }
+        console_new_line();
+    }
+}
