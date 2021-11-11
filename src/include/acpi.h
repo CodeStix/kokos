@@ -1,3 +1,6 @@
+#pragma once
+#include "core.h"
+
 // The signature that identifies the RSDP structure, ascii "RSD PTR " in a packed long
 #define ACPI_RSDTP_SIGNATURE 0x2052545020445352
 
@@ -22,8 +25,8 @@ typedef struct
     unsigned char checksum;
     char oem_id[6];
     unsigned char revision;
-    unsigned int address;            // Points to a AcpiRsdt structure using a 32 bit address
-} __attribute__((packed)) AcpiRsdtp; // Make sure the compiler does not put unused memory between fields
+    unsigned int address;     // Points to a AcpiRsdt structure using a 32 bit address
+} ATTRIBUTE_PACKED AcpiRsdtp; // Make sure the compiler does not put unused memory between fields
 
 typedef struct
 {
@@ -32,7 +35,7 @@ typedef struct
     unsigned long long address; // Points to a AcpiXsdt structure using a 64 bit address
     unsigned char checksum;
     unsigned char reserved[3];
-} __attribute__((packed)) AcpiXsdtp;
+} ATTRIBUTE_PACKED AcpiXsdtp;
 
 typedef struct
 {
@@ -56,21 +59,21 @@ typedef struct
     unsigned int oem_revision;
     unsigned int creator_id;
     unsigned int creator_revision;
-} __attribute__((packed)) AcpiSdt;
+} ATTRIBUTE_PACKED AcpiSdt;
 
 typedef struct
 {
     AcpiSdt base;
     // The length of this array can be calculated using acpi_rsdt_entry_count
     unsigned int table_addresses[];
-} __attribute__((packed)) AcpiRsdt;
+} ATTRIBUTE_PACKED AcpiRsdt;
 
 typedef struct
 {
     AcpiSdt base;
     // The length of this array can be calculated using acpi_xsdt_entry_count
     unsigned long long table_addresses[];
-} __attribute__((packed)) AcpiXsdt;
+} ATTRIBUTE_PACKED AcpiXsdt;
 
 // An address structure used in the AcpiFadt table below
 typedef struct
@@ -80,7 +83,7 @@ typedef struct
     unsigned char bit_offset;
     unsigned char access_size;
     unsigned long address;
-} __attribute__((packed)) AcpiFadtAddress;
+} ATTRIBUTE_PACKED AcpiFadtAddress;
 
 // The AcpiFadt is a ACPI table with signature 'FACP'
 // https://wiki.osdev.org/AcpiFadt
@@ -155,7 +158,7 @@ typedef struct
     AcpiFadtAddress extended_gpe0_block;
     // Only available on ACPI 2.0+
     AcpiFadtAddress extended_gpe1_block;
-} __attribute__((packed)) AcpiFadt;
+} ATTRIBUTE_PACKED AcpiFadt;
 
 typedef struct
 {
@@ -176,7 +179,7 @@ typedef struct
 {
     unsigned char type;
     unsigned char length;
-} __attribute__((packed)) AcpiMadtEntry;
+} ATTRIBUTE_PACKED AcpiMadtEntry;
 
 // The MADT ACPI table has signature 'APIC', it contains information about the different programmable interrupt controllers (PIC, APIC, IOAPIC) in the system
 // After this struct, a variable list of MADT entries are stored.
@@ -187,7 +190,7 @@ typedef struct
     AcpiSdt base;
     unsigned int local_apic_address;
     unsigned int flags;
-} __attribute__((packed)) AcpiMadt;
+} ATTRIBUTE_PACKED AcpiMadt;
 
 // AcpiMadt entry of type 0
 // This type represents a single physical processor and its local interrupt controller.
@@ -197,7 +200,7 @@ typedef struct
     unsigned char processor_id;
     unsigned char apic_id;
     unsigned int flags;
-} __attribute__((packed)) AcpiMadtEntry0LocalAPIC;
+} ATTRIBUTE_PACKED AcpiMadtEntry0LocalAPIC;
 
 // AcpiMadt entry of type 1
 // Represents an IO APIC
@@ -208,7 +211,7 @@ typedef struct
     unsigned char unused;
     unsigned int io_apic_address;
     unsigned int global_system_interrupt_base;
-} __attribute__((packed)) AcpiMadtEntry1IOAPIC;
+} ATTRIBUTE_PACKED AcpiMadtEntry1IOAPIC;
 
 // AcpiMadt entry of type 2
 // Represents a IO APIC source
@@ -219,7 +222,7 @@ typedef struct
     unsigned char irq_source;
     unsigned int global_system_interrupt;
     unsigned short flags;
-} __attribute__((packed)) AcpiMadtEntry2IOAPICSource;
+} ATTRIBUTE_PACKED AcpiMadtEntry2IOAPICSource;
 
 // AcpiMadt entry of type 3
 // Specifies which IO APIC interrupt inputs should be enabled as non-maskable
@@ -230,7 +233,7 @@ typedef struct
     unsigned char unused;
     unsigned short flags;
     unsigned int global_system_interrupt;
-} __attribute__((packed)) AcpiMadtEntry3IOAPICNonMaskable;
+} ATTRIBUTE_PACKED AcpiMadtEntry3IOAPICNonMaskable;
 
 // AcpiMadt entry of type 4
 typedef struct
@@ -240,7 +243,7 @@ typedef struct
     unsigned short flags;
     // Should be 0 to trigger LINT0 and 1 to trigger LINT1 on the processor's local APIC
     unsigned char local_interrupt_target;
-} __attribute__((packed)) AcpiMadtEntry4LocalAPICNonMaskable;
+} ATTRIBUTE_PACKED AcpiMadtEntry4LocalAPICNonMaskable;
 
 // AcpiMadt entry of type 5
 // Provides the 64 bit address of the local APIC, this one should be used instead of the AcpiMadt's local_apic_address
@@ -249,7 +252,7 @@ typedef struct
     AcpiMadtEntry base;
     unsigned short unused;
     unsigned long local_apic_address;
-} __attribute__((packed)) AcpiMadtEntry5LocalAPICAddressOverride;
+} ATTRIBUTE_PACKED AcpiMadtEntry5LocalAPICAddressOverride;
 
 // AcpiMadt entry of type 9
 // Same as type 0 but bigger
@@ -260,7 +263,7 @@ typedef struct
     unsigned int processor_id;
     unsigned int flags;
     unsigned int apic_id;
-} __attribute__((packed)) AcpiMadtEntry9LocalX2APIC;
+} ATTRIBUTE_PACKED AcpiMadtEntry9LocalX2APIC;
 
 // The following function iterates ram on a specific location looking for the RSDP structure. The RSDP starts with the string "RSD PTR " which is 0x2052545020445352 in reversed ascii (little endian)
 // When AcpiRsdtp.revision >= 2, you can cast it to AcpiXsdtp.

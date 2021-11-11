@@ -11,3 +11,6 @@
 
 // Align the variable to the next address divisible by (same as aligned to) x
 #define ATTRIBUTE_ALIGN(x) __attribute__((aligned(x)))
+
+// Tells the compiler that the following function is an interrupt handler
+#define ATTRIBUTE_INTERRUPT __attribute__((interrupt))

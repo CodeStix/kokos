@@ -1,4 +1,5 @@
 #pragma once
+#include "core.h"
 
 // http://nongnu.askapache.com/grub/phcoder/multiboot.pdf
 // https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html
@@ -25,13 +26,13 @@ typedef struct
 {
     unsigned int total_size;
     unsigned int unused;
-} __attribute__((packed)) Multiboot2Info;
+} ATTRIBUTE_PACKED Multiboot2Info;
 
 typedef struct
 {
     MULTIBOOT2_TYPE type;
     unsigned int size;
-} __attribute__((packed)) Multiboot2InfoTag;
+} ATTRIBUTE_PACKED Multiboot2InfoTag;
 
 typedef struct
 {
@@ -43,7 +44,7 @@ typedef struct
     unsigned char framebuffer_bits_per_pixel;
     unsigned char framebuffer_type;
     unsigned char unused;
-} __attribute__((packed)) Multiboot2InfoTagFrameBuffer;
+} ATTRIBUTE_PACKED Multiboot2InfoTagFrameBuffer;
 
 typedef struct
 {
@@ -52,7 +53,7 @@ typedef struct
     // Type = 1 means usable ram, 3 means ACPI, 5 means defective ram, other values reserved
     unsigned int type;
     unsigned int unused;
-} __attribute__((packed)) Multiboot2InfoTagMemoryMapEntry;
+} ATTRIBUTE_PACKED Multiboot2InfoTagMemoryMapEntry;
 
 typedef struct
 {
@@ -60,7 +61,7 @@ typedef struct
     unsigned int entry_size;
     unsigned int entry_version;
     Multiboot2InfoTagMemoryMapEntry entries[];
-} __attribute__((packed)) Multiboot2InfoTagMemoryMap;
+} ATTRIBUTE_PACKED Multiboot2InfoTagMemoryMap;
 
 // TODO create all multiboot2 structures
 

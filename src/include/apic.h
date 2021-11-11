@@ -164,7 +164,7 @@ typedef struct
     unsigned char mask : 1;
     unsigned long unused : 39;
     unsigned char destination : 8;
-} __attribute__((packed)) IOApicEntry;
+} ATTRIBUTE_PACKED IOApicEntry;
 
 unsigned char apic_io_get_id(IOApic *apic);
 unsigned char apic_io_get_version(IOApic *apic);

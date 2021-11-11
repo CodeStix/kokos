@@ -1,6 +1,6 @@
 #pragma once
+#include "core.h"
 
-#define ATTRIBUTE_INTERRUPT __attribute__((interrupt))
 #define INTERRUPT_TYPE_INTERRUPT 0b1110
 #define INTERRUPT_TYPE_TRAP 0b1111
 #define CODE_SEGMENT 8
@@ -33,14 +33,14 @@ typedef struct
     unsigned short offset2;
     unsigned int offset3;
     unsigned int unused;
-} __attribute__((packed)) InterruptDescriptor;
+} ATTRIBUTE_PACKED InterruptDescriptor;
 
 // This structure is used for the lidt instruction, which loads the interrupt descriptor table
 typedef struct
 {
     unsigned short limit;
     InterruptDescriptor *address;
-} __attribute__((packed)) InterruptDescriptorPointer;
+} ATTRIBUTE_PACKED InterruptDescriptorPointer;
 
 // This function must be called before calling any other interrupt functions. This function fills the IDT only for the current cpu.
 // memory_physical_initialize and cpu_initialize must be called first!!
