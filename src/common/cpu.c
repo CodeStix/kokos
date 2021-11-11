@@ -94,12 +94,6 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
     console_print("[cpu] set up IDT\n");
     idt_initialize();
 
-    asm volatile("int3");
-
-    while (1)
-    {
-    }
-
     console_print("[cpu] set up dummy process\n");
 
     // Create dummy process, required for paging to work

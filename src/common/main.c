@@ -149,15 +149,11 @@ void root_program()
     idt_debug();
     gdt_debug();
 
-    asm volatile("int3");
-    // console_clear();
-    // console_print("[cpu] root program start 2\n");
-
     // scheduler_execute(&test_program);
     // scheduler_execute(&test_program2);
     // scheduler_execute(&test_program3);
 
-    // console_print("[cpu] root program end\n");
+    console_print("[cpu] all programs started\n");
 }
 
 void kernel_main()

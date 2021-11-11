@@ -4,13 +4,13 @@
 #include "kokos/console.h"
 #include "kokos/memory.h"
 
-extern GdtEntry gdt64[];
-
-void gdt_debug(GdtEntry *gdt)
+void gdt_debug()
 {
+    Cpu *cpu = cpu_get_current();
+
     for (int i = 0; i < 6; i++)
     {
-        GdtEntry entry = gdt[i];
+        GdtEntry entry = cpu->global_descriptor_table[i];
         if (!entry.present)
             continue;
         console_print("[gdt] entry #");

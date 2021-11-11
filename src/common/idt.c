@@ -356,11 +356,8 @@ void idt_debug()
         console_print_u64(entry.gate_type, 2);
         console_print(" level=");
         console_print_u64(entry.privilege_level, 10);
-        if (entry.interrupt_stack)
-        {
-            console_print(" ist=");
-            console_print_u64(entry.interrupt_stack, 10);
-        }
+        console_print(" ist=");
+        console_print_u64(entry.interrupt_stack, 10);
         console_new_line();
     }
 }
