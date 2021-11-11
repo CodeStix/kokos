@@ -302,21 +302,20 @@ void interrupt_initialize()
 void interrupt_disable(unsigned char vector)
 {
     Cpu *cpu = cpu_get_current();
-    cpu->interrupt_descriptor_table[vector].type_attributes &= ~(1 << 7);
+    cpu->interrupt_descriptor_table[vector].present = 0;
 }
 
 void interrupt_enable(unsigned char vector)
 {
     Cpu *cpu = cpu_get_current();
-    cpu->interrupt_descriptor_table[vector].type_attributes |= (1 << 7);
+    cpu->interrupt_descriptor_table[vector].present = 1;
 }
 
 void interrupt_register(unsigned char vector, void *function_pointer, InterruptGateType interrupt_type)
 {
     Cpu *cpu = cpu_get_current();
-    MUST_BE(cpu != 0, "idt is not initialized.");
 
-    if (cpu->interrupt_descriptor_table[vector].type_attributes & (1 << 7))
+    if (cpu->interrupt_descriptor_table[vector].present)
     {
         console_print("warning: overwriting interrupt vector #");
         console_print_i32(vector, 10);
@@ -325,9 +324,10 @@ void interrupt_register(unsigned char vector, void *function_pointer, InterruptG
 
     InterruptDescriptor *descriptor = &cpu->interrupt_descriptor_table[vector];
     descriptor->offset1 = (unsigned long)function_pointer & 0xFFFF;
-    descriptor->selector = CODE_SEGMENT;
-    descriptor->interrupt_stack_table = 0;                           // Unused
-    descriptor->type_attributes = (interrupt_type & 0xF) | (1 << 7); // 1 << 7 enables interrupt
+    descriptor->code_segment = CODE_SEGMENT;
+    descriptor->interrupt_stack_table_offset = 0; // Unused
+    descriptor->gate_type = interrupt_type & 0xF;
+    descriptor->present = 1;
     descriptor->offset2 = ((unsigned long)function_pointer >> 16) & 0xFFFF;
     descriptor->offset3 = ((unsigned long)function_pointer >> 32) & 0xFFFFFFFF;
 }

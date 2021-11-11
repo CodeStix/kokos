@@ -1,6 +1,7 @@
 ; Give other files access to the 'start' address
 global start32
 global gdt64.code_segment
+global gdt64
 global page_table_level4
 global page_table_level3
 global memory_map

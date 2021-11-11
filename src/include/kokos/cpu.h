@@ -32,7 +32,7 @@ typedef struct Cpu
 } Cpu;
 
 // https://wiki.osdev.org/GDT
-typedef struct CpuGlobalDescriptor
+typedef struct GlobalDescriptor
 {
     union
     {
@@ -60,31 +60,7 @@ typedef struct CpuGlobalDescriptor
         };
         unsigned long as_long;
     };
-} ATTRIBUTE_PACKED CpuGlobalDescriptor;
-
-// https://wiki.osdev.org/IDT
-typedef struct CpuInterruptDescriptor
-{
-    union
-    {
-        struct
-        {
-            unsigned short offset1;
-            unsigned short code_segment;
-            unsigned char interrupt_stack_table_offset;
-
-            unsigned char gate_type : 4;
-            unsigned char unused1 : 1;
-            unsigned char privilege_level : 2;
-            unsigned char present : 1;
-
-            unsigned short offset2;
-            unsigned int offset3;
-            unsigned int unused;
-        };
-        unsigned long as_long[2];
-    };
-} ATTRIBUTE_PACKED CpuInterruptDescriptor;
+} ATTRIBUTE_PACKED GlobalDescriptor;
 
 typedef struct CpuTaskState
 {

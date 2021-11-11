@@ -29,6 +29,7 @@
 
 extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup16)();
+extern GlobalDescriptor gdt64[];
 unsigned short cpu_startup_increment = 0;
 unsigned short cpu_startup_done = 0;
 
@@ -143,16 +144,84 @@ void test_program3()
     }
 }
 
+void gdt_debug()
+{
+    for (int i = 0; i < 3; i++)
+    {
+        GlobalDescriptor entry = gdt64[i];
+        if (!entry.present)
+            continue;
+        console_print("[gdt] entry #");
+        console_print_u64(i, 10);
+        console_print(" base=0x");
+        console_print_u64(entry.base1 | (entry.base2 << 16) | (entry.base3 << 24), 16);
+        console_print(" limit=0x");
+        console_print_u64(entry.limit1 | (entry.limit2 << 16), 16);
+        console_print(" access=");
+        if (entry.present)
+            console_print("P");
+        console_print_u32((unsigned int)entry.privilege, 10);
+        if (entry.type)
+            console_print("T");
+        if (entry.executable)
+            console_print("E");
+        if (entry.direction_conforming)
+            console_print("D");
+        if (entry.read_write)
+            console_print("W");
+        if (entry.accessed)
+            console_print("a");
+        console_print(" flags=");
+        if (entry.granularity)
+            console_print("G");
+        if (entry.size)
+            console_print("S");
+        if (entry.long_mode)
+            console_print("L");
+        console_new_line();
+    }
+}
+
+void idt_debug()
+{
+    Cpu *cpu = cpu_get_current();
+
+    for (int i = 0; i < 256; i++)
+    {
+        InterruptDescriptor entry = cpu->interrupt_descriptor_table[i];
+        if (!entry.present)
+            continue;
+        console_print("[idt] entry #");
+        console_print_u64(i, 10);
+        console_print(" offset=0x");
+        console_print_u64((unsigned long)entry.offset1 | ((unsigned long)entry.offset2 << 16) | ((unsigned long)entry.offset3 << 32), 16);
+        console_print(" code_segment=");
+        console_print_u64(entry.code_segment, 10);
+        console_print(" type=0b");
+        console_print_u64(entry.gate_type, 2);
+        console_print(" level=");
+        console_print_u64(entry.privilege_level, 10);
+        if (entry.interrupt_stack_table_offset)
+        {
+            console_print(" ist=");
+            console_print_u64(entry.interrupt_stack_table_offset, 10);
+        }
+        console_new_line();
+    }
+}
+
 void root_program()
 {
-    console_clear();
-    console_print("[cpu] root program start 2\n");
+    gdt_debug();
+    idt_debug();
+    // console_clear();
+    // console_print("[cpu] root program start 2\n");
 
-    scheduler_execute(&test_program);
-    scheduler_execute(&test_program2);
-    scheduler_execute(&test_program3);
+    // scheduler_execute(&test_program);
+    // scheduler_execute(&test_program2);
+    // scheduler_execute(&test_program3);
 
-    console_print("[cpu] root program end\n");
+    // console_print("[cpu] root program end\n");
 }
 
 void kernel_main()

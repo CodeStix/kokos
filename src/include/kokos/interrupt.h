@@ -24,15 +24,27 @@ typedef struct
 
 // An entry in the IDT (interrupt descriptor table)
 // https://wiki.osdev.org/IDT
-typedef struct
+typedef struct InterruptDescriptor
 {
-    unsigned short offset1;
-    unsigned short selector;
-    unsigned char interrupt_stack_table;
-    unsigned char type_attributes;
-    unsigned short offset2;
-    unsigned int offset3;
-    unsigned int unused;
+    union
+    {
+        struct
+        {
+            unsigned short offset1;
+            unsigned short code_segment;
+            unsigned char interrupt_stack_table_offset;
+
+            unsigned char gate_type : 4;
+            unsigned char unused1 : 1;
+            unsigned char privilege_level : 2;
+            unsigned char present : 1;
+
+            unsigned short offset2;
+            unsigned int offset3;
+            unsigned int unused;
+        };
+        unsigned long as_long[2];
+    };
 } ATTRIBUTE_PACKED InterruptDescriptor;
 
 // This structure is used for the lidt instruction, which loads the interrupt descriptor table
