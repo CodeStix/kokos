@@ -93,9 +93,50 @@ void console_debug(const char *str, unsigned long value, int base)
     console_new_line();
 }
 
+void test_program()
+{
+    console_print("[program1] start\n");
+    unsigned long counter = 0;
+    while (1)
+    {
+        console_print("[program1] add counter = ");
+        console_print_u64(counter, 10);
+        console_new_line();
+        for (int i = 0; i < 10; i++)
+            cpu_wait_millisecond();
+        counter++;
+    }
+}
+
+void test_program2()
+{
+    console_print("[program2] start\n");
+    unsigned long counter = 1;
+    while (1)
+    {
+        console_print("[program2] mul counter = ");
+        console_print_u64(counter, 10);
+        console_new_line();
+        for (int i = 0; i < 10; i++)
+            cpu_wait_millisecond();
+
+        counter *= 2;
+        if (counter >= 1ul << 63)
+        {
+            counter = 1;
+        }
+    }
+}
+
 void root_program()
 {
+    console_clear();
     console_print("[cpu] root program start 2\n");
+
+    scheduler_execute(&test_program);
+    scheduler_execute(&test_program2);
+
+    console_print("[cpu] root program end\n");
 }
 
 void kernel_main()

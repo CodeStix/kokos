@@ -5,6 +5,7 @@ bits 64
 section .text
 
 scheduler_interrupt:
+    push rbp    ; rsp + 80
     push rax    ; rsp + 72
     push rbx    ; rsp + 64 Test: will be preserved?
     push rcx    ; rsp + 56
@@ -33,4 +34,5 @@ scheduler_interrupt:
     pop rcx
     pop rbx ; Test: will be preserved?
     pop rax
+    pop rbp
     iretq

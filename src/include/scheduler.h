@@ -15,6 +15,7 @@ typedef struct SchedulerSavedRegisters
     unsigned long rcx;
     unsigned long rbx;
     unsigned long rax;
+    unsigned long rbp;
 } SchedulerSavedRegisters;
 
 typedef struct
@@ -45,3 +46,7 @@ typedef struct SchedulerProcess
 } SchedulerProcess;
 
 typedef void (*SchedulerEntrypoint)();
+
+void scheduler_initialize();
+
+void scheduler_execute(SchedulerEntrypoint entrypoint);

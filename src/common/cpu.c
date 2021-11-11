@@ -95,7 +95,8 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
     // Create dummy process, required for paging to work
     SchedulerProcess *dummy_process = memory_physical_allocate();
     dummy_process->saved_instruction_pointer = 0;
-    dummy_process->id = 0;
+    dummy_process->saved_stack_pointer = (unsigned char *)memory_physical_allocate() + 4096;
+    dummy_process->id = 20;
     dummy_process->next = dummy_process;
     dummy_process->previous = dummy_process;
 
@@ -163,22 +164,25 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
     console_print("[cpu] enable local APIC\n");
     cpu->local_apic->spurious_interrupt_vector = 0x1FF;
 
-    console_print("[cpu] set up scheduler\n");
-    scheduler_initialize();
-
     // Set new stack pointer
     console_print("[cpu] allocating stack space\n");
-    void *stack = paging_map(4096 * 8, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+    void *stack = (unsigned char *)memory_physical_allocate() + 4096; // paging_map(4096 * 8, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
     // Because parameters can be passed on the stack, we must assure that the entrypoint parameter is available after a stack switch
     // Store it in a register using the register keyword before the stack switch
     register SchedulerEntrypoint entrypoint_saved = entrypoint;
-    asm volatile("mov rsp, %0" ::"rm"((unsigned char *)stack + 4096 * 8));
+    asm volatile("mov rsp, %0" ::"rm"(stack));
+
+    console_print("[cpu] set up scheduler\n");
+    scheduler_initialize();
 
     // Enable hardware interrupts
     asm volatile("sti");
 
-    entrypoint_saved();
+    if (entrypoint_saved)
+    {
+        entrypoint_saved();
+    }
 
     while (1)
     {
