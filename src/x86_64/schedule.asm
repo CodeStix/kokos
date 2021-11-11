@@ -18,9 +18,6 @@ scheduler_interrupt:
     push r11    ; rsp    
 
     mov rdi, rsp
-    ; Same as
-    ; mov rdi, rsp
-    ; add rdi, 8 * 10
     cld 
     call scheduler_handle_interrupt
 

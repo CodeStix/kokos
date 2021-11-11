@@ -100,15 +100,15 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
     dummy_process->next = dummy_process;
     dummy_process->previous = dummy_process;
 
-    dummy_process->paging_index.level4_table = memory_physical_allocate();
-    memory_zero(dummy_process->paging_index.level4_table, 4096);
-    dummy_process->paging_index.level3_table = 0;
-    dummy_process->paging_index.level2_table = 0;
-    dummy_process->paging_index.level1_table = 0;
-    dummy_process->paging_index.level4_index = 0;
-    dummy_process->paging_index.level3_index = 0;
-    dummy_process->paging_index.level2_index = 0;
-    dummy_process->paging_index.level1_index = 0;
+    dummy_process->paging_context.level4_table = memory_physical_allocate();
+    memory_zero(dummy_process->paging_context.level4_table, 4096);
+    dummy_process->paging_context.level3_table = 0;
+    dummy_process->paging_context.level2_table = 0;
+    dummy_process->paging_context.level1_table = 0;
+    dummy_process->paging_context.level4_index = 0;
+    dummy_process->paging_context.level3_index = 0;
+    dummy_process->paging_context.level2_index = 0;
+    dummy_process->paging_context.level1_index = 0;
     cpu->current_process = dummy_process;
 
     // Identity map whole RAM
@@ -117,7 +117,7 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
         console_print("[paging] identity map using 1GiB pages\n");
 
         // Identity map whole memory using 1GB huge pages
-        paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_memory_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+        paging_map_physical_at(&dummy_process->paging_context, 0, 0, ALIGN_TO_NEXT(max_memory_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
         console_print("[paging] done\n");
     }
@@ -126,7 +126,7 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
         console_print("[paging] identity map using 2MiB pages (1GiB pages not supported)\n");
 
         // Identity map whole memory using 2MB huge pages
-        paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_memory_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+        paging_map_physical_at(&dummy_process->paging_context, 0, 0, ALIGN_TO_NEXT(max_memory_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
         console_print("[paging] done\n");
     }
@@ -134,7 +134,7 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
     console_print("[cpu] setting new page table\n");
 
     // Tell cpu to use new page table
-    asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_index.level4_table)
+    asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_context.level4_table)
                  :);
 
     // Now that paging should work, map the local APIC
@@ -154,7 +154,7 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
     console_print_u64((unsigned long)local_apic, 16);
     console_new_line();
 
-    cpu->local_apic = paging_map_physical(local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    cpu->local_apic = paging_map_physical(&dummy_process->paging_context, local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     console_print("[cpu] apic id ");
     console_print_u64(cpu->local_apic->id >> 24, 10);

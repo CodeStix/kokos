@@ -102,7 +102,7 @@ void test_program()
         console_print("[program1] add counter = ");
         console_print_u64(counter, 10);
         console_new_line();
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 100; i++)
             cpu_wait_millisecond();
         counter++;
     }
@@ -117,7 +117,7 @@ void test_program2()
         console_print("[program2] mul counter = ");
         console_print_u64(counter, 10);
         console_new_line();
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 100; i++)
             cpu_wait_millisecond();
 
         counter *= 2;
@@ -128,6 +128,21 @@ void test_program2()
     }
 }
 
+void test_program3()
+{
+    console_print("[program3] start\n");
+    unsigned long counter = 0;
+    while (1)
+    {
+        console_print("[program3] add123 counter = ");
+        console_print_u64(counter, 10);
+        console_new_line();
+        for (int i = 0; i < 100; i++)
+            cpu_wait_millisecond();
+        counter += 123;
+    }
+}
+
 void root_program()
 {
     console_clear();
@@ -135,6 +150,7 @@ void root_program()
 
     scheduler_execute(&test_program);
     scheduler_execute(&test_program2);
+    scheduler_execute(&test_program3);
 
     console_print("[cpu] root program end\n");
 }
@@ -413,7 +429,9 @@ void kernel_main()
         return;
     }
 
-    Apic *apic = cpu_get_current()->local_apic;
+    Cpu *cpu = cpu_get_current();
+
+    Apic *apic = cpu->local_apic;
 
     console_print("[apic] mapped at 0x");
     console_print_u64((unsigned long)apic, 16);
@@ -423,7 +441,7 @@ void kernel_main()
     unsigned char apic_version = apic->version & 0xFF;
     unsigned char apic_max_entries = (apic->version >> 16) & 0xFF;
     console_print("[apic] physical address: 0x");
-    console_print_u64((unsigned long)paging_get_physical_address(apic), 16);
+    console_print_u64((unsigned long)paging_get_physical_address(&cpu->current_process->paging_context, apic), 16);
     console_new_line();
     console_print("[apic] virtual address: 0x");
     console_print_u64((unsigned long)apic, 16);
@@ -461,7 +479,7 @@ void kernel_main()
 
         if (ioapic == 0)
         {
-            ioapic = (IOApic *)paging_map_physical(current_ioapic->io_apic_address, sizeof(IOApic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+            ioapic = (IOApic *)paging_map_physical(&cpu->current_process->paging_context, current_ioapic->io_apic_address, sizeof(IOApic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
             console_print("[ioapic] version: ");
             console_print_u64(apic_io_get_version(ioapic), 10);

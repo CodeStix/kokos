@@ -33,7 +33,7 @@ typedef struct SchedulerProcess
     // Pointer to the previous process
     struct SchedulerProcess *previous;
     // Pointer to the pages table used by this process
-    PagingIndex paging_index;
+    PagingContext paging_context;
 
     // TODO move to thread struct
     unsigned long saved_rflags;

@@ -17,27 +17,6 @@ void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
 {
     Cpu *current_cpu = cpu_get_current();
 
-    // lock_acquire(&print_lock);
-
-    // unsigned int x, y;
-    // console_get_cursor(&x, &y);
-    // console_set_cursor(0, 24 - current_cpu->id);
-
-    // counters[current_cpu->id]++;
-
-    // console_print_u64(counters[current_cpu->id], 10);
-
-    // console_print("[schedule] interrupt fired on cpu 0x");
-    // console_print_u64(current_cpu->id, 16);
-    // console_print(" when at ");
-    // console_print_u64(stack->base.code_segment, 16);
-    // console_print(":0x");
-    // console_print_u64((unsigned long)stack->base.instruction_pointer, 16);
-    // console_new_line();
-
-    // console_set_cursor(x, y);
-    // lock_release(&print_lock);
-
     SchedulerProcess *next = current_cpu->current_process->next;
     if (current_cpu->current_process != next)
     {
@@ -60,15 +39,13 @@ void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
         current_cpu->current_process->saved_rflags = stack->base.rflags;
         current_cpu->current_process->saved_instruction_pointer = stack->base.instruction_pointer;
         current_cpu->current_process->saved_stack_pointer = stack->base.stack_pointer;
-        // current_cpu->current_process->saved_registers = stack->registers;
-        memory_copy(&stack->registers, &current_cpu->current_process->saved_registers, sizeof(SchedulerSavedRegisters));
+        current_cpu->current_process->saved_registers = stack->registers;
 
         // Restore next process registers
         stack->base.instruction_pointer = next->saved_instruction_pointer;
         stack->base.stack_pointer = next->saved_stack_pointer;
         stack->base.rflags = next->saved_rflags;
-        // stack->registers = next->saved_registers;
-        memory_copy(&next->saved_registers, &stack->registers, sizeof(SchedulerSavedRegisters));
+        stack->registers = next->saved_registers;
 
         current_cpu->current_process = next;
     }
@@ -88,7 +65,7 @@ void scheduler_initialize()
 
 static unsigned long current_process_id = 0;
 
-// extern unsigned long max_memory_address;
+extern unsigned long max_memory_address;
 
 void scheduler_execute(SchedulerEntrypoint entrypoint)
 {
@@ -98,35 +75,35 @@ void scheduler_execute(SchedulerEntrypoint entrypoint)
     process->id = current_process_id++;
 
     // Set up page table information
-    process->paging_index.level4_table = memory_physical_allocate();
-    memory_zero(process->paging_index.level4_table, 4096);
-    process->paging_index.level3_table = 0;
-    process->paging_index.level2_table = 0;
-    process->paging_index.level1_table = 0;
-    process->paging_index.level4_index = 0;
-    process->paging_index.level3_index = 0;
-    process->paging_index.level2_index = 0;
-    process->paging_index.level1_index = 0;
+    process->paging_context.level4_table = memory_physical_allocate();
+    memory_zero(process->paging_context.level4_table, 4096);
+    process->paging_context.level3_table = 0;
+    process->paging_context.level2_table = 0;
+    process->paging_context.level1_table = 0;
+    process->paging_context.level4_index = 0;
+    process->paging_context.level3_index = 0;
+    process->paging_context.level2_index = 0;
+    process->paging_context.level1_index = 0;
 
     // Identity map RAM
-    // if (paging_get_hugepages_supported())
-    // {
-    //     console_print("[paging] identity map using 1GiB pages\n");
+    if (paging_get_hugepages_supported())
+    {
+        console_print("[paging] identity map using 1GiB pages\n");
 
-    //     // Identity map whole memory using 1GB huge pages
-    //     paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_memory_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+        // Identity map whole memory using 1GB huge pages
+        paging_map_physical_at(&process->paging_context, 0, 0, ALIGN_TO_NEXT(max_memory_address, 0x40000000ul), PAGING_FLAG_1GB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
-    //     console_print("[paging] done\n");
-    // }
-    // else
-    // {
-    //     console_print("[paging] identity map using 2MiB pages (1GiB pages not supported)\n");
+        console_print("[paging] done\n");
+    }
+    else
+    {
+        console_print("[paging] identity map using 2MiB pages (1GiB pages not supported)\n");
 
-    //     // Identity map whole memory using 2MB huge pages
-    //     paging_map_physical_at(0, 0, ALIGN_TO_NEXT(max_memory_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+        // Identity map whole memory using 2MB huge pages
+        paging_map_physical_at(&process->paging_context, 0, 0, ALIGN_TO_NEXT(max_memory_address, 0x200000ul), PAGING_FLAG_2MB | PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
-    //     console_print("[paging] done\n");
-    // }
+        console_print("[paging] done\n");
+    }
 
     process->saved_rflags = 0b1001000110; // Default flags
     memory_zero(&process->saved_registers, sizeof(SchedulerSavedRegisters));
