@@ -9,6 +9,7 @@
 #include "kokos/multiboot2.h"
 #include "kokos/memory_physical.h"
 #include "kokos/idt.h"
+#include "kokos/gdt.h"
 #include "kokos/cpu.h"
 #include "kokos/port.h"
 #include "kokos/serial.h"
@@ -29,7 +30,6 @@
 
 extern volatile unsigned long page_table_level4[512];
 extern void(cpu_startup16)();
-extern GlobalDescriptor gdt64[];
 unsigned short cpu_startup_increment = 0;
 unsigned short cpu_startup_done = 0;
 
@@ -144,48 +144,10 @@ void test_program3()
     }
 }
 
-void gdt_debug()
-{
-    for (int i = 0; i < 3; i++)
-    {
-        GlobalDescriptor entry = gdt64[i];
-        if (!entry.present)
-            continue;
-        console_print("[gdt] entry #");
-        console_print_u64(i, 10);
-        console_print(" base=0x");
-        console_print_u64(entry.base1 | (entry.base2 << 16) | (entry.base3 << 24), 16);
-        console_print(" limit=0x");
-        console_print_u64(entry.limit1 | (entry.limit2 << 16), 16);
-        console_print(" access=");
-        if (entry.present)
-            console_print("P");
-        console_print_u32((unsigned int)entry.privilege, 10);
-        if (entry.type)
-            console_print("T");
-        if (entry.executable)
-            console_print("E");
-        if (entry.direction_conforming)
-            console_print("D");
-        if (entry.read_write)
-            console_print("W");
-        if (entry.accessed)
-            console_print("a");
-        console_print(" flags=");
-        if (entry.granularity)
-            console_print("G");
-        if (entry.size)
-            console_print("S");
-        if (entry.long_mode)
-            console_print("L");
-        console_new_line();
-    }
-}
-
 void root_program()
 {
-    gdt_debug();
     idt_debug();
+    gdt_debug();
 
     asm volatile("int3");
     // console_clear();

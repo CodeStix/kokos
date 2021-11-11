@@ -19,6 +19,7 @@
         "lock.h": "c",
         "acpi.h": "c",
         "core.h": "c",
-        "interrupt_descriptor.h": "c"
+        "interrupt_descriptor.h": "c",
+        "gdt.h": "c"
     }
 }
