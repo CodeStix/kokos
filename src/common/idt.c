@@ -1,4 +1,5 @@
 #include "kokos/idt.h"
+#include "kokos/gdt.h"
 #include "kokos/console.h"
 #include "kokos/memory_physical.h"
 #include "kokos/cpu.h"
@@ -68,6 +69,10 @@ ATTRIBUTE_INTERRUPT
 static void idt_handle_breakpoint(IdtFrame *frame)
 {
     console_print("interrupt: breakpoint!\n");
+    console_print("a pointer = 0x");
+    int a;
+    console_print_u64((unsigned long)&a, 16);
+    console_new_line();
 }
 
 ATTRIBUTE_INTERRUPT
@@ -324,8 +329,8 @@ void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGat
 
     IdtEntry *descriptor = &cpu->interrupt_descriptor_table[vector];
     descriptor->offset1 = (unsigned long)function_pointer & 0xFFFF;
-    descriptor->code_segment = CODE_SEGMENT;
-    descriptor->interrupt_stack_table_offset = 0; // Unused
+    descriptor->code_segment = GDT_KERNEL_CODE_SEGMENT;
+    descriptor->interrupt_stack = 1; // Use interrupt stack 1, see gdt_initialize
     descriptor->gate_type = interrupt_type & 0xF;
     descriptor->present = 1;
     descriptor->offset2 = ((unsigned long)function_pointer >> 16) & 0xFFFF;
@@ -351,10 +356,10 @@ void idt_debug()
         console_print_u64(entry.gate_type, 2);
         console_print(" level=");
         console_print_u64(entry.privilege_level, 10);
-        if (entry.interrupt_stack_table_offset)
+        if (entry.interrupt_stack)
         {
             console_print(" ist=");
-            console_print_u64(entry.interrupt_stack_table_offset, 10);
+            console_print_u64(entry.interrupt_stack, 10);
         }
         console_new_line();
     }

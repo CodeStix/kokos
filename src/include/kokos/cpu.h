@@ -1,6 +1,7 @@
 #pragma once
 #include "kokos/apic.h"
 #include "kokos/idt.h"
+#include "kokos/gdt.h"
 #include "kokos/paging.h"
 #include "kokos/scheduler.h"
 
@@ -27,6 +28,7 @@ typedef struct Cpu
     Apic *local_apic;
     // Pointer to its interrupt descriptor table
     IdtEntry *interrupt_descriptor_table;
+    GdtEntry *global_descriptor_table;
     // Pointer to currently running process
     SchedulerProcess *current_process;
 } Cpu;

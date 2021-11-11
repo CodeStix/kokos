@@ -3,7 +3,6 @@
 
 #define INTERRUPT_TYPE_INTERRUPT 0b1110
 #define INTERRUPT_TYPE_TRAP 0b1111
-#define CODE_SEGMENT 8
 
 typedef enum
 {
@@ -32,7 +31,7 @@ typedef struct IdtEntry
         {
             unsigned short offset1;
             unsigned short code_segment;
-            unsigned char interrupt_stack_table_offset;
+            unsigned char interrupt_stack;
 
             unsigned char gate_type : 4;
             unsigned char unused1 : 1;

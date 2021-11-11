@@ -162,6 +162,22 @@ gdt64:
     db 0b00100000 ; Flags & limit (long mode)
     db 0 ; Base
 
+.task_segment: equ $ - gdt64
+    dw 0 ; Limit
+    dw 0 ; Base
+    db 0 ; Base
+    db 0b10001001 ; Access byte (system segment, task state segment (type=1001), present)
+    db 0b00000000 ; Flags & limit 
+    db 0 ; Base
+    dw 0 ; Base
+    dw 0 ; Unused
+
+.user_code_segment:
+    dq 0  ; Currently unused
+
+.user_data_segment:
+    dq 0 ; Currently unused
+
 .pointer:
     dw $ - gdt64 - 1
     dq gdt64
