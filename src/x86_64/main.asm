@@ -146,7 +146,33 @@ section .rodata ; The rodata section contains initialized read only data
 gdt64:          
     dq 0                                                ; The 'null' entry, this is required
 .code_segment: equ $ - gdt64
-    dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53)    ; 64 bit kernel code entry, this code segment will be used when executing 64 bit kernel (privilege level 0) code.
+    dw 0 ; Limit
+    dw 0 ; Base
+    db 0 ; Base
+    db 0b10011010 ; Access byte (readable, code segment, executable, present)
+    db 0b00100000 ; Flags & limit (long mode)
+    db 0 ; Base
+
+.data_segment: equ $ - gdt64
+    dw 0 ; Limit
+    dw 0 ; Base
+    db 0 ; Base
+    db 0b10010010 ; Access byte (readable/writable, data segment, present)
+    db 0b00100000 ; Flags & limit (long mode)
+    db 0 ; Base
+
+.task_segment: equ $ - gdt64
+    dw tss64.size ; Limit
+    dw tss64 ; Base
+    db 0 ; Base
+    db 0b10000010 ; Access byte (readable/writable, task state segment, present)
+    db 0b00100000 ; Flags & limit (long mode)
+    db 0 ; Base
+
 .pointer:
     dw $ - gdt64 - 1
     dq gdt64
+
+tss64:
+
+.size: equ $ - tss64

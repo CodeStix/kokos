@@ -20,7 +20,7 @@ typedef struct CpuIdResult
 typedef struct Cpu
 {
     // Pointer to itself (trick for cpu_get_current and cpu_initialize)
-    struct Cpu *address;
+    Cpu *address;
     // The processor's id
     unsigned int id;
     // Pointer to this processor's local APIC
@@ -30,6 +30,61 @@ typedef struct Cpu
     // Pointer to currently running process
     SchedulerProcess *current_process;
 } Cpu;
+
+// https://wiki.osdev.org/GDT
+typedef struct CpuGlobalDescriptor
+{
+    union
+    {
+        struct
+        {
+            unsigned short limit1 : 16;
+            unsigned short base1 : 16;
+            unsigned char base2 : 8;
+
+            unsigned char accessed : 1;
+            unsigned char read_write : 1;
+            unsigned char direction_conforming : 1;
+            unsigned char executable : 1;
+            unsigned char type : 1;
+            unsigned char privilege : 2;
+            unsigned char present : 1;
+
+            unsigned char limit2 : 4;
+            unsigned char unused1 : 1;
+            unsigned char long_mode : 1;
+            unsigned char size : 1;
+            unsigned char granularity : 1;
+
+            unsigned char base3 : 8;
+        };
+        unsigned long as_long;
+    };
+} CpuGlobalDescriptor;
+
+// https://wiki.osdev.org/IDT
+typedef struct CpuInterruptDescriptor
+{
+    union
+    {
+        struct
+        {
+            unsigned short offset1;
+            unsigned short code_segment;
+            unsigned char interrupt_stack_table_offset;
+
+            unsigned char gate_type : 4;
+            unsigned char unused1 : 1;
+            unsigned char privilege_level : 2;
+            unsigned char present : 1;
+
+            unsigned short offset2;
+            unsigned int offset3;
+            unsigned int unused;
+        };
+        unsigned long as_long[2];
+    };
+} CpuInterruptDescriptor;
 
 // Performs an cpuid instruction and returns the result
 CpuIdResult cpu_id(unsigned int function);
