@@ -1,4 +1,4 @@
-# OS
+# The kokos operating system
 
 ## Dependencies
 
