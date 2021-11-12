@@ -146,12 +146,22 @@ void test_program3()
 
 void root_program()
 {
-    idt_debug();
+    // idt_debug();
     gdt_debug();
 
     // scheduler_execute(&test_program);
     // scheduler_execute(&test_program2);
     // scheduler_execute(&test_program3);
+
+    console_print("a pointer = 0x");
+    int a;
+    console_print_u64((unsigned long)&a, 16);
+    console_new_line();
+    asm volatile("int3");
+    asm volatile("int3");
+    asm volatile("int3");
+    asm volatile("int3");
+    asm volatile("int3");
 
     console_print("[cpu] all programs started\n");
 }
@@ -480,7 +490,7 @@ void kernel_main()
 
         if (ioapic == 0)
         {
-            ioapic = (IOApic *)paging_map_physical(&cpu->current_process->paging_context, current_ioapic->io_apic_address, sizeof(IOApic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+            ioapic = (IOApic *)paging_map_physical(&cpu->current_process->paging_context, (void *)current_ioapic->io_apic_address, sizeof(IOApic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
             console_print("[ioapic] version: ");
             console_print_u64(apic_io_get_version(ioapic), 10);

@@ -75,8 +75,12 @@ void gdt_initialize()
     GdtTaskState *task_state = memory_physical_allocate();
     memory_zero(task_state, sizeof(GdtTaskState));
 
-    // Allocate Interrupt Stack 1
-    task_state->ist1 = (unsigned long)memory_physical_allocate();
+    console_print("[gdt] allocate task_state at 0x");
+    console_print_u64((unsigned long)task_state, 16);
+    console_new_line();
+
+    // Allocate Interrupt Stack 1, +4096ul because the stack grows down
+    task_state->ist1 = (unsigned long)memory_physical_allocate() + 4096ul;
 
     console_print("[gdt] allocate ist1 at 0x");
     console_print_u64(task_state->ist1, 16);
@@ -101,7 +105,6 @@ void gdt_initialize()
     task_segment->base.limit2 = (limit >> 16) & 0xFFul;
     task_segment->base.base1 = base & 0xFFFFul;
     task_segment->base.base2 = (base >> 16) & 0xFFul;
-    task_segment->base.base3 = (base >> 24) & 0xFFul;
     task_segment->base.base3 = (base >> 24) & 0xFFul;
     task_segment->base4 = (base >> 32) & 0xFFFFFFFFul;
 
