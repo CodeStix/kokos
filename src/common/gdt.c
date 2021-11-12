@@ -49,17 +49,15 @@ void gdt_debug()
 
 void gdt_initialize()
 {
-    Cpu *cpu = cpu_get_current();
-
+    // Allocate space for the global descriptor table
     GdtEntry *global_descriptor_table = memory_physical_allocate();
     memory_zero(global_descriptor_table, 4096);
-    cpu->global_descriptor_table = global_descriptor_table;
 
     // Skip entry 0, it is considered a null entry
 
     // Create kernel code segment (at 0x8)
-    // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NCxbMTU0LDM1LDE1NCwzNV1d
-    GdtEntry *code_segment = (GdtEntry *)((unsigned char *)global_descriptor_table + 0x8);
+    // Format of this segment: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NCxbMTU0LDM1LDE1NCwzNV1d
+    GdtEntry *code_segment = (GdtEntry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_CODE_SEGMENT);
     code_segment->read_write = 1;
     code_segment->executable = 1;
     code_segment->non_system = 1;
@@ -67,8 +65,8 @@ void gdt_initialize()
     code_segment->long_mode = 1;
 
     // Create kernel data segment (at 0x10)
-    // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NSxbMTU1LDQ3LDE1NSw0N11d
-    GdtEntry *data_segment = (GdtEntry *)((unsigned char *)global_descriptor_table + 0x10);
+    // Format of this segment: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NSxbMTU1LDQ3LDE1NSw0N11d
+    GdtEntry *data_segment = (GdtEntry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_DATA_SEGMENT);
     data_segment->read_write = 1;
     data_segment->non_system = 1;
     data_segment->present = 1;
@@ -85,16 +83,19 @@ void gdt_initialize()
     console_new_line();
 
     // Create kernel task segment (at 0x18)
-    // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NyxbMTU3LDM5LDE1NywzOV1d
-    GdtSystemEntry *task_segment = (GdtSystemEntry *)((unsigned char *)global_descriptor_table + 0x18);
-    unsigned long base = (unsigned long)task_state;
-    unsigned int limit = sizeof(GdtTaskState);
-    // Set system segment type to 0b1001, which means task state segment
+    // Format of this segment: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NyxbMTU3LDM5LDE1NywzOV1d
+    GdtSystemEntry *task_segment = (GdtSystemEntry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_TASK_SEGMENT);
+
+    // When .non_system = 0, the following four fields decribe the type of system segment, a list of available system segments (in 64 bit mode) can be found here:
     // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NixbMTU2LDE1OCwxNTYsMTY4XV0=
+    // Set system segment type to 0b1001, which means task state segment
     task_segment->base.accessed = 1;
     task_segment->base.read_write = 0;
     task_segment->base.direction_conforming = 0;
     task_segment->base.executable = 1;
+
+    unsigned long base = (unsigned long)task_state;
+    unsigned int limit = sizeof(GdtTaskState);
     task_segment->base.present = 1;
     task_segment->base.limit1 = limit & 0xFFFFul;
     task_segment->base.limit2 = (limit >> 16) & 0xFFul;
@@ -104,15 +105,19 @@ void gdt_initialize()
     task_segment->base.base3 = (base >> 24) & 0xFFul;
     task_segment->base4 = (base >> 32) & 0xFFFFFFFFul;
 
+    // Load new global descriptor table, passing the GDT pointer
+    // Instruction info: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMy5wZGYiLDQ0MyxbNDQzLDQ2LDQ0Myw0Nl1d
     GdtPointer pointer = {
         .address = global_descriptor_table,
         .limit = sizeof(GdtEntry) * 3 + sizeof(GdtSystemEntry),
     };
-
-    gdt_debug(global_descriptor_table);
-
     asm volatile("lgdt [%0]" ::"rm"(pointer));
 
-    // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMy5wZGYiLDQ1MixbNDUyLDQ0LDQ1Miw0NF1d
+    // Load the task segment from the GDT at index 0x18
+    // Instruction info: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMy5wZGYiLDQ1MixbNDUyLDQ0LDQ1Miw0NF1d
     asm volatile("ltr %0" ::"r"(GDT_KERNEL_TASK_SEGMENT));
+
+    // Set current cpu information
+    Cpu *cpu = cpu_get_current();
+    cpu->global_descriptor_table = global_descriptor_table;
 }

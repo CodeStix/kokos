@@ -269,10 +269,7 @@ void idt_initialize()
     };
 
     // Load interrupt descriptor table
-    asm volatile("lidt [%0]"
-                 :
-                 : "m"(pointer)
-                 :);
+    asm volatile("lidt [%0]" ::"m"(pointer));
 
     idt_register_interrupt(0, idt_handle_divide_by_zero, INTERRUPT_GATE_TYPE_TRAP);
     idt_register_interrupt(1, idt_handle_debug, INTERRUPT_GATE_TYPE_TRAP);

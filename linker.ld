@@ -2,7 +2,7 @@ ENTRY(start32)
 
 SECTIONS 
 {
-    /* set current writing addresst o0x8000 (around 8kb) */
+    /* set current writing address to 0x8000 (around 8kb) */
     . = 0x8000;
 
     .lowtext : 
