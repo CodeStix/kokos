@@ -80,9 +80,9 @@ void gdt_initialize()
     console_print_u64((unsigned long)task_state, 16);
     console_new_line();
 
-    // Allocate interrupt stacks, add 4096 because the stack grows down
-    // Stack 1 is used for double faults
+    // Allocate interrupt stacks, add 4096 because the stack grows down, see IdtStack in gdt.h for more information
     task_state->ist1 = (unsigned long)memory_physical_allocate() + 4096ul;
+    task_state->ist2 = (unsigned long)memory_physical_allocate() + 4096ul;
 
     console_print("[gdt] allocate ist1 at 0x");
     console_print_u64(task_state->ist1, 16);

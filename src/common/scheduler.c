@@ -57,7 +57,7 @@ void scheduler_initialize()
 {
     Cpu *cpu = cpu_get_current();
 
-    idt_register_interrupt(0x23, scheduler_interrupt, INTERRUPT_TYPE_TRAP, 0);
+    idt_register_interrupt(0x23, scheduler_interrupt, IDT_GATE_TYPE_INTERRUPT, IDT_STACK_SCHEDULER);
     cpu->local_apic->timer_initial_count = 10000;
     cpu->local_apic->timer_divide_config = 0b1010;
     cpu->local_apic->timer_vector = 0x23 | (1 << 17);
