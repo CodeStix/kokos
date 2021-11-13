@@ -7,8 +7,7 @@ Persoonlijk ontwikkelingsplan (POP) - opvolgingsdocument Academiejaar 2021-2022
 
 Student:	Stijn Rogiest
 
-Mentor:		<in te vullen door de mentor>
-
+Mentor:	Johan Donné
 
 =================================================================================
 Beschrijving - datum 26/9/2021 
@@ -123,38 +122,29 @@ Zelfevaluatie:
 
 Top. Erg leuk om aan te werken (beetje verslavend ook).
 
-Feedback vanwege mentor - <datum van ingave>:
+Feedback vanwege mentor - 13/11/2021:
 (Laat steeds de feedback van de mentor in het opvolgingsdocument staan tot het einde
 van het opleidingsonderdeel.) 
 
-<Hier komt de feedback en opmerkingen vanwege de mentor>
+Stijn
+
+Leuk om te lezen dat het tot nu toe vlot loopt (en dat je ondertussen toch ook effectief in protected mode een het werk bent).
+Ik kan er zeker inkomen dat de informatie op osdev.org op zichzelf absoluut onvoldoende is om alles uit te werken. 
+De originele handleidingen van AMD kunnen dan zeker helpen (al zijn die dan weer heel uitgebreid).  Mogelijk kunnen ook de tegenhangers van Intel handig zijn: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
+
+Het viel me op dat je hierboven nog geen planning hebt opgenomen. Het lijkt me een goed idee om toch voor de resterende weken tot de evaluatie nog zo'n planning op te maken met daarin per week waaraan je denkt te zullen werken en wat je wilt realiseren.
+Daarmee zal je op voorhand een beter zicht krijgen op waar je met je eindresultaat zal uitkomen. 
+Uiteraard is het achteraf zeker geen probleem om zo'n planning aan te passen of bij te sturen.
+
+Zorg in je uiteindelijkprotfolio ook voor voldoende uitleg over wat de verschillend etechnishce onderdelen van je code en hoe ze samen passen (de commit messages zin daarvoor zeker niet voldoende ;)).
+
+Nog veel succes met het verder verloop!
+
+Johan
 
 
-=================================================================================
-(optioneel) Tweede tussenrapportering - <datum van ingave>
-=================================================================================
-
-Stand van zaken:
-
-<Geef hier een korte stand van zaken van wat er gebeurd is sinds vorige tussenrapportering: 
-Wat is er gerealiseerd? Wat moet nog gebeuren? Wat zijn bijzondere gebeurtenissen?
-Wat zijn problemen die je nog moet oplossen?>
-
-Reflectie:
-
-<Hoe werkt je aanpak? Waar had je achteraf gezien beter anders te werk kunnen gaan?
-Hebben vroegere bijsturingen het gewenste effect? Wat wil je nog wijzigen in je aanpak of planning?>
 
 
-Zelfevaluatie:
-
-<Geef jezelf hier een score (gaande van 'NVT' tot 'A') voor de items die in het 
-evaluatiedocument een witte achtergrond hebben>
-
-
-Feedback vanwege mentor - <datum van ingave>:
-
-<Hier komt de feedback en opmerkingen vanwege de mentor>
 
 
 
