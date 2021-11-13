@@ -1,4 +1,18 @@
-# The kokos operating system
+# The kokos operating system (VERY WIP)
+
+Striking features:
+- ✔ Readable code and developer experience, see below.
+- ✔ Kernel uses identity mapped memory, other programs virtual.
+- ⏳ Clean and easy to use API.
+- ⏳ Per application resource access management.
+- ⏳ Ring 3 only (even device drivers use ring 3).
+
+## Development tools
+
+The main goal of this operating system is simplicity and developer experience, custom built tools are used to increase productivity and enhance experience:
+
+- [Kokos documentor](https://kokos.run/) can be used to generate reference links to put in source code. For example, [this](https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDY0OF0=) immediately show interrupt controller information from the AMD manual.
+- More to come...
 
 ## Dependencies
 
