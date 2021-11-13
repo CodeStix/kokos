@@ -339,7 +339,7 @@ void idt_debug()
 {
     Cpu *cpu = cpu_get_current();
 
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i < 256 - 17; i++)
     {
         IdtEntry entry = cpu->interrupt_descriptor_table[i];
         if (!entry.present)

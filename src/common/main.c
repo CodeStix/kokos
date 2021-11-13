@@ -146,9 +146,6 @@ void test_program3()
 
 void root_program()
 {
-    idt_debug();
-    // gdt_debug();
-
     scheduler_execute(&test_program);
     scheduler_execute(&test_program2);
     scheduler_execute(&test_program3);
@@ -162,6 +159,8 @@ void root_program()
     asm volatile("int3");
     asm volatile("int3");
     asm volatile("int3");
+
+    idt_debug();
 
     console_print("[cpu] all programs started\n");
 }

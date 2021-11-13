@@ -2,6 +2,8 @@
 #include "kokos/idt.h"
 #include "kokos/paging.h"
 
+#define SCHEDULER_TIMER_INTERVAL 10000
+
 // See schedule.asm
 typedef struct SchedulerSavedRegisters
 {

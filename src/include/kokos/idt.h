@@ -5,15 +5,16 @@ typedef enum IdtGateType
 {
     // Same as trap, but clears the interrupt flag on entry (disables hardware interrupts), this disables nested interrupts.
     IDT_GATE_TYPE_INTERRUPT = 0b1110,
-    // A trap gate is recommended because this does not block other incoming hardware interrupts and allows nested interrupts. Make sure to not use IST != 0 when using traps because stacks will be overwritten by nested interrupts.
+    // A trap gate is recommended because this does not block other incoming hardware interrupts and allows nested interrupts.
     IDT_GATE_TYPE_TRAP = 0b1111,
 } IdtGateType;
 
 typedef enum IdtStack
 {
     // Interrupt stack 0 does not exist, it means don't use an interrupt stack, just use the current stack.
+    // When using an interrupt stack, the stack cannot be used by multiple interrupts at the same time because they would overwrite each others stacks.
     IDT_STACK_CURRENT = 0,
-    // Interrupt stack 1 is used for double faults, to make sure that a valid stack is available when this exception occures
+    // Interrupt stack 1 is used for double faults, to make sure that a valid stack is available when this exception occures.
     IDT_STACK_DOUBLE_FAULT = 1,
     // Stack 2 is used for scheduler interrupts and task switches
     // A seperate stack is used for the scheduler interrupt because, when a process must be switched, the stack pointer could be unique to that process's virtual address space.
