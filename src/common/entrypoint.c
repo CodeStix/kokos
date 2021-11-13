@@ -36,7 +36,7 @@ void cpu_entrypoint()
     // console_print("[cpu] enabling schedule interrupt\n");
 
     // asm volatile("cli");
-    // idt_register_interrupt(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
+    // idt_register_interrupt(0x22, interrupt_schedule, IDT_GATE_TYPE_INTERRUPT);
     // asm volatile("sti");
 
     // Enable local APIC by setting bit 8 in the spurious_interrupt_vector register

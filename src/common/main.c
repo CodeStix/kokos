@@ -146,8 +146,8 @@ void test_program3()
 
 void root_program()
 {
-    // idt_debug();
-    gdt_debug();
+    idt_debug();
+    // gdt_debug();
 
     // scheduler_execute(&test_program);
     // scheduler_execute(&test_program2);
@@ -594,12 +594,12 @@ void kernel_main()
     // console_print_u64((unsigned long)interrupt_schedule, 16);
     // console_new_line();
 
-    // idt_register_interrupt(0x22, interrupt_schedule, INTERRUPT_GATE_TYPE_INTERRUPT);
+    // idt_register_interrupt(0x22, interrupt_schedule, IDT_GATE_TYPE_INTERRUPT);
     // apic->timer_initial_count = 10000000;
     // apic->timer_divide_config = 0b1010;
     // apic->timer_vector = 0x22 | (1 << 17);
 
-    idt_register_interrupt(0x24, interrupt_handle_timer, INTERRUPT_GATE_TYPE_INTERRUPT);
+    idt_register_interrupt(0x24, interrupt_handle_timer, IDT_GATE_TYPE_INTERRUPT, 0);
     IOApicEntry timer_entry = {
         .vector = 0x24,
         .destination = apic->id >> 24,

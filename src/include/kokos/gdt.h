@@ -12,7 +12,6 @@
 // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NCxbMTU0LDI3LDE1NCwyN11d
 typedef struct GdtEntry
 {
-
     unsigned short limit1 : 16;
     unsigned short base1 : 16;
     unsigned char base2 : 8;

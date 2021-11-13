@@ -243,7 +243,7 @@ void keyboard_initialize()
     console_print("registering interrupt\n");
 
     asm volatile("cli");
-    idt_register_interrupt(0x23, interrupt_handle_keyboard, INTERRUPT_GATE_TYPE_INTERRUPT);
+    idt_register_interrupt(0x23, interrupt_handle_keyboard, IDT_GATE_TYPE_TRAP, 0);
     asm volatile("sti");
 
     Cpu *cpu = cpu_get_current();

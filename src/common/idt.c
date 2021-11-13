@@ -2,6 +2,7 @@
 #include "kokos/gdt.h"
 #include "kokos/console.h"
 #include "kokos/memory_physical.h"
+#include "kokos/memory.h"
 #include "kokos/cpu.h"
 #include "kokos/util.h"
 
@@ -240,8 +241,12 @@ void idt_initialize()
 
     // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
     IdtEntry *interrupt_descriptor_table = (IdtEntry *)memory_physical_allocate();
-    Cpu *cpu = cpu_get_current();
-    cpu->interrupt_descriptor_table = interrupt_descriptor_table;
+    if (!interrupt_descriptor_table)
+    {
+        console_print("fatal: could not initialize interrupt descriptor table");
+        asm volatile("hlt");
+    }
+    memory_zero(interrupt_descriptor_table, 4096);
 
     // console_print("[interrupt] create interrupt_descriptor_table at 0x");
     // console_print_u64(interrupt_descriptor_table, 16);
@@ -251,17 +256,8 @@ void idt_initialize()
     // console_print_u64(cpu, 16);
     // console_new_line();
 
-    if (!interrupt_descriptor_table)
-    {
-        console_print("fatal: could not initialize interrupt descriptor table");
-        asm volatile("hlt");
-    }
-
-    // Fill with zeroes
-    for (int i = 0; i < 4096 / sizeof(unsigned long); i++)
-    {
-        ((unsigned long *)interrupt_descriptor_table)[i] = 0ull;
-    }
+    Cpu *cpu = cpu_get_current();
+    cpu->interrupt_descriptor_table = interrupt_descriptor_table;
 
     IdtPointer pointer = {
         .address = interrupt_descriptor_table,
@@ -271,30 +267,35 @@ void idt_initialize()
     // Load interrupt descriptor table
     asm volatile("lidt [%0]" ::"m"(pointer));
 
-    idt_register_interrupt(0, idt_handle_divide_by_zero, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(1, idt_handle_debug, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(2, idt_handle_non_maskable_interrupt, INTERRUPT_GATE_TYPE_INTERRUPT); // This is recommended by Intel (Intel Volume 1 6.7.1)
-    idt_register_interrupt(3, idt_handle_breakpoint, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(4, idt_handle_overflow, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(5, idt_handle_bound_range, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(6, idt_handle_invalid_opcode, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(7, idt_handle_device_not_available, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(8, idt_handle_invalid_double_fault, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(9, idt_handle_segment_overrun, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(10, idt_handle_invalid_tss, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(11, idt_handle_segment_not_present, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(12, idt_handle_stack, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(13, idt_handle_general_protection, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(14, idt_handle_page_fault, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(16, idt_handle_float_exception, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(17, idt_handle_alignment_check, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(18, idt_handle_machine_check, INTERRUPT_GATE_TYPE_TRAP);
-    idt_register_interrupt(19, idt_handle_simd_float_exception, INTERRUPT_GATE_TYPE_TRAP);
+    idt_register_interrupt(0, idt_handle_divide_by_zero, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(1, idt_handle_debug, IDT_GATE_TYPE_TRAP, 0);
+    // It is recommended by intel to use an interrupt gate for non-maskable interrupts
+    // https://kokos.run/#WzAsIkludGVsVm9sdW1lM0EucGRmIiwxOTEsWzE5MSw3NSwxOTEsNzhdXQ==
+    idt_register_interrupt(2, idt_handle_non_maskable_interrupt, IDT_GATE_TYPE_INTERRUPT, 0);
+    idt_register_interrupt(3, idt_handle_breakpoint, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(4, idt_handle_overflow, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(5, idt_handle_bound_range, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(6, idt_handle_invalid_opcode, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(7, idt_handle_device_not_available, IDT_GATE_TYPE_TRAP, 0);
+    // Set IST (interrupt stack) for double fault to 1, meaning, use the first stack defined in the gdt task segment, see src/common/gdt.c
+    // A double fault is an exception that was thrown in a exception handler, a valid stack must be available to prevent system reset
+    // Using a interrupt gate because a trap gate allows for nested interrupts, which will all use stack 1 at the same time and corrupt it
+    idt_register_interrupt(8, idt_handle_invalid_double_fault, IDT_GATE_TYPE_INTERRUPT, 1);
+    idt_register_interrupt(9, idt_handle_segment_overrun, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(10, idt_handle_invalid_tss, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(11, idt_handle_segment_not_present, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(12, idt_handle_stack, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(13, idt_handle_general_protection, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(14, idt_handle_page_fault, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(16, idt_handle_float_exception, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(17, idt_handle_alignment_check, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(18, idt_handle_machine_check, IDT_GATE_TYPE_TRAP, 0);
+    idt_register_interrupt(19, idt_handle_simd_float_exception, IDT_GATE_TYPE_TRAP, 0);
 
     // The last 17 interrupts handle spurious interrupts (16 from the PIC and 1 from the APIC)
     for (int i = 0xff - 17; i <= 0xff; i++)
     {
-        idt_register_interrupt(i, idt_handle_spurious, INTERRUPT_GATE_TYPE_TRAP);
+        idt_register_interrupt(i, idt_handle_spurious, IDT_GATE_TYPE_TRAP, 0);
     }
 
     // Enable interrupts
@@ -313,7 +314,7 @@ void idt_enable_interrupt(unsigned char vector)
     cpu->interrupt_descriptor_table[vector].present = 1;
 }
 
-void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type)
+void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type, unsigned char ist)
 {
     Cpu *cpu = cpu_get_current();
 
@@ -327,7 +328,7 @@ void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGat
     IdtEntry *descriptor = &cpu->interrupt_descriptor_table[vector];
     descriptor->offset1 = (unsigned long)function_pointer & 0xFFFF;
     descriptor->code_segment = GDT_KERNEL_CODE_SEGMENT;
-    descriptor->interrupt_stack = 1; // Use interrupt stack 1, see gdt_initialize
+    descriptor->interrupt_stack = ist & 0b111;
     descriptor->gate_type = interrupt_type & 0xF;
     descriptor->present = 1;
     descriptor->offset2 = ((unsigned long)function_pointer >> 16) & 0xFFFF;

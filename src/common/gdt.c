@@ -72,6 +72,7 @@ void gdt_initialize()
     data_segment->present = 1;
     data_segment->long_mode = 1;
 
+    // Task state format: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDQyMCxbNDIwLDksNDIwLDldXQ==
     GdtTaskState *task_state = memory_physical_allocate();
     memory_zero(task_state, sizeof(GdtTaskState));
 
@@ -79,7 +80,8 @@ void gdt_initialize()
     console_print_u64((unsigned long)task_state, 16);
     console_new_line();
 
-    // Allocate Interrupt Stack 1, +4096ul because the stack grows down
+    // Allocate interrupt stacks, add 4096 because the stack grows down
+    // Stack 1 is used for double faults
     task_state->ist1 = (unsigned long)memory_physical_allocate() + 4096ul;
 
     console_print("[gdt] allocate ist1 at 0x");

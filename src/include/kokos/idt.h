@@ -6,8 +6,10 @@
 
 typedef enum
 {
-    INTERRUPT_GATE_TYPE_INTERRUPT = 0b1110,
-    INTERRUPT_GATE_TYPE_TRAP = 0b1111,
+    // Same as trap, but clears the interrupt flag on entry (disables hardware interrupts), this disables nested interrupts.
+    IDT_GATE_TYPE_INTERRUPT = 0b1110,
+    // A trap gate is recommended because this does not block other incoming hardware interrupts and allows nested interrupts. Make sure to not use IST != 0 when using traps because stacks will be overwritten by nested interrupts.
+    IDT_GATE_TYPE_TRAP = 0b1111,
 } IdtGateType;
 
 // This struct describes the format of the stack after an interrupt was fired. See AMD Volume 2 page 258.
@@ -64,7 +66,7 @@ void idt_disable_interrupt(unsigned char vector);
 void idt_enable_interrupt(unsigned char vector);
 
 // Registers and enables an interrupt vector
-void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type);
+void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type, unsigned char ist);
 
 // Prints the current idt to the console
 void idt_debug();
