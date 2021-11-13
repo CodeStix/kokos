@@ -75,6 +75,18 @@ inline Cpu *cpu_get_current()
     return cpu;
 }
 
+inline void cpu_panic(const char *message)
+{
+    asm volatile("cli");
+    console_print("[cpu] PANIC! ");
+    console_print(message);
+    console_new_line();
+    while (1)
+    {
+        asm volatile("hlt");
+    }
+}
+
 static int current_cpu_id = 0;
 extern unsigned long max_memory_address;
 
@@ -137,36 +149,40 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
 
     console_print("[cpu] setting new page table\n");
 
-    // Tell cpu to use new page table
-    asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_context.level4_table)
-                 :);
-
     // Now that paging should work, map the local APIC
     console_print("[cpu] mapping local APIC\n");
 
     unsigned long local_apic_info = cpu_read_msr(CPU_MSR_LOCAL_APIC);
-    Apic *local_apic = local_apic_info & 0x000ffffffffff000;
+    Apic *local_apic_physical = local_apic_info & 0x000ffffffffff000;
 
     // Check 11th bit to check if it is enabled
     if (!(local_apic_info & 0x800))
     {
-        console_print("[cpu] fatal: local apic not enabled, cannot enable\n");
+        cpu_panic("local apic not enabled, cannot enable\n");
         return;
     }
 
-    console_print("[cpu] local_apic = 0x");
-    console_print_u64((unsigned long)local_apic, 16);
+    cpu->local_apic_physical = local_apic_physical;
+    if (!paging_map_physical_at(&dummy_process->paging_context, local_apic_physical, CPU_APIC_ADDRESS, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ))
+    {
+        cpu_panic("could not map local apic");
+        return;
+    }
+
+    console_print("[cpu] local_apic_physical = 0x");
+    console_print_u64((unsigned long)local_apic_physical, 16);
     console_new_line();
 
-    cpu->local_apic = paging_map_physical(&dummy_process->paging_context, local_apic, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
-
+    // Tell cpu to use new page table
+    asm volatile("mov cr3, %0" ::"a"(cpu->current_process->paging_context.level4_table)
+                 :);
     console_print("[cpu] apic id ");
-    console_print_u64(cpu->local_apic->id >> 24, 10);
+    console_print_u64(CPU_APIC->id >> 24, 10);
     console_new_line();
 
     // Enable APIC after interrupt vectors were intialized
-    console_print("[cpu] enable local APIC\n");
-    cpu->local_apic->spurious_interrupt_vector = 0x1FF;
+    // console_print("[cpu] enable local APIC\n");
+    CPU_APIC->spurious_interrupt_vector = 0x1FF;
 
     // Set new stack pointer
     console_print("[cpu] allocating stack space\n");

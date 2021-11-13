@@ -16,8 +16,9 @@ unsigned int counters[16] = {0};
 void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
 {
     Cpu *current_cpu = cpu_get_current();
+
     // Allow more interrupts to be handled
-    current_cpu->local_apic->end_of_interrupt = 0;
+    CPU_APIC->end_of_interrupt = 0;
 
     SchedulerProcess *next = current_cpu->current_process->next;
     if (current_cpu->current_process != next)
@@ -49,11 +50,14 @@ void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
         stack->base.rflags = next->saved_rflags;
         stack->registers = next->saved_registers;
 
+        // Set new page table
+        asm volatile("mov cr3, %0" ::"a"(next->paging_context.level4_table));
+
         current_cpu->current_process = next;
     }
 
     // Restart timer
-    current_cpu->local_apic->timer_initial_count = SCHEDULER_TIMER_INTERVAL;
+    CPU_APIC->timer_initial_count = SCHEDULER_TIMER_INTERVAL;
 }
 
 void scheduler_initialize()
@@ -62,11 +66,11 @@ void scheduler_initialize()
 
     // Register the local APIC timer, see https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDY1NyxbNjU3LDMxLDY1NywzMV1d
     idt_register_interrupt(0x23, scheduler_interrupt, IDT_GATE_TYPE_TRAP, IDT_STACK_SCHEDULER);
-    cpu->local_apic->timer_initial_count = SCHEDULER_TIMER_INTERVAL;
+    CPU_APIC->timer_initial_count = SCHEDULER_TIMER_INTERVAL;
     // Use divisor 128
-    cpu->local_apic->timer_divide_config = 0b1010;
+    CPU_APIC->timer_divide_config = 0b1010;
     // Use one-shot mode, when an scheduler interrupt is done, it re-enables the one-shot mode.
-    cpu->local_apic->timer_vector = 0x23;
+    CPU_APIC->timer_vector = 0x23;
 }
 
 static unsigned long current_process_id = 0;
@@ -110,6 +114,9 @@ void scheduler_execute(SchedulerEntrypoint entrypoint)
 
         console_print("[paging] done\n");
     }
+
+    // Map the local apic at the fixed apic virtual address
+    paging_map_physical_at(&process->paging_context, cpu->local_apic_physical, CPU_APIC_ADDRESS, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     process->saved_rflags = 0b1001000110; // Default flags
     memory_zero(&process->saved_registers, sizeof(SchedulerSavedRegisters));

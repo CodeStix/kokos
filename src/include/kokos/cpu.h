@@ -13,6 +13,10 @@
 #define CPU_MSR_FS_BASE 0xC0000100
 #define CPU_MSR_GS_BASE 0xC0000101
 
+// The cpu APIC has a fixed virtual address
+#define CPU_APIC_ADDRESS (void *)0x8000000000ul
+#define CPU_APIC ((Apic *)CPU_APIC_ADDRESS)
+
 typedef struct CpuIdResult
 {
     unsigned int eax, ebx, ecx, edx;
@@ -24,8 +28,8 @@ typedef struct Cpu
     struct Cpu *address;
     // The processor's id
     unsigned int id;
-    // Pointer to this processor's local APIC
-    Apic *local_apic;
+    // Physical address of this cpu's local APIC
+    Apic *local_apic_physical;
     // Pointer to its interrupt descriptor table
     IdtEntry *interrupt_descriptor_table;
     GdtEntry *global_descriptor_table;
@@ -58,3 +62,5 @@ Cpu *cpu_get_current();
 // Initializes the current cpu info.
 // memory_physical_initialize and paging_initialize must be called first!
 Cpu *cpu_initialize(SchedulerEntrypoint entrypoint);
+
+void cpu_panic(const char *message);

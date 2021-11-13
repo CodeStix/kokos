@@ -67,7 +67,7 @@ void interrupt_handle_test(IdtFrame *frame)
     console_set_cursor(x, y);
 
     Cpu *cpu = cpu_get_current();
-    cpu->local_apic->end_of_interrupt = 0;
+    cpu->local_apic_physical->end_of_interrupt = 0;
 }
 
 ATTRIBUTE_INTERRUPT
@@ -84,7 +84,7 @@ void interrupt_handle_timer(IdtFrame *frame)
     // console_set_cursor(x, y);
 
     Cpu *cpu = cpu_get_current();
-    cpu->local_apic->end_of_interrupt = 0;
+    cpu->local_apic_physical->end_of_interrupt = 0;
 }
 
 void console_debug(const char *str, unsigned long value, int base)
@@ -150,6 +150,9 @@ void root_program()
     scheduler_execute(&test_program2);
     scheduler_execute(&test_program3);
 
+    idt_debug();
+    gdt_debug();
+
     console_print("a pointer = 0x");
     int a;
     console_print_u64((unsigned long)&a, 16);
@@ -159,8 +162,6 @@ void root_program()
     asm volatile("int3");
     asm volatile("int3");
     asm volatile("int3");
-
-    idt_debug();
 
     console_print("[cpu] all programs started\n");
 }
@@ -441,7 +442,7 @@ void kernel_main()
 
     Cpu *cpu = cpu_get_current();
 
-    Apic *apic = cpu->local_apic;
+    Apic *apic = cpu->local_apic_physical;
 
     console_print("[apic] mapped at 0x");
     console_print_u64((unsigned long)apic, 16);

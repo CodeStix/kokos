@@ -1,6 +1,7 @@
 #pragma once
 #include "kokos/idt.h"
 #include "kokos/paging.h"
+#include "kokos/apic.h"
 
 #define SCHEDULER_TIMER_INTERVAL 10000
 
@@ -36,6 +37,8 @@ typedef struct SchedulerProcess
     struct SchedulerProcess *previous;
     // Pointer to the pages table used by this process
     PagingContext paging_context;
+    // Virtual address to the local apic
+    Apic *local_apic;
 
     // TODO move to thread struct
     unsigned long saved_rflags;
