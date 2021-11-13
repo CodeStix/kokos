@@ -13,8 +13,9 @@
 #define CPU_MSR_FS_BASE 0xC0000100
 #define CPU_MSR_GS_BASE 0xC0000101
 
-// The cpu APIC has a fixed virtual address
-#define CPU_APIC_ADDRESS (void *)0x8000000000ul
+// The following statements define fixed virtual address structures/devices
+// Fixed virtual location of the apic
+#define CPU_APIC_ADDRESS 0x8000000000ul
 #define CPU_APIC ((Apic *)CPU_APIC_ADDRESS)
 
 typedef struct CpuIdResult

@@ -186,7 +186,7 @@ Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
 
     // Set new stack pointer
     console_print("[cpu] allocating stack space\n");
-    void *stack = (unsigned char *)memory_physical_allocate() + 4096; // paging_map(4096 * 8, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+    void *stack = (unsigned char *)paging_map(&dummy_process->paging_context, 4096ul * 8ul, PAGING_FLAG_READ | PAGING_FLAG_WRITE) + 4096ul * 8ul; // paging_map(4096 * 8, PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
     // Because parameters can be passed on the stack, we must assure that the entrypoint parameter is available after a stack switch
     // Store it in a register using the register keyword before the stack switch

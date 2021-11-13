@@ -97,6 +97,13 @@ void console_debug(const char *str, unsigned long value, int base)
 void test_program()
 {
     console_print("[program1] start\n");
+    // Cpu *cpu = cpu_get_current();
+    // paging_debug(&cpu->current_process->paging_context);
+
+    // while (1)
+    // {
+    // }
+
     unsigned long counter = 0;
     while (1)
     {
@@ -147,8 +154,8 @@ void test_program3()
 void root_program()
 {
     scheduler_execute(&test_program);
-    scheduler_execute(&test_program2);
-    scheduler_execute(&test_program3);
+    // scheduler_execute(&test_program2);
+    // scheduler_execute(&test_program3);
 
     idt_debug();
     gdt_debug();

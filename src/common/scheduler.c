@@ -65,6 +65,7 @@ void scheduler_initialize()
     Cpu *cpu = cpu_get_current();
 
     // Register the local APIC timer, see https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDY1NyxbNjU3LDMxLDY1NywzMV1d
+    // Not using interrupt gate, because hardware interrupts are still allowed while the cpu is switching threads
     idt_register_interrupt(0x23, scheduler_interrupt, IDT_GATE_TYPE_TRAP, IDT_STACK_SCHEDULER);
     CPU_APIC->timer_initial_count = SCHEDULER_TIMER_INTERVAL;
     // Use divisor 128
@@ -120,7 +121,7 @@ void scheduler_execute(SchedulerEntrypoint entrypoint)
 
     process->saved_rflags = 0b1001000110; // Default flags
     memory_zero(&process->saved_registers, sizeof(SchedulerSavedRegisters));
-    process->saved_stack_pointer = (unsigned char *)memory_physical_allocate() + 4096; //(unsigned char *)paging_map(4096 * 8, PAGING_FLAG_READ | PAGING_FLAG_WRITE) + 4096 * 8;
+    process->saved_stack_pointer = (unsigned char *)paging_map(&process->paging_context, 4096ul * 8ul, PAGING_FLAG_READ | PAGING_FLAG_WRITE | PAGING_FLAG_USER) + 4096ul * 8ul;
     process->saved_instruction_pointer = entrypoint;
 
     // Temporary disable scheduler interrupt
