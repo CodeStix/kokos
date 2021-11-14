@@ -20,6 +20,7 @@
         "acpi.h": "c",
         "core.h": "c",
         "interrupt_descriptor.h": "c",
-        "gdt.h": "c"
+        "gdt.h": "c",
+        "varargs.h": "c"
     }
 }

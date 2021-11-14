@@ -60,7 +60,7 @@ void serial_initialize()
 void serial_print_u32(unsigned int num, unsigned int base)
 {
     char dest[33];
-    convert_u32_string(dest, num, base);
+    string_from_u32(dest, num, base);
     serial_print(dest);
 }
 

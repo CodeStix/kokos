@@ -1,5 +1,6 @@
 #include "kokos/console.h"
 #include "kokos/util.h"
+#include <stdarg.h>
 
 volatile ConsoleVideoChar *video_memory = (ConsoleVideoChar *)0xb8000;
 
@@ -130,28 +131,28 @@ void console_print_length(const char *str, unsigned int length)
 void console_print_i32(int num, int base)
 {
     char dest[sizeof(int) * 8 + 1];
-    convert_i32_string(dest, num, base);
+    string_from_i32(dest, num, base);
     console_print(dest);
 }
 
 void console_print_u32(unsigned int num, int base)
 {
     char dest[sizeof(unsigned int) * 8 + 1];
-    convert_u32_string(dest, num, base);
+    string_from_u32(dest, num, base);
     console_print(dest);
 }
 
 void console_print_i64(long num, int base)
 {
     char dest[sizeof(long) * 8 + 1];
-    convert_i64_string(dest, num, base);
+    string_from_i64(dest, num, base);
     console_print(dest);
 }
 
 void console_print_u64(unsigned long num, int base)
 {
     char dest[sizeof(unsigned long) * 8 + 1];
-    convert_u64_string(dest, num, base);
+    string_from_u64(dest, num, base);
     console_print(dest);
 }
 
@@ -167,4 +168,14 @@ void console_scroll(int amount)
         scroll = CONSOLE_BUFFER_HEIGHT - 1;
     }
     console_update_screen();
+}
+
+void console_format(const char *format, ...)
+{
+    va_list l;
+    va_start(l, format);
+    char dest[256];
+    string_format_args(dest, format, l);
+    va_end(l);
+    console_print(dest);
 }

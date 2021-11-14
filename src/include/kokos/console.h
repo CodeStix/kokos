@@ -43,3 +43,11 @@ void console_print_u32(unsigned int num, int base);
 void console_print_i64(long num, int base);
 void console_print_u64(unsigned long num, int base);
 void console_scroll(int amount);
+
+// Prints to the console using a specific format.
+// Examples:
+//   console_format("the value is %i", 100);
+//   console_format("unsigned long value = %ul", 123ul);
+//   console_format("binary int = %bi", 7); // prints "binary int = 111"
+//   console_format("unsigned long hex = 0x%uhl", 17); // prints "unsigned long hex = 0x11"
+void console_format(const char *format, ...);
