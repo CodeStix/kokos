@@ -33,7 +33,7 @@ void paging_initialize()
 }
 
 // Updates the paging index so that it points to a spot where x sequential bytes of virtual memory can be allocated
-static int paging_index_find_spot(PagingContext *index, unsigned long bytes, unsigned long flags)
+static int paging_index_find_spot(struct paging_context *index, unsigned long bytes, unsigned long flags)
 {
     if (bytes <= 0)
     {
@@ -205,7 +205,7 @@ static unsigned long paging_convert_flags(unsigned short flags)
     return page_entry_flags;
 }
 
-static int paging_map_index_physical(void *physical_address, PagingContext *index, unsigned long bytes, unsigned short flags)
+static int paging_map_index_physical(void *physical_address, struct paging_context *index, unsigned long bytes, unsigned short flags)
 {
     if (bytes <= 0)
     {
@@ -387,7 +387,7 @@ static int paging_map_index_physical(void *physical_address, PagingContext *inde
 }
 
 // Begins to map x bytes at the current location where index points to, all the tables and indices should be filled in in index
-static int paging_map_index_current(PagingContext *context, unsigned long bytes, unsigned short flags)
+static int paging_map_index_current(struct paging_context *context, unsigned long bytes, unsigned short flags)
 {
     if (bytes <= 0)
     {
@@ -551,7 +551,7 @@ static int paging_map_index_current(PagingContext *context, unsigned long bytes,
     return 1;
 }
 
-static int paging_virtual_address_to_index(PagingContext *destination_context, void *virtual_address, unsigned long flags)
+static int paging_virtual_address_to_index(struct paging_context *destination_context, void *virtual_address, unsigned long flags)
 {
     destination_context->level4_index = ((unsigned long)virtual_address >> 39) & 0b111111111ul;
 
@@ -628,7 +628,7 @@ static int paging_virtual_address_to_index(PagingContext *destination_context, v
 //     return paging_map_index_physical(&cpu->current_process->paging_context, physical_address, bytes, flags);
 // }
 
-void *paging_map_physical(PagingContext *context, void *physical_address, unsigned long bytes, unsigned long flags)
+void *paging_map_physical(struct paging_context *context, void *physical_address, unsigned long bytes, unsigned long flags)
 {
     if (paging_index_find_spot(context, bytes, flags))
     {
@@ -655,7 +655,7 @@ void *paging_map_physical(PagingContext *context, void *physical_address, unsign
 //     return paging_map_index(&cpu->current_process->paging_context, bytes, flags);
 // }
 
-void *paging_map(PagingContext *context, unsigned long bytes, unsigned long flags)
+void *paging_map(struct paging_context *context, unsigned long bytes, unsigned long flags)
 {
     if (paging_index_find_spot(context, bytes, flags))
     {
@@ -682,9 +682,9 @@ void *paging_map(PagingContext *context, unsigned long bytes, unsigned long flag
 //     return paging_map_index_physical_at(&cpu->current_process->paging_context, physical_address, virtual_address, bytes, flags);
 // }
 
-void *paging_map_physical_at(PagingContext *context, void *physical_address, void *virtual_address, unsigned long bytes, unsigned long flags)
+void *paging_map_physical_at(struct paging_context *context, void *physical_address, void *virtual_address, unsigned long bytes, unsigned long flags)
 {
-    PagingContext new_index;
+    struct paging_context new_index;
     // A virtual address was given, only get the uppermost (level 4) page table from the current process
     new_index.level4_table = context->level4_table;
     if (paging_virtual_address_to_index(&new_index, virtual_address, flags))
@@ -710,9 +710,9 @@ void *paging_map_physical_at(PagingContext *context, void *physical_address, voi
 //     return paging_map_index_at(&cpu->current_process->paging_context, virtual_address, bytes, flags);
 // }
 
-void *paging_map_at(PagingContext *context, void *virtual_address, unsigned long bytes, unsigned long flags)
+void *paging_map_at(struct paging_context *context, void *virtual_address, unsigned long bytes, unsigned long flags)
 {
-    PagingContext new_index;
+    struct paging_context new_index;
     // A virtual address was given, only get the uppermost (level 4) page table from the current process
     new_index.level4_table = context->level4_table;
     if (paging_virtual_address_to_index(&new_index, virtual_address, flags))
@@ -732,7 +732,7 @@ void *paging_map_at(PagingContext *context, void *virtual_address, unsigned long
     }
 }
 
-int paging_unmap(PagingContext *context, void *virtual_address, unsigned long bytes)
+int paging_unmap(struct paging_context *context, void *virtual_address, unsigned long bytes)
 {
     unsigned long *level4_table = context->level4_table;
     unsigned int level4_index = ((unsigned long)virtual_address >> 39) & 0b111111111ul;
@@ -905,7 +905,7 @@ int paging_unmap(PagingContext *context, void *virtual_address, unsigned long by
     return 1;
 }
 
-void *paging_get_physical_address(PagingContext *context, void *virtual_address)
+void *paging_get_physical_address(struct paging_context *context, void *virtual_address)
 {
     unsigned long address = (unsigned long)virtual_address;
 
@@ -1009,7 +1009,7 @@ static void paging_debug_attributes(unsigned long entry)
         console_print_char('d');
 }
 
-void paging_debug(PagingContext *context)
+void paging_debug(struct paging_context *context)
 {
     console_print("level4 0x");
     console_print_u64(context->level4_table, 16);

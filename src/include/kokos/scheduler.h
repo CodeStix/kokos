@@ -36,7 +36,7 @@ struct scheduler_process
     // Pointer to the previous process
     struct scheduler_process *previous;
     // Pointer to the pages table used by this process
-    PagingContext paging_context;
+    struct paging_context paging_context;
     // Virtual address to the local apic
     struct apic *local_apic;
 

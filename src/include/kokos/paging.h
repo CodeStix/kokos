@@ -62,7 +62,7 @@
 #define PAGING_FLAG_REPLACE 0b1000000
 
 // Represents a location in the page structure
-typedef struct PagingContext
+struct paging_context
 {
     unsigned long *level4_table; // The uppermost level4 table
     unsigned long *level3_table; // The current level3 table selected by level4_table[level4_index]
@@ -72,29 +72,29 @@ typedef struct PagingContext
     unsigned short level3_index;
     unsigned short level2_index;
     unsigned short level1_index;
-} PagingContext;
+};
 
 // Sets up paging.
 // Physical memory allocation must be initialized first!
 void paging_initialize();
 
 // Returns the physical address for virtual address and returns 0 if the virtual address is not mapped
-void *paging_get_physical_address(PagingContext *context, void *virtual_address);
+void *paging_get_physical_address(struct paging_context *context, void *virtual_address);
 
 // Maps the specified physical memory to any available virtual memory
-void *paging_map_physical(PagingContext *context, void *physical_address, unsigned long bytes, unsigned long flags);
+void *paging_map_physical(struct paging_context *context, void *physical_address, unsigned long bytes, unsigned long flags);
 
 // Tries to map the specified physical memory to specific virtual memory
-void *paging_map_physical_at(PagingContext *context, void *physical_address, void *virtual_address, unsigned long bytes, unsigned long flags);
+void *paging_map_physical_at(struct paging_context *context, void *physical_address, void *virtual_address, unsigned long bytes, unsigned long flags);
 
 // Maps certain amount of available physical memory to any virtual memory
-void *paging_map(PagingContext *context, unsigned long bytes, unsigned long flags);
+void *paging_map(struct paging_context *context, unsigned long bytes, unsigned long flags);
 
 // Tries to map certain amount of available physical memory specific virtual memory
-void *paging_map_at(PagingContext *context, void *virtual_address, unsigned long bytes, unsigned long flags);
+void *paging_map_at(struct paging_context *context, void *virtual_address, unsigned long bytes, unsigned long flags);
 
 // Unmaps memory previously mapped memory using paging_map
-int paging_unmap(PagingContext *context, void *virtual_address, unsigned long bytes);
+int paging_unmap(struct paging_context *context, void *virtual_address, unsigned long bytes);
 
 // Returs the number of used virtual pages
 unsigned long paging_used_pages();
@@ -102,4 +102,4 @@ unsigned long paging_used_pages();
 // Returns non-zero number if huge pages (1GB pages) are supported
 int paging_get_hugepages_supported();
 
-void paging_debug(PagingContext *context);
+void paging_debug(struct paging_context *context);
