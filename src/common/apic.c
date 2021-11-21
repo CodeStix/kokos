@@ -60,7 +60,7 @@ void apic_disable_pic()
 
 int apic_check_supported()
 {
-    CpuIdResult result = cpu_id(0x1);
+    struct cpu_id_result result = cpu_id(0x1);
     // Test for bit 9 in the rdx register, which means that an apic is supported (AMD64 Volume 3 page 574)
     return result.edx & 0b100000000;
 }

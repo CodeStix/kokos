@@ -14,7 +14,7 @@ void cpu_entrypoint()
     // cpu_startup_increment = 1;
     // return;
 
-    // Cpu *cpu_info = cpu_initialize();
+    // struct cpu *cpu_info = cpu_initialize();
     // idt_initialize();
 
     cpu_wait_millisecond();

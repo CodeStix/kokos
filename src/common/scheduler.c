@@ -15,7 +15,7 @@ unsigned int counters[16] = {0};
 
 void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
 {
-    Cpu *current_cpu = cpu_get_current();
+    struct cpu *current_cpu = cpu_get_current();
 
     // Allow more interrupts to be handled
     CPU_APIC->end_of_interrupt = 0;
@@ -62,7 +62,7 @@ void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
 
 void scheduler_initialize()
 {
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
 
     // Register the local APIC timer, see https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDY1NyxbNjU3LDMxLDY1NywzMV1d
     // Not using interrupt gate, because hardware interrupts are still allowed while the cpu is switching threads
@@ -80,7 +80,7 @@ extern unsigned long max_memory_address;
 
 void scheduler_execute(SchedulerEntrypoint entrypoint)
 {
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
 
     SchedulerProcess *process = memory_physical_allocate();
     process->id = current_process_id++;

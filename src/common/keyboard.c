@@ -195,7 +195,7 @@ void interrupt_handle_keyboard(IdtFrame *frame)
         extended = 0;
     }
 
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
     cpu->local_apic_physical->end_of_interrupt = 0;
 }
 
@@ -246,7 +246,7 @@ void keyboard_initialize()
     idt_register_interrupt(0x23, interrupt_handle_keyboard, IDT_GATE_TYPE_TRAP, 0);
     asm volatile("sti");
 
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
 
     IOApicEntry entry = {
         .vector = 0x23,

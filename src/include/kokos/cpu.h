@@ -1,4 +1,5 @@
 #pragma once
+#include "kokos/core.h"
 #include "kokos/apic.h"
 #include "kokos/idt.h"
 #include "kokos/gdt.h"
@@ -18,15 +19,15 @@
 #define CPU_APIC_ADDRESS 0x8000000000ul
 #define CPU_APIC ((Apic *)CPU_APIC_ADDRESS)
 
-typedef struct CpuIdResult
+struct cpu_id_result
 {
     unsigned int eax, ebx, ecx, edx;
-} CpuIdResult;
+};
 
-typedef struct Cpu
+struct cpu
 {
     // Pointer to itself (trick for cpu_get_current and cpu_initialize)
-    struct Cpu *address;
+    struct cpu *address;
     // The processor's id
     unsigned int id;
     // Physical address of this cpu's local APIC
@@ -36,10 +37,10 @@ typedef struct Cpu
     GdtEntry *global_descriptor_table;
     // Pointer to currently running process
     SchedulerProcess *current_process;
-} Cpu;
+};
 
 // Performs an cpuid instruction and returns the result
-CpuIdResult cpu_id(unsigned int function);
+struct cpu_id_result cpu_id(unsigned int function);
 
 // Returns the cpu's time stamp counter
 unsigned long cpu_timestamp();
@@ -58,10 +59,10 @@ unsigned long cpu_write_msr(unsigned int register_index, unsigned long value);
 
 // Returns os-relevant information about the current cpu.
 // cpu_initialize must be called first!
-Cpu *cpu_get_current();
+struct cpu *cpu_get_current();
 
 // Initializes the current cpu info.
 // memory_physical_initialize and paging_initialize must be called first!
-Cpu *cpu_initialize(SchedulerEntrypoint entrypoint);
+struct cpu *cpu_initialize(SchedulerEntrypoint entrypoint);
 
 void cpu_panic(const char *message);

@@ -1,3 +1,4 @@
+#include "kokos/core.h"
 #include "kokos/cpu.h"
 #include "kokos/memory_physical.h"
 #include "kokos/paging.h"
@@ -8,9 +9,9 @@
 #include "kokos/gdt.h"
 #include "kokos/memory.h"
 
-inline struct CpuIdResult cpu_id(unsigned int function)
+inline struct cpu_id_result cpu_id(unsigned int function)
 {
-    struct CpuIdResult result;
+    struct cpu_id_result result;
     asm volatile("cpuid"
                  : "=a"(result.eax), "=b"(result.ebx), "=c"(result.ecx), "=d"(result.edx)
                  : "a"(function)
@@ -65,9 +66,9 @@ inline unsigned long cpu_write_msr(unsigned int register_index, unsigned long va
                  :);
 }
 
-inline Cpu *cpu_get_current()
+inline struct cpu *cpu_get_current()
 {
-    Cpu *cpu;
+    struct cpu *cpu;
 
     asm volatile("mov %0, [fs:0]"
                  : "=rm"(cpu)::);
@@ -90,10 +91,10 @@ inline void cpu_panic(const char *message)
 static int current_cpu_id = 0;
 extern unsigned long max_memory_address;
 
-Cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
+struct cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
 {
     // The FS segment register will point to cpu-specific information
-    Cpu *cpu = memory_physical_allocate();
+    struct cpu *cpu = memory_physical_allocate();
     cpu->address = cpu;
     cpu->id = current_cpu_id++;
     cpu->interrupt_descriptor_table = 0;

@@ -21,6 +21,7 @@
         "core.h": "c",
         "interrupt_descriptor.h": "c",
         "gdt.h": "c",
-        "varargs.h": "c"
+        "varargs.h": "c",
+        "stdbool.h": "c"
     }
 }

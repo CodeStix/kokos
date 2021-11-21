@@ -6,7 +6,7 @@
 
 void gdt_debug()
 {
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
 
     for (int i = 0; i < 6; i++)
     {
@@ -123,6 +123,6 @@ void gdt_initialize()
     asm volatile("ltr %0" ::"r"(GDT_KERNEL_TASK_SEGMENT));
 
     // Set current cpu information
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
     cpu->global_descriptor_table = global_descriptor_table;
 }

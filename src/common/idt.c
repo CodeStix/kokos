@@ -256,7 +256,7 @@ void idt_initialize()
     // console_print_u64(cpu, 16);
     // console_new_line();
 
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table = interrupt_descriptor_table;
 
     IdtPointer pointer = {
@@ -304,19 +304,19 @@ void idt_initialize()
 
 void idt_disable_interrupt(unsigned char vector)
 {
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table[vector].present = 0;
 }
 
 void idt_enable_interrupt(unsigned char vector)
 {
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table[vector].present = 1;
 }
 
 void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type, IdtStack ist)
 {
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
 
     if (cpu->interrupt_descriptor_table[vector].present)
     {
@@ -337,7 +337,7 @@ void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGat
 
 void idt_debug()
 {
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
 
     for (int i = 0; i < 256 - 17; i++)
     {

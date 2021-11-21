@@ -1,6 +1,16 @@
 #pragma once
 
 // This file contains declarations that are used all over kokos
+// typedef signed long long s64;
+// typedef signed int s32;
+// typedef signed short s16;
+// typedef signed char s8;
+// typedef unsigned long long unsigned long;
+// typedef unsigned int unsigned int;
+// typedef unsigned short u16;
+// typedef unsigned char u8;
+
+#define NULL (void *)0
 
 // This attribute is used when a function/struct should not be used anymore and could be removed in a future version, when used anyway, the compiler generates a warning
 #define ATTRIBUTE_DEPRECATED __attribute__((deprecated))

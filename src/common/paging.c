@@ -28,7 +28,7 @@ void paging_initialize()
 
     // Check if hugepages is supported using cpuid
     // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMy5wZGYiLDY1NCxbNjU0LDg0LDY1NCw4NF1d
-    CpuIdResult result = cpu_id(0x80000001);
+    struct cpu_id_result result = cpu_id(0x80000001);
     hugepages_supported = result.edx & CPU_ID_1GB_PAGES_EDX;
 }
 
@@ -624,7 +624,7 @@ static int paging_virtual_address_to_index(PagingContext *destination_context, v
 
 // void *paging_map_physical(void* physical_address, unsigned long bytes, unsigned long flags)
 // {
-//     Cpu *cpu = cpu_get_current();
+//     struct cpu *cpu = cpu_get_current();
 //     return paging_map_index_physical(&cpu->current_process->paging_context, physical_address, bytes, flags);
 // }
 
@@ -651,7 +651,7 @@ void *paging_map_physical(PagingContext *context, void *physical_address, unsign
 
 // void *paging_map(unsigned long bytes, unsigned long flags)
 // {
-//     Cpu *cpu = cpu_get_current();
+//     struct cpu *cpu = cpu_get_current();
 //     return paging_map_index(&cpu->current_process->paging_context, bytes, flags);
 // }
 
@@ -678,7 +678,7 @@ void *paging_map(PagingContext *context, unsigned long bytes, unsigned long flag
 
 // void *paging_map_physical_at(void *physical_address, void *virtual_address, unsigned long bytes, unsigned long flags)
 // {
-//     Cpu *cpu = cpu_get_current();
+//     struct cpu *cpu = cpu_get_current();
 //     return paging_map_index_physical_at(&cpu->current_process->paging_context, physical_address, virtual_address, bytes, flags);
 // }
 
@@ -706,7 +706,7 @@ void *paging_map_physical_at(PagingContext *context, void *physical_address, voi
 
 // void *paging_map_at(void *virtual_address, unsigned long bytes, unsigned long flags)
 // {
-//     Cpu *cpu = cpu_get_current();
+//     struct cpu *cpu = cpu_get_current();
 //     return paging_map_index_at(&cpu->current_process->paging_context, virtual_address, bytes, flags);
 // }
 

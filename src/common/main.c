@@ -66,7 +66,7 @@ void interrupt_handle_test(IdtFrame *frame)
     console_print_u64(counter++, 10);
     console_set_cursor(x, y);
 
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
     cpu->local_apic_physical->end_of_interrupt = 0;
 }
 
@@ -83,7 +83,7 @@ void interrupt_handle_timer(IdtFrame *frame)
     // console_print_char((counter2 & 0b111) < 4 ? '_' : ' ');
     // console_set_cursor(x, y);
 
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
     cpu->local_apic_physical->end_of_interrupt = 0;
 }
 
@@ -97,7 +97,7 @@ void console_debug(const char *str, unsigned long value, int base)
 void test_program()
 {
     console_print("[program1] start\n");
-    // Cpu *cpu = cpu_get_current();
+    // struct cpu *cpu = cpu_get_current();
     // paging_debug(&cpu->current_process->paging_context);
 
     // while (1)
@@ -308,7 +308,7 @@ void kernel_main()
     }
 
     // Get CPU manufacturer https://kokos.run/#WzAsIkludGVsVm9sdW1lMkEucGRmIiwyOTIsWzI5MiwxOCwyOTIsMThdXQ==
-    CpuIdResult cpu_name = cpu_id(0x0);
+    struct cpu_id_result cpu_name = cpu_id(0x0);
     console_print("[cpu] cpu manufacturer ");
     console_print_length(&cpu_name.ebx, 4);
     console_print_length(&cpu_name.edx, 4);
@@ -448,7 +448,7 @@ void kernel_main()
         return;
     }
 
-    Cpu *cpu = cpu_get_current();
+    struct cpu *cpu = cpu_get_current();
 
     Apic *apic = cpu->local_apic_physical;
 
