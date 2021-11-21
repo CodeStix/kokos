@@ -43,7 +43,7 @@ static char *exception_messages[] = {
 
 // https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html#x86-Function-Attributes
 ATTRIBUTE_INTERRUPT
-static void idt_handle_divide_by_zero(IdtFrame *frame)
+static void idt_handle_divide_by_zero(struct idt_stack_frame *frame)
 {
     console_print("interrupt: divide by zero!\n");
 
@@ -52,13 +52,13 @@ static void idt_handle_divide_by_zero(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_debug(IdtFrame *frame)
+static void idt_handle_debug(struct idt_stack_frame *frame)
 {
     console_print("interrupt: debug!\n");
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_non_maskable_interrupt(IdtFrame *frame)
+static void idt_handle_non_maskable_interrupt(struct idt_stack_frame *frame)
 {
     console_print("interrupt: non maskable!\n");
 
@@ -67,7 +67,7 @@ static void idt_handle_non_maskable_interrupt(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_breakpoint(IdtFrame *frame)
+static void idt_handle_breakpoint(struct idt_stack_frame *frame)
 {
     console_print("interrupt: breakpoint!\n");
     console_print("a pointer = 0x");
@@ -77,7 +77,7 @@ static void idt_handle_breakpoint(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_overflow(IdtFrame *frame)
+static void idt_handle_overflow(struct idt_stack_frame *frame)
 {
     console_print("interrupt: overflow!\n");
 
@@ -86,7 +86,7 @@ static void idt_handle_overflow(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_bound_range(IdtFrame *frame)
+static void idt_handle_bound_range(struct idt_stack_frame *frame)
 {
     console_print("interrupt: bound range!\n");
 
@@ -95,7 +95,7 @@ static void idt_handle_bound_range(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_invalid_opcode(IdtFrame *frame)
+static void idt_handle_invalid_opcode(struct idt_stack_frame *frame)
 {
     console_print("interrupt: invalid opcode! at 0x\n");
     console_print_u64(frame->instruction_pointer, 16);
@@ -106,7 +106,7 @@ static void idt_handle_invalid_opcode(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_device_not_available(IdtFrame *frame)
+static void idt_handle_device_not_available(struct idt_stack_frame *frame)
 {
     console_print("interrupt: device not available!\n");
 
@@ -115,7 +115,7 @@ static void idt_handle_device_not_available(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_invalid_double_fault(IdtFrame *frame, unsigned long error_code)
+static void idt_handle_invalid_double_fault(struct idt_stack_frame *frame, unsigned long error_code)
 {
     console_print("interrupt: double fault!\n");
 
@@ -124,7 +124,7 @@ static void idt_handle_invalid_double_fault(IdtFrame *frame, unsigned long error
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_segment_overrun(IdtFrame *frame)
+static void idt_handle_segment_overrun(struct idt_stack_frame *frame)
 {
     console_print("interrupt: segment overrun!\n");
 
@@ -133,7 +133,7 @@ static void idt_handle_segment_overrun(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_invalid_tss(IdtFrame *frame, unsigned long error_code)
+static void idt_handle_invalid_tss(struct idt_stack_frame *frame, unsigned long error_code)
 {
     console_print("interrupt: invalid tss!\n");
 
@@ -142,7 +142,7 @@ static void idt_handle_invalid_tss(IdtFrame *frame, unsigned long error_code)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_segment_not_present(IdtFrame *frame, unsigned long error_code)
+static void idt_handle_segment_not_present(struct idt_stack_frame *frame, unsigned long error_code)
 {
     console_print("interrupt: segment not present!\n");
 
@@ -151,7 +151,7 @@ static void idt_handle_segment_not_present(IdtFrame *frame, unsigned long error_
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_stack(IdtFrame *frame, unsigned long error_code)
+static void idt_handle_stack(struct idt_stack_frame *frame, unsigned long error_code)
 {
     console_print("interrupt: stack!\n");
 
@@ -160,7 +160,7 @@ static void idt_handle_stack(IdtFrame *frame, unsigned long error_code)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_general_protection(IdtFrame *frame, unsigned long error_code)
+static void idt_handle_general_protection(struct idt_stack_frame *frame, unsigned long error_code)
 {
     console_print("interrupt: general protection!\n");
 
@@ -169,7 +169,7 @@ static void idt_handle_general_protection(IdtFrame *frame, unsigned long error_c
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_page_fault(IdtFrame *frame, unsigned long error_code)
+static void idt_handle_page_fault(struct idt_stack_frame *frame, unsigned long error_code)
 {
     // When a page fault happens, the address that was tried to be accessed, is in control register 2 (cr2). (AMD Volume 2 8.2.15)
     unsigned long fault_address;
@@ -192,7 +192,7 @@ static void idt_handle_page_fault(IdtFrame *frame, unsigned long error_code)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_float_exception(IdtFrame *frame)
+static void idt_handle_float_exception(struct idt_stack_frame *frame)
 {
     console_print("interrupt: floating-point exception!\n");
 
@@ -201,7 +201,7 @@ static void idt_handle_float_exception(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_alignment_check(IdtFrame *frame, unsigned long error_code)
+static void idt_handle_alignment_check(struct idt_stack_frame *frame, unsigned long error_code)
 {
     console_print("interrupt: alignment check!\n");
 
@@ -210,7 +210,7 @@ static void idt_handle_alignment_check(IdtFrame *frame, unsigned long error_code
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_machine_check(IdtFrame *frame)
+static void idt_handle_machine_check(struct idt_stack_frame *frame)
 {
     console_print("interrupt: machine check!\n");
 
@@ -219,7 +219,7 @@ static void idt_handle_machine_check(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_simd_float_exception(IdtFrame *frame)
+static void idt_handle_simd_float_exception(struct idt_stack_frame *frame)
 {
     console_print("interrupt: simd floating-point exception!\n");
 
@@ -228,7 +228,7 @@ static void idt_handle_simd_float_exception(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-static void idt_handle_spurious(IdtFrame *frame)
+static void idt_handle_spurious(struct idt_stack_frame *frame)
 {
     // console_print("interrupt: spurious\n");
     // console_new_line();
@@ -240,7 +240,7 @@ void idt_initialize()
     // asm volatile("cli");
 
     // The interrupt descriptor table just fits in a single page (16 bytes interrupt descriptor * 256 entries)
-    IdtEntry *interrupt_descriptor_table = (IdtEntry *)memory_physical_allocate();
+    struct idt_entry *interrupt_descriptor_table = (struct idt_entry *)memory_physical_allocate();
     if (!interrupt_descriptor_table)
     {
         console_print("fatal: could not initialize interrupt descriptor table");
@@ -259,7 +259,7 @@ void idt_initialize()
     struct cpu *cpu = cpu_get_current();
     cpu->interrupt_descriptor_table = interrupt_descriptor_table;
 
-    IdtPointer pointer = {
+    struct idt_pointer pointer = {
         .address = interrupt_descriptor_table,
         .limit = 256 * 16 - 1,
     };
@@ -267,30 +267,30 @@ void idt_initialize()
     // Load interrupt descriptor table
     asm volatile("lidt [%0]" ::"m"(pointer));
 
-    idt_register_interrupt(0, idt_handle_divide_by_zero, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(1, idt_handle_debug, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
+    idt_register_interrupt(0, idt_handle_divide_by_zero, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(1, idt_handle_debug, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
     // It is recommended by intel to use an interrupt gate for non-maskable interrupts
     // https://kokos.run/#WzAsIkludGVsVm9sdW1lM0EucGRmIiwxOTEsWzE5MSw3NSwxOTEsNzhdXQ==
-    idt_register_interrupt(2, idt_handle_non_maskable_interrupt, IDT_GATE_TYPE_INTERRUPT, IDT_STACK_CURRENT);
-    idt_register_interrupt(3, idt_handle_breakpoint, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(4, idt_handle_overflow, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(5, idt_handle_bound_range, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(6, idt_handle_invalid_opcode, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(7, idt_handle_device_not_available, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
+    idt_register_interrupt(2, idt_handle_non_maskable_interrupt, IDT_GATE_TYPE_INTERRUPT, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(3, idt_handle_breakpoint, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(4, idt_handle_overflow, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(5, idt_handle_bound_range, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(6, idt_handle_invalid_opcode, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(7, idt_handle_device_not_available, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
     // Set IST (interrupt stack) for double fault to 1, meaning, use the first stack defined in the gdt task segment, see src/common/gdt.c
     // A double fault is an exception that was thrown in a exception handler, a valid stack must be available to prevent system reset
     // Using a interrupt gate because a trap gate allows for nested interrupts, which will all use stack 1 at the same time and corrupt it
-    idt_register_interrupt(8, idt_handle_invalid_double_fault, IDT_GATE_TYPE_INTERRUPT, IDT_STACK_DOUBLE_FAULT);
-    idt_register_interrupt(9, idt_handle_segment_overrun, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(10, idt_handle_invalid_tss, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(11, idt_handle_segment_not_present, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(12, idt_handle_stack, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(13, idt_handle_general_protection, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(14, idt_handle_page_fault, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(16, idt_handle_float_exception, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(17, idt_handle_alignment_check, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(18, idt_handle_machine_check, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
-    idt_register_interrupt(19, idt_handle_simd_float_exception, IDT_GATE_TYPE_TRAP, IDT_STACK_CURRENT);
+    idt_register_interrupt(8, idt_handle_invalid_double_fault, IDT_GATE_TYPE_INTERRUPT, IDT_STACK_TYPE_DOUBLE_FAULT);
+    idt_register_interrupt(9, idt_handle_segment_overrun, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(10, idt_handle_invalid_tss, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(11, idt_handle_segment_not_present, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(12, idt_handle_stack, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(13, idt_handle_general_protection, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(14, idt_handle_page_fault, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(16, idt_handle_float_exception, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(17, idt_handle_alignment_check, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(18, idt_handle_machine_check, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
+    idt_register_interrupt(19, idt_handle_simd_float_exception, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_CURRENT);
 
     // The last 17 interrupts handle spurious interrupts (16 from the PIC and 1 from the APIC)
     for (int i = 0xff - 17; i <= 0xff; i++)
@@ -314,7 +314,7 @@ void idt_enable_interrupt(unsigned char vector)
     cpu->interrupt_descriptor_table[vector].present = 1;
 }
 
-void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGateType interrupt_type, IdtStack ist)
+void idt_register_interrupt(unsigned char vector, void *function_pointer, enum idt_gate_type interrupt_type, enum idt_stack_type ist)
 {
     struct cpu *cpu = cpu_get_current();
 
@@ -325,7 +325,7 @@ void idt_register_interrupt(unsigned char vector, void *function_pointer, IdtGat
         console_new_line();
     }
 
-    IdtEntry *descriptor = &cpu->interrupt_descriptor_table[vector];
+    struct idt_entry *descriptor = &cpu->interrupt_descriptor_table[vector];
     descriptor->offset1 = (unsigned long)function_pointer & 0xFFFF;
     descriptor->code_segment = GDT_KERNEL_CODE_SEGMENT;
     descriptor->interrupt_stack = ist & 0b111;
@@ -341,7 +341,7 @@ void idt_debug()
 
     for (int i = 0; i < 256 - 17; i++)
     {
-        IdtEntry entry = cpu->interrupt_descriptor_table[i];
+        struct idt_entry entry = cpu->interrupt_descriptor_table[i];
         if (!entry.present)
             continue;
         console_print("[idt] entry #");

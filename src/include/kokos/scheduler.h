@@ -24,7 +24,7 @@ struct scheduler_saved_registers
 struct scheduler_interrupt_frame
 {
     struct scheduler_saved_registers registers;
-    IdtFrame base;
+    struct idt_stack_frame base;
 };
 
 struct scheduler_process

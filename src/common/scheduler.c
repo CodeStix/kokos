@@ -66,7 +66,7 @@ void scheduler_initialize()
 
     // Register the local APIC timer, see https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDY1NyxbNjU3LDMxLDY1NywzMV1d
     // Not using interrupt gate, because hardware interrupts are still allowed while the cpu is switching threads
-    idt_register_interrupt(0x23, scheduler_interrupt, IDT_GATE_TYPE_TRAP, IDT_STACK_SCHEDULER);
+    idt_register_interrupt(0x23, scheduler_interrupt, IDT_GATE_TYPE_TRAP, IDT_STACK_TYPE_SCHEDULER);
     CPU_APIC->timer_initial_count = SCHEDULER_TIMER_INTERVAL;
     // Use divisor 128
     CPU_APIC->timer_divide_config = 0b1010;

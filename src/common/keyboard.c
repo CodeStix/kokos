@@ -74,7 +74,7 @@ static int caps_lock = 0;
 static int extended = 0;
 
 ATTRIBUTE_INTERRUPT
-void interrupt_handle_keyboard(IdtFrame *frame)
+void interrupt_handle_keyboard(struct idt_stack_frame *frame)
 {
     unsigned char input = port_in8(0x60);
 

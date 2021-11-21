@@ -10,7 +10,7 @@ void gdt_debug()
 
     for (int i = 0; i < 6; i++)
     {
-        GdtEntry entry = cpu->global_descriptor_table[i];
+        struct gdt_entry entry = cpu->global_descriptor_table[i];
         if (!entry.present)
             continue;
         console_print("[gdt] entry #");
@@ -50,14 +50,14 @@ void gdt_debug()
 void gdt_initialize()
 {
     // Allocate space for the global descriptor table
-    GdtEntry *global_descriptor_table = memory_physical_allocate();
+    struct gdt_entry *global_descriptor_table = memory_physical_allocate();
     memory_zero(global_descriptor_table, 4096);
 
     // Skip entry 0, it is considered a null entry
 
     // Create kernel code segment (at 0x8)
     // Format of this segment: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NCxbMTU0LDM1LDE1NCwzNV1d
-    GdtEntry *code_segment = (GdtEntry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_CODE_SEGMENT);
+    struct gdt_entry *code_segment = (struct gdt_entry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_CODE_SEGMENT);
     code_segment->read_write = 1;
     code_segment->executable = 1;
     code_segment->non_system = 1;
@@ -66,21 +66,21 @@ void gdt_initialize()
 
     // Create kernel data segment (at 0x10)
     // Format of this segment: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NSxbMTU1LDQ3LDE1NSw0N11d
-    GdtEntry *data_segment = (GdtEntry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_DATA_SEGMENT);
+    struct gdt_entry *data_segment = (struct gdt_entry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_DATA_SEGMENT);
     data_segment->read_write = 1;
     data_segment->non_system = 1;
     data_segment->present = 1;
     data_segment->long_mode = 1;
 
     // Task state format: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDQyMCxbNDIwLDksNDIwLDldXQ==
-    GdtTaskState *task_state = memory_physical_allocate();
-    memory_zero(task_state, sizeof(GdtTaskState));
+    struct gdt_task_state *task_state = memory_physical_allocate();
+    memory_zero(task_state, sizeof(struct gdt_task_state));
 
     console_print("[gdt] allocate task_state at 0x");
     console_print_u64((unsigned long)task_state, 16);
     console_new_line();
 
-    // Allocate interrupt stacks, add 4096 because the stack grows down, see IdtStack in gdt.h for more information
+    // Allocate interrupt stacks, add 4096 because the stack grows down, see enum idt_stack_type in gdt.h for more information
     task_state->ist1 = (unsigned long)memory_physical_allocate() + 4096ul;
     task_state->ist2 = (unsigned long)memory_physical_allocate() + 4096ul;
 
@@ -90,7 +90,7 @@ void gdt_initialize()
 
     // Create kernel task segment (at 0x18)
     // Format of this segment: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NyxbMTU3LDM5LDE1NywzOV1d
-    GdtSystemEntry *task_segment = (GdtSystemEntry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_TASK_SEGMENT);
+    struct gdt_system_entry *task_segment = (struct gdt_system_entry *)((unsigned char *)global_descriptor_table + GDT_KERNEL_TASK_SEGMENT);
 
     // When .non_system = 0, the following four fields decribe the type of system segment, a list of available system segments (in 64 bit mode) can be found here:
     // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NixbMTU2LDE1OCwxNTYsMTY4XV0=
@@ -101,7 +101,7 @@ void gdt_initialize()
     task_segment->base.executable = 1;
 
     unsigned long base = (unsigned long)task_state;
-    unsigned int limit = sizeof(GdtTaskState);
+    unsigned int limit = sizeof(struct gdt_task_state);
     task_segment->base.present = 1;
     task_segment->base.limit1 = limit & 0xFFFFul;
     task_segment->base.limit2 = (limit >> 16) & 0xFFul;
@@ -112,9 +112,9 @@ void gdt_initialize()
 
     // Load new global descriptor table, passing the GDT pointer
     // Instruction info: https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMy5wZGYiLDQ0MyxbNDQzLDQ2LDQ0Myw0Nl1d
-    GdtPointer pointer = {
+    struct gdt_pointer pointer = {
         .address = global_descriptor_table,
-        .limit = sizeof(GdtEntry) * 3 + sizeof(GdtSystemEntry),
+        .limit = sizeof(struct gdt_entry) * 3 + sizeof(struct gdt_system_entry),
     };
     asm volatile("lgdt [%0]" ::"rm"(pointer));
 

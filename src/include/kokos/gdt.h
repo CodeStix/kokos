@@ -10,7 +10,7 @@
 
 // https://wiki.osdev.org/GDT
 // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NCxbMTU0LDI3LDE1NCwyN11d
-typedef struct GdtEntry
+struct gdt_entry
 {
     unsigned short limit1 : 16;
     unsigned short base1 : 16;
@@ -32,30 +32,30 @@ typedef struct GdtEntry
 
     unsigned char base3 : 8;
 
-} ATTRIBUTE_PACKED GdtEntry;
+} ATTRIBUTE_PACKED;
 
 // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NyxbMTU3LDM5LDE1NywzOV1d
-typedef struct GdtSystemEntry
+struct gdt_system_entry
 {
-    GdtEntry base;
+    struct gdt_entry base;
     // Only used when this is a segment is a system segment
     unsigned int base4;
     // Only used when this is a segment is a system segment
     unsigned int unused;
-} ATTRIBUTE_PACKED GdtSystemEntry;
+} ATTRIBUTE_PACKED;
 
-typedef struct
+struct gdt_pointer
 {
     unsigned short limit;
-    GdtEntry *address;
-} ATTRIBUTE_PACKED GdtPointer;
+    struct gdt_entry *address;
+} ATTRIBUTE_PACKED;
 
 // Format described at
 // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDQxOCxbNDE4LDI5LDQxOCwyOV1d
 // to load it, it must be specified using the task register (TR) which can be loaded using the ltr instruction, pointing to an entry in the global descriptor table (GDT)
 // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDQxMyxbNDEzLDgsNDEzLDhdXQ==
 // https://kokos.run/#WzAsIkFNRDY0Vm9sdW1lMi5wZGYiLDE1NCxbMTU0LDI3LDE1NCwyN11d
-typedef struct GdtTaskState
+struct gdt_task_state
 {
     unsigned int unused0;
     // Stack pointer used when switching to ring 0
@@ -76,6 +76,6 @@ typedef struct GdtTaskState
     unsigned int unused3;
     unsigned int unused4;
     unsigned int iopb_offset;
-} ATTRIBUTE_PACKED GdtTaskState;
+} ATTRIBUTE_PACKED;
 
 void gdt_debug();

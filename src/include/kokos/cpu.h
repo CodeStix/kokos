@@ -33,8 +33,8 @@ struct cpu
     // Physical address of this cpu's local APIC
     struct apic *local_apic_physical;
     // Pointer to its interrupt descriptor table
-    IdtEntry *interrupt_descriptor_table;
-    GdtEntry *global_descriptor_table;
+    struct idt_entry *interrupt_descriptor_table;
+    struct gdt_entry *global_descriptor_table;
     // Pointer to currently running process
     struct scheduler_process *current_process;
 };

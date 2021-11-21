@@ -58,7 +58,7 @@ static volatile unsigned long counter = 0;
 static volatile unsigned long counter2 = 0;
 
 ATTRIBUTE_INTERRUPT
-void interrupt_handle_test(IdtFrame *frame)
+void interrupt_handle_test(struct idt_stack_frame *frame)
 {
     unsigned int x, y;
     console_get_cursor(&x, &y);
@@ -71,7 +71,7 @@ void interrupt_handle_test(IdtFrame *frame)
 }
 
 ATTRIBUTE_INTERRUPT
-void interrupt_handle_timer(IdtFrame *frame)
+void interrupt_handle_timer(struct idt_stack_frame *frame)
 {
     // unsigned int x, y;
     // console_get_cursor(&x, &y);
