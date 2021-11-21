@@ -2,10 +2,7 @@
 
 Striking features:
 - ✔ Readable code and developer experience, see below.
-- ✔ Kernel uses identity mapped memory, other programs virtual.
-- ⏳ Clean and easy to use API.
-- ⏳ Per application resource access management.
-- ⏳ Ring 3 only (even device drivers use ring 3).
+- ⏳ Per application managed resource access.
 
 ## Development tools
 
