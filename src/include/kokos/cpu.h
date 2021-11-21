@@ -17,7 +17,7 @@
 // The following statements define fixed virtual address structures/devices
 // Fixed virtual location of the apic
 #define CPU_APIC_ADDRESS 0x8000000000ul
-#define CPU_APIC ((Apic *)CPU_APIC_ADDRESS)
+#define CPU_APIC ((struct apic *)CPU_APIC_ADDRESS)
 
 struct cpu_id_result
 {
@@ -31,7 +31,7 @@ struct cpu
     // The processor's id
     unsigned int id;
     // Physical address of this cpu's local APIC
-    Apic *local_apic_physical;
+    struct apic *local_apic_physical;
     // Pointer to its interrupt descriptor table
     IdtEntry *interrupt_descriptor_table;
     GdtEntry *global_descriptor_table;

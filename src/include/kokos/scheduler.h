@@ -38,7 +38,7 @@ struct scheduler_process
     // Pointer to the pages table used by this process
     PagingContext paging_context;
     // Virtual address to the local apic
-    Apic *local_apic;
+    struct apic *local_apic;
 
     // TODO move to thread struct
     unsigned long saved_rflags;

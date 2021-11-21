@@ -117,7 +117,7 @@ void scheduler_execute(void (*entrypoint)())
     }
 
     // Map the local apic at the fixed apic virtual address
-    paging_map_physical_at(&process->paging_context, cpu->local_apic_physical, CPU_APIC_ADDRESS, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
+    paging_map_physical_at(&process->paging_context, cpu->local_apic_physical, CPU_APIC_ADDRESS, sizeof(struct apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     process->saved_rflags = 0b1001000110; // Default flags
     memory_zero(&process->saved_registers, sizeof(struct scheduler_saved_registers));

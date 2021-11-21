@@ -65,26 +65,26 @@ int apic_check_supported()
     return result.edx & 0b100000000;
 }
 
-unsigned char apic_io_get_id(IOApic *apic)
+unsigned char apic_io_get_id(struct ioapic *apic)
 {
     apic->register_select = APIC_IO_REGISTER_ID;
     return (apic->register_data >> 24) & 0b11111111;
 }
 
-unsigned char apic_io_get_version(IOApic *apic)
+unsigned char apic_io_get_version(struct ioapic *apic)
 {
     apic->register_select = APIC_IO_REGISTER_VERSION;
     return apic->register_data & 0b11111111;
 }
 
-unsigned char apic_io_get_max_entries(IOApic *apic)
+unsigned char apic_io_get_max_entries(struct ioapic *apic)
 {
     // The amount of entries this IOAPIC supports is contained in the version register
     apic->register_select = APIC_IO_REGISTER_VERSION;
     return (apic->register_data >> 16) & 0b11111111;
 }
 
-unsigned long apic_io_get_entry(IOApic *apic, unsigned char index)
+unsigned long apic_io_get_entry(struct ioapic *apic, unsigned char index)
 {
     // Each entry takes up 2 IOAPIC registers
     unsigned char reg = APIC_IO_REGISTER_ENTRY(index);
@@ -97,7 +97,7 @@ unsigned long apic_io_get_entry(IOApic *apic, unsigned char index)
     return entry | ((unsigned long)apic->register_data << 32);
 }
 
-void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry)
+void apic_io_set_entry(struct ioapic *apic, unsigned char index, unsigned long entry)
 {
     unsigned char reg = APIC_IO_REGISTER_ENTRY(index);
     // Set first register
@@ -108,7 +108,7 @@ void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry)
     apic->register_data = entry >> 32;
 }
 
-void apic_io_register(IOApic *apic, unsigned char irq, IOApicEntry entry)
+void apic_io_register(struct ioapic *apic, unsigned char irq, struct ioapic_entry entry)
 {
     apic_io_set_entry(apic, irq, *(unsigned long *)&entry);
 }
@@ -118,5 +118,5 @@ void apic_io_register(IOApic *apic, unsigned char irq, IOApicEntry entry)
 typedef struct
 {
     unsigned int starting_irq; // Or GSI (Global System Interrupt)
-    IOApic *address;
+    struct ioapic *address;
 } IOApicInfo;

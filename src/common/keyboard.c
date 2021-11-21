@@ -199,7 +199,7 @@ void interrupt_handle_keyboard(IdtFrame *frame)
     cpu->local_apic_physical->end_of_interrupt = 0;
 }
 
-extern IOApic *ioapic;
+extern struct ioapic *ioapic;
 
 void keyboard_initialize()
 {
@@ -248,7 +248,7 @@ void keyboard_initialize()
 
     struct cpu *cpu = cpu_get_current();
 
-    IOApicEntry entry = {
+    struct ioapic_entry entry = {
         .vector = 0x23,
         .destination = (cpu->local_apic_physical->id >> 24) & 0b11111111,
     };

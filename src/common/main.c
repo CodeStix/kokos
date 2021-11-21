@@ -34,7 +34,7 @@ unsigned short cpu_startup_increment = 0;
 unsigned short cpu_startup_done = 0;
 
 unsigned long max_memory_address;
-IOApic *ioapic;
+struct ioapic *ioapic;
 
 void memory_debug()
 {
@@ -450,7 +450,7 @@ void kernel_main()
 
     struct cpu *cpu = cpu_get_current();
 
-    Apic *apic = cpu->local_apic_physical;
+    struct apic *apic = cpu->local_apic_physical;
 
     console_print("[apic] mapped at 0x");
     console_print_u64((unsigned long)apic, 16);
@@ -466,7 +466,7 @@ void kernel_main()
     console_print_u64((unsigned long)apic, 16);
     console_new_line();
     console_print("[apic] size ");
-    console_print_u32(sizeof(Apic), 10);
+    console_print_u32(sizeof(struct apic), 10);
     console_new_line();
     console_print("[apic] spurious register (should be 0xF0) 0x");
     console_print_u64((unsigned char *)(&apic->spurious_interrupt_vector) - (unsigned char *)apic, 16);
@@ -498,7 +498,7 @@ void kernel_main()
 
         if (ioapic == 0)
         {
-            ioapic = (IOApic *)paging_map_physical(&cpu->current_process->paging_context, (void *)current_ioapic->io_apic_address, sizeof(IOApic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
+            ioapic = (struct ioapic *)paging_map_physical(&cpu->current_process->paging_context, (void *)current_ioapic->io_apic_address, sizeof(struct ioapic), PAGING_FLAG_READ | PAGING_FLAG_WRITE);
 
             console_print("[ioapic] version: ");
             console_print_u64(apic_io_get_version(ioapic), 10);
@@ -608,7 +608,7 @@ void kernel_main()
     // apic->timer_vector = 0x22 | (1 << 17);
 
     idt_register_interrupt(0x24, interrupt_handle_timer, IDT_GATE_TYPE_INTERRUPT, 0);
-    IOApicEntry timer_entry = {
+    struct ioapic_entry timer_entry = {
         .vector = 0x24,
         .destination = apic->id >> 24,
     };

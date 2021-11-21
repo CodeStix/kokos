@@ -1,8 +1,13 @@
 #pragma once
 #include "kokos/core.h"
 
+#define APIC_IO_REGISTER_ID 0
+#define APIC_IO_REGISTER_VERSION 1
+#define APIC_IO_REGISTER_ARB 2
+#define APIC_IO_REGISTER_ENTRY(n) 0x10 + n * 2
+
 // This structure defines all the APIC (advanced programmable interrupt controller) registers
-typedef struct
+struct apic
 {
     unsigned int unused ATTRIBUTE_ALIGN(16);
     unsigned int unused2 ATTRIBUTE_ALIGN(16);
@@ -104,74 +109,69 @@ typedef struct
     unsigned int extended_interrupt_vector1 ATTRIBUTE_ALIGN(16);
     unsigned int extended_interrupt_vector2 ATTRIBUTE_ALIGN(16);
     unsigned int extended_interrupt_vector3 ATTRIBUTE_ALIGN(16);
-} ATTRIBUTE_PACKED Apic;
-
-#define APIC_IO_REGISTER_ID 0
-#define APIC_IO_REGISTER_VERSION 1
-#define APIC_IO_REGISTER_ARB 2
-#define APIC_IO_REGISTER_ENTRY(n) 0x10 + n * 2
+} ATTRIBUTE_PACKED;
 
 // https://wiki.osdev.org/IOAPIC
-typedef struct
+struct ioapic
 {
     unsigned int register_select ATTRIBUTE_ALIGN(16); // at 0x0
     unsigned int register_data ATTRIBUTE_ALIGN(16);   // at 0x10 (16)
-} ATTRIBUTE_PACKED IOApic;
+} ATTRIBUTE_PACKED;
 
-typedef enum
+enum ioapic_delivery_mode
 {
-    FIXED = 0b000,
-    LOW_PRIORITY = 0b001,
-    SMI = 0b010,
-    NMI = 0b100,
-    INIT = 0b101,
-    EXTENDED_INIT = 0b111,
-} IOApicEntryDeliveryMode;
+    IOAPIC_DELIVERY_MODE_FIXED = 0b000,
+    IOAPIC_DELIVERY_MODE_LOW_PRIORITY = 0b001,
+    IOAPIC_DELIVERY_MODE_SMI = 0b010,
+    IOAPIC_DELIVERY_MODE_NMI = 0b100,
+    IOAPIC_DELIVERY_MODE_INIT = 0b101,
+    IOAPIC_DELIVERY_MODE_EXTENDED_INIT = 0b111,
+};
 
-typedef enum
+enum ioapic_destination_mode
 {
-    PHYSICAL = 0b0,
-    LOGICAL = 0b1
-} IOApicEntryDestinationMode;
+    IOAPIC_DESTINATION_MODE_PHYSICAL = 0b0,
+    IOAPIC_DESTINATION_MODE_LOGICAL = 0b1
+};
 
-typedef enum
+enum ioapic_delivery_status
 {
-    IDLE = 0b0,
-    BUSY = 0b1
-} IOApicEntryDeliveryStatus;
+    IOAPIC_DELIVERY_STATUS_IDLE = 0b0,
+    IOAPIC_DELIVERY_STATUS_BUSY = 0b1
+};
 
-typedef enum
+enum ioapic_pin_polarity
 {
-    ACTIVE_HIGH = 0b0,
-    ACTIVE_LOW = 0b1,
-} IOApicEntryPinPolarity;
+    IOAPIC_PIN_POLARITY_ACTIVE_HIGH = 0b0,
+    IOAPIC_PIN_POLARITY_ACTIVE_LOW = 0b1,
+};
 
-typedef enum
+enum ioapic_trigger_mode
 {
-    EDGE = 0b0,
-    LEVEL = 0b1,
-} IOApicEntryTriggerMode;
+    IOAPIC_TRIGGER_MODE_EDGE = 0b0,
+    IOAPIC_TRIGGER_MODE_LEVEL = 0b1,
+};
 
-typedef struct
+struct ioapic_entry
 {
     unsigned char vector : 8;
-    IOApicEntryDeliveryMode delivery_mode : 3;
-    IOApicEntryDestinationMode destination_mode : 1;
-    IOApicEntryDeliveryStatus delivery_status : 1;
-    IOApicEntryPinPolarity pin_polarity : 1;
+    enum ioapic_delivery_mode delivery_mode : 3;
+    enum ioapic_destination_mode destination_mode : 1;
+    enum ioapic_delivery_status delivery_status : 1;
+    enum ioapic_pin_polarity pin_polarity : 1;
     unsigned char remote_irr : 1;
-    IOApicEntryTriggerMode trigger_mode : 1;
+    enum ioapic_trigger_mode trigger_mode : 1;
     unsigned char mask : 1;
     unsigned long unused : 39;
     unsigned char destination : 8;
-} ATTRIBUTE_PACKED IOApicEntry;
+} ATTRIBUTE_PACKED;
 
-unsigned char apic_io_get_id(IOApic *apic);
-unsigned char apic_io_get_version(IOApic *apic);
-unsigned char apic_io_get_max_entries(IOApic *apic);
-unsigned long apic_io_get_entry(IOApic *apic, unsigned char index);
-void apic_io_set_entry(IOApic *apic, unsigned char index, unsigned long entry);
-void apic_io_register(IOApic *apic, unsigned char irq, IOApicEntry entry);
+unsigned char apic_io_get_id(struct ioapic *apic);
+unsigned char apic_io_get_version(struct ioapic *apic);
+unsigned char apic_io_get_max_entries(struct ioapic *apic);
+unsigned long apic_io_get_entry(struct ioapic *apic, unsigned char index);
+void apic_io_set_entry(struct ioapic *apic, unsigned char index, unsigned long entry);
+void apic_io_register(struct ioapic *apic, unsigned char irq, struct ioapic_entry entry);
 
 // Disables the normal PIC
 void apic_disable_pic();

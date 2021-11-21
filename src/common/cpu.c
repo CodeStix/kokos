@@ -154,7 +154,7 @@ struct cpu *cpu_initialize(void (*entrypoint)())
     console_print("[cpu] mapping local APIC\n");
 
     unsigned long local_apic_info = cpu_read_msr(CPU_MSR_LOCAL_APIC);
-    Apic *local_apic_physical = local_apic_info & 0x000ffffffffff000;
+    struct apic *local_apic_physical = local_apic_info & 0x000ffffffffff000;
 
     // Check 11th bit to check if it is enabled
     if (!(local_apic_info & 0x800))
@@ -164,7 +164,7 @@ struct cpu *cpu_initialize(void (*entrypoint)())
     }
 
     cpu->local_apic_physical = local_apic_physical;
-    if (!paging_map_physical_at(&dummy_process->paging_context, local_apic_physical, CPU_APIC_ADDRESS, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ))
+    if (!paging_map_physical_at(&dummy_process->paging_context, local_apic_physical, CPU_APIC_ADDRESS, sizeof(struct apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ))
     {
         cpu_panic("could not map local apic");
         return;
