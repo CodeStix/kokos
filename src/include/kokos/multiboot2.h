@@ -50,7 +50,7 @@ typedef struct
 {
     unsigned long address;
     unsigned long length;
-    // Type = 1 means usable ram, 3 means ACPI, 5 means defective ram, other values reserved
+    // Type = 1 means usable ram, 2 means hardware device, 3 means ACPI, 5 means defective ram, other values reserved
     unsigned int type;
     unsigned int unused;
 } ATTRIBUTE_PACKED Multiboot2InfoTagMemoryMapEntry;
