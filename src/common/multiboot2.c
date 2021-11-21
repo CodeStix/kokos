@@ -1,14 +1,14 @@
 #include "kokos/multiboot2.h"
 #include "kokos/util.h"
 
-Multiboot2InfoTag *multiboot2_info_get(MULTIBOOT2_TYPE type)
+struct multiboot_tag *multiboot2_info_get(enum multiboot_tag_type type)
 {
-    unsigned char *address = ((unsigned char *)multiboot2_info) + sizeof(Multiboot2Info);
+    unsigned char *address = ((unsigned char *)multiboot2_info) + sizeof(struct multiboot_info);
     while (1)
     {
-        Multiboot2InfoTag *tag = (Multiboot2InfoTag *)address;
+        struct multiboot_tag *tag = (struct multiboot_tag *)address;
 
-        if (tag->type == MULTIBOOT2_TYPE_END)
+        if (tag->type == MULTIBOOT_TAG_TYPE_END)
         {
             return 0;
         }

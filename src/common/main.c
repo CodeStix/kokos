@@ -198,7 +198,7 @@ void kernel_main()
 
     // Read the memory map provided by multiboot, is contains information about what regions of RAM we can freely use
     // https://kokos.run/#WzAsIk11bHRpYm9vdC5wZGYiLDEzLFsxMywxNjIsMTMsMTYyXV0=
-    Multiboot2InfoTagMemoryMap *memory_information = (Multiboot2InfoTagMemoryMap *)multiboot2_info_get(MULTIBOOT2_TYPE_MEMORY_MAP);
+    struct multiboot_tag_memory_map *memory_information = (struct multiboot_tag_memory_map *)multiboot2_info_get(MULTIBOOT_TAG_TYPE_MEMORY_MAP);
     if (!memory_information)
     {
         console_print("[physical memory] fatal: no memory information available\n");
@@ -210,7 +210,7 @@ void kernel_main()
     max_memory_address = 0;
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
-        Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
+        struct multiboot_tag_memory_map_entry *entry = &memory_information->entries[i];
         if (entry->type == 1)
         {
             usable_memory += entry->length;
@@ -249,7 +249,7 @@ void kernel_main()
     void *allocation_table_start = (void *)0xFFFFFFFF;
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
-        Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
+        struct multiboot_tag_memory_map_entry *entry = &memory_information->entries[i];
         // Always place the allocation table higher than 1mb, the low memory area can contain data
         if (entry->type == 1 && entry->length >= allocation_table_size && entry->address >= 0x00100000)
         {
@@ -300,7 +300,7 @@ void kernel_main()
     // Reserve memory for all non-usable (type != 1) memory regions
     for (int i = 0; i * memory_information->entry_size < memory_information->base.size; i++)
     {
-        Multiboot2InfoTagMemoryMapEntry *entry = &memory_information->entries[i];
+        struct multiboot_tag_memory_map_entry *entry = &memory_information->entries[i];
         if (entry->type != 1)
         {
             memory_physical_reserve((void *)entry->address, entry->length);
