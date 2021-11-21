@@ -38,7 +38,7 @@ struct ioapic *ioapic;
 
 void memory_debug()
 {
-    MemoryChunk *chk = &memory_chunk;
+    struct memory_chunk *chk = &memory_chunk;
     while (chk)
     {
         console_print("0x");

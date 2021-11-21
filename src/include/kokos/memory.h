@@ -1,13 +1,13 @@
 #pragma once
 
-typedef struct MemoryChunk
+struct memory_chunk
 {
-    struct MemoryChunk *next;
-    struct MemoryChunk *previous;
+    struct memory_chunk *next;
+    struct memory_chunk *previous;
     int size;
-} MemoryChunk;
+};
 
-extern MemoryChunk memory_chunk;
+extern struct memory_chunk memory_chunk;
 
 // Sets a region of memory starting at `pointer` and ending at `pointer + amount` equal to `value`
 void memory_set(void *pointer, unsigned long size, unsigned char amount);

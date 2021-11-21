@@ -2,7 +2,7 @@
 #include "kokos/memory.h"
 
 // Simple memory allocation strategy:
-// Every allocated block of memory starts with a header (MemoryChunk) and is linked together to the next and previous blocks of memory
+// Every allocated block of memory starts with a header (struct memory_chunk) and is linked together to the next and previous blocks of memory
 // When Allocating, the linked list of memory blocks is iterated and the first gap is filled. O(n)
 // When freeing, the memory block is removed from the linked list. O(1)
 
@@ -52,13 +52,13 @@ void *memory_allocate(int bytes)
 {
     bytes = ALIGN_TO_NEXT(bytes, sizeof(void *));
 
-    MemoryChunk *chk = &memory_chunk;
+    struct memory_chunk *chk = &memory_chunk;
     while (chk)
     {
-        if (!chk->next || (unsigned char *)chk->next - ((unsigned char *)chk + chk->size) > bytes + sizeof(MemoryChunk) * 2)
+        if (!chk->next || (unsigned char *)chk->next - ((unsigned char *)chk + chk->size) > bytes + sizeof(struct memory_chunk) * 2)
         {
             // Insert memory chunk after chk
-            MemoryChunk *new_chunk = (MemoryChunk *)((unsigned char *)chk + sizeof(MemoryChunk) + chk->size);
+            struct memory_chunk *new_chunk = (struct memory_chunk *)((unsigned char *)chk + sizeof(struct memory_chunk) + chk->size);
             new_chunk->size = bytes;
             new_chunk->next = chk->next;
             new_chunk->previous = chk;
@@ -67,7 +67,7 @@ void *memory_allocate(int bytes)
                 chk->next->previous = new_chunk;
             }
             chk->next = new_chunk;
-            return (void *)((unsigned char *)new_chunk + sizeof(MemoryChunk));
+            return (void *)((unsigned char *)new_chunk + sizeof(struct memory_chunk));
         }
 
         chk = chk->next;
@@ -78,7 +78,7 @@ void *memory_allocate(int bytes)
 
 void memory_free(void *pointer)
 {
-    MemoryChunk *header = (MemoryChunk *)((unsigned char *)pointer - sizeof(MemoryChunk));
+    struct memory_chunk *header = (struct memory_chunk *)((unsigned char *)pointer - sizeof(struct memory_chunk));
 
     if (header->previous)
     {
@@ -94,7 +94,7 @@ void *memory_resize(void *pointer, int bytes)
 {
     bytes = ALIGN_TO_NEXT(bytes, sizeof(void *));
 
-    MemoryChunk *header = (MemoryChunk *)((unsigned char *)pointer - sizeof(MemoryChunk));
+    struct memory_chunk *header = (struct memory_chunk *)((unsigned char *)pointer - sizeof(struct memory_chunk));
 
     if (!header->next || (unsigned char *)header + header->size >= (unsigned char *)header->next)
     {
