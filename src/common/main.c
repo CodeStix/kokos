@@ -357,7 +357,7 @@ void kernel_main()
     console_print("[acpi] find rsdt\n");
 
     // Find the root system description table pointer
-    AcpiRsdtp *rsdtp = acpi_find_rsdt_pointer();
+    struct acpi_rsdtp *rsdtp = acpi_find_rsdt_pointer();
     if (!rsdtp)
     {
         console_print("[acpi] rsdp not found!\n");
@@ -372,7 +372,7 @@ void kernel_main()
         return;
     }
 
-    AcpiRsdt *rsdt = (AcpiRsdt *)rsdtp->address;
+    struct acpi_rsdt *rsdt = (struct acpi_rsdt *)rsdtp->address;
     if (acpi_validate_sdt(&rsdt->base))
     {
         console_print("[acpi] rsdt checksum does not match!\n");
@@ -382,7 +382,7 @@ void kernel_main()
 
     // TODO support XSDT
 
-    AcpiFadt *fadt = (AcpiFadt *)acpi_rsdt_get_table(rsdt, ACPI_FADT_SIGNATURE);
+    struct acpi_fadt *fadt = (struct acpi_fadt *)acpi_rsdt_get_table(rsdt, ACPI_FADT_SIGNATURE);
     if (!fadt)
     {
         console_print("[acpi] fatal: FADT not found!\n");
@@ -394,7 +394,7 @@ void kernel_main()
         return;
     }
 
-    AcpiDsdt *dsdt = (AcpiDsdt *)fadt->dsdt;
+    struct acpi_dsdt *dsdt = (struct acpi_dsdt *)fadt->dsdt;
     if (!dsdt)
     {
         console_print("[acpi] fatal: DSDT not found!\n");
@@ -406,7 +406,7 @@ void kernel_main()
         return;
     }
 
-    unsigned int dsdt_aml_length = dsdt->base.length - sizeof(AcpiSdt);
+    unsigned int dsdt_aml_length = dsdt->base.length - sizeof(struct acpi_sdt);
     console_print("aml code size = ");
     console_print_u32(dsdt_aml_length, 10);
     console_new_line();
@@ -430,7 +430,7 @@ void kernel_main()
     // }
 
     // https://kokos.run/#WzAsIkFDUEkucGRmIiwxNjFd
-    AcpiMadt *madt = (AcpiMadt *)acpi_rsdt_get_table(rsdt, ACPI_MADT_SIGNATURE);
+    struct acpi_madt *madt = (struct acpi_madt *)acpi_rsdt_get_table(rsdt, ACPI_MADT_SIGNATURE);
     if (!madt)
     {
         console_print("[acpi] fatal: MADT not found!\n");
@@ -484,7 +484,7 @@ void kernel_main()
     console_print("[ioapic] looking for io apic in MADT table\n");
 
     // Iterate all io apic's
-    AcpiMadtEntry1IOAPIC *current_ioapic = 0;
+    struct acpi_madt_entry_io_apic *current_ioapic = 0;
     ioapic = 0;
     while (current_ioapic = acpi_madt_iterate_type(madt, current_ioapic, ACPI_MADT_TYPE_IO_APIC))
     {
@@ -534,7 +534,7 @@ void kernel_main()
 
     console_clear();
 
-    AcpiMadtEntry0LocalAPIC *current_processor = 0;
+    struct acpi_madt_entry_local_apic *current_processor = 0;
     while (current_processor = acpi_madt_iterate_type(madt, current_processor, ACPI_MADT_TYPE_LOCAL_APIC))
     {
         // console_print("[smp] starting processor ");

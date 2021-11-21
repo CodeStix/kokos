@@ -6,7 +6,7 @@
 #define SCHEDULER_TIMER_INTERVAL 10000
 
 // See schedule.asm
-typedef struct SchedulerSavedRegisters
+struct scheduler_saved_registers
 {
     unsigned long r11;
     unsigned long r10;
@@ -19,22 +19,22 @@ typedef struct SchedulerSavedRegisters
     unsigned long rbx;
     unsigned long rax;
     unsigned long rbp;
-} SchedulerSavedRegisters;
+};
 
-typedef struct
+struct scheduler_interrupt_frame
 {
-    SchedulerSavedRegisters registers;
+    struct scheduler_saved_registers registers;
     IdtFrame base;
-} SchedulerInterruptFrame;
+};
 
-typedef struct SchedulerProcess
+struct scheduler_process
 {
     // The id of this process
     unsigned long id;
     // Pointer to the next process
-    struct SchedulerProcess *next;
+    struct scheduler_process *next;
     // Pointer to the previous process
-    struct SchedulerProcess *previous;
+    struct scheduler_process *previous;
     // Pointer to the pages table used by this process
     PagingContext paging_context;
     // Virtual address to the local apic
@@ -47,11 +47,9 @@ typedef struct SchedulerProcess
     // Address of the stack
     void *saved_stack_pointer;
     // Saved registers during a task switch
-    SchedulerSavedRegisters saved_registers;
-} SchedulerProcess;
-
-typedef void (*SchedulerEntrypoint)();
+    struct scheduler_saved_registers saved_registers;
+};
 
 void scheduler_initialize();
 
-void scheduler_execute(SchedulerEntrypoint entrypoint);
+void scheduler_execute(void (*scheduler_entrypoint)());

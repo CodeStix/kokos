@@ -21,7 +21,7 @@ One of the mail goals of this operating system is readability. That is why the f
     ```
 
 - Use `lower_snake_case` for function names. `string_length(...)`
-- Use `UpperCaseCamelCase` for struct names. (even shorts like `ACPI` are written as `Acpi`, to stop confusion like this: `ACPIXSDT` -> `AcpiXsdt`)
+- Use `UpperCaseCamelCase` for struct names. (even shorts like `ACPI` are written as `Acpi`, to stop confusion like this: `ACPIXSDT` -> `struct acpi_xsdt`)
 - Use typedef for every struct.
 
     ```c
@@ -94,7 +94,7 @@ One of the mail goals of this operating system is readability. That is why the f
     Example usage:
 
     ```c
-        AcpiMadtEntry1IOAPIC *current_ioapic = 0;
+        struct acpi_madt_entry_io_apic *current_ioapic = 0;
         while (current_ioapic = acpi_madt_iterate_type(madt, current_ioapic, ACPI_MADT_TYPE_IO_APIC))
         {
             console_print("io apic at 0x");

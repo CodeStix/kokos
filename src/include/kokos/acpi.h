@@ -15,7 +15,7 @@
 // The Root System Description Pointer is a structure found in memory, between address 0x000E0000 and 0x000FFFFF or between 0x00080000 and 0x0009FFFF
 // that points to a Root System Description Table which points to a lot of other tables which contain a lot of information about the systems hardware. https://wiki.osdev.org/RSDP
 
-typedef struct
+struct acpi_rsdtp
 {
     union
     {
@@ -25,19 +25,19 @@ typedef struct
     unsigned char checksum;
     char oem_id[6];
     unsigned char revision;
-    unsigned int address;     // Points to a AcpiRsdt structure using a 32 bit address
-} ATTRIBUTE_PACKED AcpiRsdtp; // Make sure the compiler does not put unused memory between fields
+    unsigned int address; // Points to a struct acpi_rsdt structure using a 32 bit address
+} ATTRIBUTE_PACKED;       // Make sure the compiler does not put unused memory between fields
 
-typedef struct
+struct acpi_xsdtp
 {
-    AcpiRsdtp base;
+    struct acpi_rsdtp base;
     unsigned int length;
-    unsigned long long address; // Points to a AcpiXsdt structure using a 64 bit address
+    unsigned long address; // Points to a struct acpi_xsdt structure using a 64 bit address
     unsigned char checksum;
     unsigned char reserved[3];
-} ATTRIBUTE_PACKED AcpiXsdtp;
+} ATTRIBUTE_PACKED;
 
-typedef struct
+struct acpi_sdt
 {
     // The signature of this table, which will consist of 4 ascii codes. This will determine what kind of table it is
     union
@@ -59,39 +59,39 @@ typedef struct
     unsigned int oem_revision;
     unsigned int creator_id;
     unsigned int creator_revision;
-} ATTRIBUTE_PACKED AcpiSdt;
+} ATTRIBUTE_PACKED;
 
-typedef struct
+struct acpi_rsdt
 {
-    AcpiSdt base;
+    struct acpi_sdt base;
     // The length of this array can be calculated using acpi_rsdt_entry_count
     unsigned int table_addresses[];
-} ATTRIBUTE_PACKED AcpiRsdt;
+} ATTRIBUTE_PACKED;
 
-typedef struct
+struct acpi_xsdt
 {
-    AcpiSdt base;
+    struct acpi_sdt base;
     // The length of this array can be calculated using acpi_xsdt_entry_count
     unsigned long long table_addresses[];
-} ATTRIBUTE_PACKED AcpiXsdt;
+} ATTRIBUTE_PACKED;
 
-// An address structure used in the AcpiFadt table below
-typedef struct
+// An address structure used in the struct acpi_fadt table below
+struct acpi_fadt_address
 {
     unsigned char address_space;
     unsigned char bit_width;
     unsigned char bit_offset;
     unsigned char access_size;
     unsigned long address;
-} ATTRIBUTE_PACKED AcpiFadtAddress;
+} ATTRIBUTE_PACKED;
 
-// The AcpiFadt is a ACPI table with signature 'FACP'
-// https://wiki.osdev.org/AcpiFadt
+// The struct acpi_fadt is a ACPI table with signature 'FACP'
+// https://wiki.osdev.org/struct acpi_fadt
 // https://kokos.run/#WzAsIkFDUEkucGRmIiwxNzgsWzE3OCwxMCwxNzgsMTFdXQ==
 // The extended fields are only used when the addresses do not fit in their non-extended variants
-typedef struct
+struct acpi_fadt
 {
-    AcpiSdt base;
+    struct acpi_sdt base;
 
     unsigned int firmware_control;
     unsigned int dsdt;
@@ -135,7 +135,7 @@ typedef struct
     unsigned short extended_boot_architecture_flags;
     unsigned char unused2;
     unsigned int flags;
-    AcpiFadtAddress reset_register;
+    struct acpi_fadt_address reset_register;
     unsigned char reset_value;
     unsigned char unused3[3];
     // Only available on ACPI 2.0+
@@ -143,28 +143,28 @@ typedef struct
     // Only available on ACPI 2.0+
     unsigned long extended_dsdt;
     // Only available on ACPI 2.0+
-    AcpiFadtAddress extended_pm1a_event_block;
+    struct acpi_fadt_address extended_pm1a_event_block;
     // Only available on ACPI 2.0+
-    AcpiFadtAddress extended_pm1b_event_block;
+    struct acpi_fadt_address extended_pm1b_event_block;
     // Only available on ACPI 2.0+
-    AcpiFadtAddress extended_pm1a_control_block;
+    struct acpi_fadt_address extended_pm1a_control_block;
     // Only available on ACPI 2.0+
-    AcpiFadtAddress extended_pm1b_control_block;
+    struct acpi_fadt_address extended_pm1b_control_block;
     // Only available on ACPI 2.0+
-    AcpiFadtAddress extended_pm2_control_block;
+    struct acpi_fadt_address extended_pm2_control_block;
     // Only available on ACPI 2.0+
-    AcpiFadtAddress extended_pm_timer_block;
+    struct acpi_fadt_address extended_pm_timer_block;
     // Only available on ACPI 2.0+
-    AcpiFadtAddress extended_gpe0_block;
+    struct acpi_fadt_address extended_gpe0_block;
     // Only available on ACPI 2.0+
-    AcpiFadtAddress extended_gpe1_block;
-} ATTRIBUTE_PACKED AcpiFadt;
+    struct acpi_fadt_address extended_gpe1_block;
+} ATTRIBUTE_PACKED;
 
-typedef struct
+struct acpi_dsdt
 {
-    AcpiSdt base;
+    struct acpi_sdt base;
     unsigned char aml_code[];
-} AcpiDsdt;
+};
 
 #define ACPI_MADT_TYPE_LOCAL_APIC 0
 #define ACPI_MADT_TYPE_IO_APIC 1
@@ -174,136 +174,134 @@ typedef struct
 #define ACPI_MADT_TYPE_LOCAL_APIC_ADDRESS_OVERRIDE 5
 #define ACPI_MADT_TYPE_LOCAL_X2APIC 9
 
-// Every AcpiMadt entry starts with this header
-typedef struct
+// Every struct acpi_madt entry starts with this header
+struct acpi_madt_entry
 {
     unsigned char type;
     unsigned char length;
-} ATTRIBUTE_PACKED AcpiMadtEntry;
+} ATTRIBUTE_PACKED;
 
 // The MADT ACPI table has signature 'APIC', it contains information about the different programmable interrupt controllers (PIC, APIC, IOAPIC) in the system
 // After this struct, a variable list of MADT entries are stored.
-// https://wiki.osdev.org/AcpiMadt
+// https://wiki.osdev.org/struct acpi_madt
 // https://kokos.run/#WzAsIkFDUEkucGRmIiwyMDMsWzIwMywzMiwyMDMsMzNdXQ==
-typedef struct
+struct acpi_madt
 {
-    AcpiSdt base;
+    struct acpi_sdt base;
     unsigned int local_apic_address;
     unsigned int flags;
-} ATTRIBUTE_PACKED AcpiMadt;
+} ATTRIBUTE_PACKED;
 
-// AcpiMadt entry of type 0
+// struct acpi_madt entry of type 0
 // This type represents a single physical processor and its local interrupt controller.
-typedef struct
+struct acpi_madt_entry_local_apic
 {
-    AcpiMadtEntry base;
+    struct acpi_madt_entry base;
     unsigned char processor_id;
     unsigned char apic_id;
     unsigned int flags;
-} ATTRIBUTE_PACKED AcpiMadtEntry0LocalAPIC;
+} ATTRIBUTE_PACKED;
 
-// AcpiMadt entry of type 1
+// struct acpi_madt entry of type 1
 // Represents an IO APIC
-typedef struct
+struct acpi_madt_entry_io_apic
 {
-    AcpiMadtEntry base;
+    struct acpi_madt_entry base;
     unsigned char io_apic_id;
     unsigned char unused;
     unsigned int io_apic_address;
     unsigned int global_system_interrupt_base;
-} ATTRIBUTE_PACKED AcpiMadtEntry1IOAPIC;
+} ATTRIBUTE_PACKED;
 
-// AcpiMadt entry of type 2
+// struct acpi_madt entry of type 2
 // Represents a IO APIC source
-typedef struct
+struct acpi_madt_entry_io_apic_source
 {
-    AcpiMadtEntry base;
+    struct acpi_madt_entry base;
     unsigned char bus_source;
     unsigned char irq_source;
     unsigned int global_system_interrupt;
     unsigned short flags;
-} ATTRIBUTE_PACKED AcpiMadtEntry2IOAPICSource;
+} ATTRIBUTE_PACKED;
 
-// AcpiMadt entry of type 3
+// struct acpi_madt entry of type 3
 // Specifies which IO APIC interrupt inputs should be enabled as non-maskable
-typedef struct
+struct acpi_madt_entry_io_apic_non_maskable
 {
-    AcpiMadtEntry base;
+    struct acpi_madt_entry base;
     unsigned char non_maskable_interrupt_source;
     unsigned char unused;
     unsigned short flags;
     unsigned int global_system_interrupt;
-} ATTRIBUTE_PACKED AcpiMadtEntry3IOAPICNonMaskable;
+} ATTRIBUTE_PACKED;
 
-// AcpiMadt entry of type 4
-typedef struct
+// struct acpi_madt entry of type 4
+struct acpi_madt_entry_local_apic_non_maskable
 {
-    AcpiMadtEntry base;
+    struct acpi_madt_entry base;
     unsigned char acpi_processor_id_target;
     unsigned short flags;
     // Should be 0 to trigger LINT0 and 1 to trigger LINT1 on the processor's local APIC
     unsigned char local_interrupt_target;
-} ATTRIBUTE_PACKED AcpiMadtEntry4LocalAPICNonMaskable;
+} ATTRIBUTE_PACKED;
 
-// AcpiMadt entry of type 5
-// Provides the 64 bit address of the local APIC, this one should be used instead of the AcpiMadt's local_apic_address
-typedef struct
+// struct acpi_madt entry of type 5
+// Provides the 64 bit address of the local APIC, this one should be used instead of the struct acpi_madt's local_apic_address
+struct acpi_madt_entry_local_apic_address
 {
-    AcpiMadtEntry base;
+    struct acpi_madt_entry base;
     unsigned short unused;
     unsigned long local_apic_address;
-} ATTRIBUTE_PACKED AcpiMadtEntry5LocalAPICAddressOverride;
+} ATTRIBUTE_PACKED;
 
-// AcpiMadt entry of type 9
+// struct acpi_madt entry of type 9
 // Same as type 0 but bigger
-typedef struct
+struct acpi_madt_entry_local_x2apic
 {
-    AcpiMadtEntry base;
+    struct acpi_madt_entry base;
     unsigned short unused;
     unsigned int processor_id;
     unsigned int flags;
     unsigned int apic_id;
-} ATTRIBUTE_PACKED AcpiMadtEntry9LocalX2APIC;
+} ATTRIBUTE_PACKED;
 
 // The following function iterates ram on a specific location looking for the RSDP structure. The RSDP starts with the string "RSD PTR " which is 0x2052545020445352 in reversed ascii (little endian)
-// When AcpiRsdtp.revision >= 2, you can cast it to AcpiXsdtp.
-AcpiRsdtp *acpi_find_rsdt_pointer();
+// When acpi_rsdtp.revision >= 2, you can cast it to struct acpi_xsdtp.
+struct acpi_rsdtp *acpi_find_rsdt_pointer();
 
-// Returns 0 if the AcpiRsdtp structure is valid
-int acpi_validate_rsdt_pointer(const AcpiRsdtp *rsdp);
+// Returns 0 if the acpi_rsdtp structure is valid
+int acpi_validate_rsdt_pointer(const struct acpi_rsdtp *rsdp);
 
-// Returns 0 if the AcpiXsdtp structure is valid
-int acpi_validate_xsdt_pointer(const AcpiXsdtp *rsdp);
+// Returns 0 if the struct acpi_xsdtp structure is valid
+int acpi_validate_xsdt_pointer(const struct acpi_xsdtp *rsdp);
 
-// Returns 0 if the AcpiRsdt or AcpiXsdt structure is valid
-int acpi_validate_sdt(const AcpiSdt *rsdt);
+// Returns 0 if the struct acpi_rsdt or struct acpi_xsdt structure is valid
+int acpi_validate_sdt(const struct acpi_sdt *rsdt);
 
-// Returns the length of the AcpiRsdt.table_addresses array
-int acpi_rsdt_entry_count(const AcpiRsdt *rsdt);
+// Returns the length of the struct acpi_rsdt.table_addresses array
+int acpi_rsdt_entry_count(const struct acpi_rsdt *rsdt);
 
-// Returns the length of the AcpiXsdt.table_addresses array
-int acpi_xsdt_entry_count(const AcpiXsdt *xsdt);
-
-// Returns a Root System Description table with the passed signature
-AcpiSdt *acpi_rsdt_get_table(const AcpiRsdt *root_table, unsigned int table_signature);
+// Returns the length of the struct acpi_xsdt.table_addresses array
+int acpi_xsdt_entry_count(const struct acpi_xsdt *xsdt);
 
 // Returns a Root System Description table with the passed signature
-AcpiSdt *acpi_xsdt_get_table(const AcpiXsdt *root_table, unsigned int table_signature);
+struct acpi_sdt *acpi_rsdt_get_table(const struct acpi_rsdt *root_table, unsigned int table_signature);
 
-void acpi_print_madt(const AcpiMadt *madt);
+// Returns a Root System Description table with the passed signature
+struct acpi_sdt *acpi_xsdt_get_table(const struct acpi_xsdt *root_table, unsigned int table_signature);
 
-void acpi_print_rsdt(const AcpiRsdt *rsdt);
+void acpi_print_madt(const struct acpi_madt *madt);
 
-void acpi_print_xsdt(const AcpiXsdt *xsdt);
+void acpi_print_rsdt(const struct acpi_rsdt *rsdt);
 
-void acpi_print_sdt(const AcpiSdt *sdt);
+void acpi_print_xsdt(const struct acpi_xsdt *xsdt);
 
-void acpi_print_rsdtp(const AcpiRsdtp *rsdtp);
+void acpi_print_sdt(const struct acpi_sdt *sdt);
 
-AcpiMadtEntry *acpi_madt_iterate2(const AcpiMadt *madt, AcpiMadtEntry *previous);
+void acpi_print_rsdtp(const struct acpi_rsdtp *rsdtp);
 
 // Enumerate the MADT table
-AcpiMadtEntry *acpi_madt_iterate(const AcpiMadt *madt, AcpiMadtEntry *previous);
+struct acpi_madt_entry *acpi_madt_iterate(const struct acpi_madt *madt, struct acpi_madt_entry *previous);
 
 // Enumerate the MADT table filtering by entry_type
-AcpiMadtEntry *acpi_madt_iterate_type(const AcpiMadt *madt, AcpiMadtEntry *previous, unsigned int entry_type);
+struct acpi_madt_entry *acpi_madt_iterate_type(const struct acpi_madt *madt, struct acpi_madt_entry *previous, unsigned int entry_type);

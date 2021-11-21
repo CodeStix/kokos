@@ -36,7 +36,7 @@ struct cpu
     IdtEntry *interrupt_descriptor_table;
     GdtEntry *global_descriptor_table;
     // Pointer to currently running process
-    SchedulerProcess *current_process;
+    struct scheduler_process *current_process;
 };
 
 // Performs an cpuid instruction and returns the result
@@ -63,6 +63,6 @@ struct cpu *cpu_get_current();
 
 // Initializes the current cpu info.
 // memory_physical_initialize and paging_initialize must be called first!
-struct cpu *cpu_initialize(SchedulerEntrypoint entrypoint);
+struct cpu *cpu_initialize(void (*entrypoint)());
 
 void cpu_panic(const char *message);

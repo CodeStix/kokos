@@ -91,7 +91,7 @@ inline void cpu_panic(const char *message)
 static int current_cpu_id = 0;
 extern unsigned long max_memory_address;
 
-struct cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
+struct cpu *cpu_initialize(void (*entrypoint)())
 {
     // The FS segment register will point to cpu-specific information
     struct cpu *cpu = memory_physical_allocate();
@@ -110,7 +110,7 @@ struct cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
     console_print("[cpu] set up dummy process\n");
 
     // Create dummy process, required for paging to work
-    SchedulerProcess *dummy_process = memory_physical_allocate();
+    struct scheduler_process *dummy_process = memory_physical_allocate();
     dummy_process->saved_instruction_pointer = 0;
     dummy_process->saved_stack_pointer = (unsigned char *)memory_physical_allocate() + 4096;
     dummy_process->id = 20;
@@ -191,7 +191,7 @@ struct cpu *cpu_initialize(SchedulerEntrypoint entrypoint)
 
     // Because parameters can be passed on the stack, we must assure that the entrypoint parameter is available after a stack switch
     // Store it in a register using the register keyword before the stack switch
-    register SchedulerEntrypoint entrypoint_saved = entrypoint;
+    register void (*entrypoint_saved)() = entrypoint;
     asm volatile("mov rsp, %0" ::"rm"(stack));
 
     console_print("[cpu] set up scheduler\n");

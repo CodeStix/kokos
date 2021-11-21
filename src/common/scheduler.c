@@ -13,14 +13,14 @@ extern void(scheduler_interrupt)();
 unsigned int print_lock = 0;
 unsigned int counters[16] = {0};
 
-void scheduler_handle_interrupt(SchedulerInterruptFrame *stack)
+void scheduler_handle_interrupt(struct scheduler_interrupt_frame *stack)
 {
     struct cpu *current_cpu = cpu_get_current();
 
     // Allow more interrupts to be handled
     CPU_APIC->end_of_interrupt = 0;
 
-    SchedulerProcess *next = current_cpu->current_process->next;
+    struct scheduler_process *next = current_cpu->current_process->next;
     if (current_cpu->current_process != next)
     {
         // There are other processes scheduled on this CPU, switch process now
@@ -78,11 +78,11 @@ static unsigned long current_process_id = 0;
 
 extern unsigned long max_memory_address;
 
-void scheduler_execute(SchedulerEntrypoint entrypoint)
+void scheduler_execute(void (*entrypoint)())
 {
     struct cpu *cpu = cpu_get_current();
 
-    SchedulerProcess *process = memory_physical_allocate();
+    struct scheduler_process *process = memory_physical_allocate();
     process->id = current_process_id++;
 
     // Set up page table information
@@ -120,7 +120,7 @@ void scheduler_execute(SchedulerEntrypoint entrypoint)
     paging_map_physical_at(&process->paging_context, cpu->local_apic_physical, CPU_APIC_ADDRESS, sizeof(Apic), PAGING_FLAG_WRITE | PAGING_FLAG_READ);
 
     process->saved_rflags = 0b1001000110; // Default flags
-    memory_zero(&process->saved_registers, sizeof(SchedulerSavedRegisters));
+    memory_zero(&process->saved_registers, sizeof(struct scheduler_saved_registers));
     process->saved_stack_pointer = (unsigned char *)paging_map(&process->paging_context, 4096ul * 8ul, PAGING_FLAG_READ | PAGING_FLAG_WRITE | PAGING_FLAG_USER) + 4096ul * 8ul;
     process->saved_instruction_pointer = entrypoint;
 
