@@ -4,7 +4,7 @@ One of the mail goals of this operating system is readability. That is why the f
 
 - Use `UPPER_SNAKE_CASE` for constant defines. `#define TEST_VALUE 100`
 - Don't use const variables, use defines.
-- Every function (excluding some utility functions) must start with a namespace. For example, every function that has something to do with console, should look like this:
+- Every function and type must start with its namespace. For example, every function that has something to do with console, should look like this:
 
     ```c
     int main() {
@@ -18,39 +18,24 @@ One of the mail goals of this operating system is readability. That is why the f
         // ...
         memory_free(ptr);
     }
+
+    struct console_context {
+        // ...
+    };
     ```
 
-- Use `lower_snake_case` for function names. `string_length(...)`
-- Use `UpperCaseCamelCase` for struct names. (even shorts like `ACPI` are written as `Acpi`, to stop confusion like this: `ACPIXSDT` -> `struct acpi_xsdt`)
-- Use typedef for every struct.
+- Use `lower_snake_case` for function, struct, union, enum and variable names.
+- Use `lower_snake_case` for struct names. 
+- DON'T use typedefs for structs, specify struct when using them
 
     ```c
-    typedef struct Person {
+    struct person {
         char* name;
-        int32 age;
-    } Person;
-    ```
+        int age;
+    } ;
 
-- Every struct name should be prefixed with ist namespace
+    // struct person p = ...
 
-    ```c
-    // in memory.c
-
-    typedef struct MemoryAllocatedChunk {
-        void* location;
-        unsigned int size;
-        unsigned short flags;
-    } MemoryAllocatedChunk;
-
-    ```
-
-- Use `lower_snake_case` for variables:
-
-    ```c
-    int main() {
-        char* name_string = "your name";
-        console_print(name_string);
-    }
     ```
 
 - Start every comment capitalized and before the line (NOT after) it will describe.
@@ -66,28 +51,29 @@ One of the mail goals of this operating system is readability. That is why the f
 
     ```c
 
-    typedef struct Table {
-        int type; // this field can determine if it is a PointerTable or a PICTable
+    struct table {
+        int type; // This field can determine if it is a PointerTable or a PICTable
         int length;
-    } Table;
+    } ;
 
-    typedef struct PointerTable {
-        Table base; // always call it base
+    struct pointer_table {
+        struct table base; // Always call it base
         void* pointer;
-    } PointerTable;
+    } ;
 
-    typedef struct PICTable {
-        Table base; // always call it base
+    struct pic_table {
+        struct table base; // Always call it base
         unsigned short pic_number;
-    } PICTable;
+    } ;
 
     ```
 
-- Length refers to the amount of item in a sequence, array or list.
-- Size refers to the amount of bytes some structure takes.
+- 'Length' refers to the amount of item in a sequence, array or list.
+- 'Size' refers to the amount of bytes some structure takes.
 - Every enumeration/iteration function should follow the following format:
 
     ```c
+    // definition
     next_item namespace_type_iterate(the_thing_to_iterate, previous_item);
     ```
 
